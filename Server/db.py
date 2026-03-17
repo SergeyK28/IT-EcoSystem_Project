@@ -1,20 +1,64 @@
 # -*- coding: utf-8 -*-
 import mysql.connector
 import bcrypt
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple
+from mysql.connector import Error
+
+# Находим корневую директорию проекта
+ROOT_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = ROOT_DIR / '.env'
+
+# Загружаем .env с принудительной перезаписью
+load_dotenv(ENV_PATH, override=True)
+
+# Для отладки - проверим, загрузились ли переменные
+print(f"Загрузка .env из: {ENV_PATH}")
+print(f"DB_USER из os.environ: {os.environ.get('DB_USER')}")
+print(f"DB_PASSWORD установлен: {'Да' if os.environ.get('DB_PASSWORD') else 'Нет'}")
+
 
 def get_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="sk28",
-        password="Yes12345Yes.",
-        database="SQL_IT_EcoSyttem_BD"
-    )
+    """Получает соединение с БД"""
+    try:
+        # Берем переменные напрямую из окружения
+        config = {
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'user': os.getenv('DB_USER'),
+            'password': os.getenv('DB_PASSWORD'),
+            'database': os.getenv('DB_NAME', 'SQL_IT_EcoSyttem_BD'),
+            'port': int(os.getenv('DB_PORT', 3306))
+        }
+
+        # Проверяем, что все необходимые параметры заданы
+        if not config['user'] or not config['password']:
+            raise ValueError("DB_USER или DB_PASSWORD не заданы в .env файле")
+
+        # Закомментируйте эти строки или удалите
+        # print("Параметры подключения:")
+        # print(f"  host: {config['host']}")
+        # print(f"  user: {config['user']}")
+        # print(f"  database: {config['database']}")
+        # print(f"  password: {'*' * len(config['password'])}")
+
+        conn = mysql.connector.connect(**config)
+        # print("✅ Подключение успешно!")  # Тоже можно закомментировать
+        return conn
+
+    except Exception as e:
+        print(f"❌ Ошибка подключения: {e}")
+        raise
+
 
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+
 def check_password(hashed, user_password):
     return bcrypt.checkpw(user_password.encode('utf-8'), hashed.encode('utf-8'))
+
 
 # Функция для регистрации нового пользователя
 def register_user(first_name, last_name, login, password, email):
@@ -35,6 +79,7 @@ def register_user(first_name, last_name, login, password, email):
         cursor.close()
         conn.close()
 
+
 # Функция для проверки логина и пароля пользователя
 def check_user(login, password):
     conn = get_connection()
@@ -48,6 +93,7 @@ def check_user(login, password):
     finally:
         cursor.close()
         conn.close()
+
 
 # Функция для изменения имени и фамилии пользователя
 def update_name_surname_in_db(user_id, first_name, last_name):
@@ -66,6 +112,7 @@ def update_name_surname_in_db(user_id, first_name, last_name):
             cursor.close()
             conn.close()
 
+
 def update_birthdate_in_db(user_id, birthdate):
     conn = get_connection()
     cursor = conn.cursor()
@@ -82,6 +129,7 @@ def update_birthdate_in_db(user_id, birthdate):
             cursor.close()
             conn.close()
 
+
 def get_user_id_by_login(login):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -95,6 +143,7 @@ def get_user_id_by_login(login):
         cursor.close()
         conn.close()
 
+
 def get_user_data_by_login(login):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -107,6 +156,7 @@ def get_user_data_by_login(login):
     finally:
         cursor.close()
         conn.close()
+
 
 def update_avatar_in_db(user_id, avatar_path):
     conn = get_connection()
@@ -124,6 +174,7 @@ def update_avatar_in_db(user_id, avatar_path):
             cursor.close()
             conn.close()
 
+
 def get_avatar_path_by_user_id(user_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -138,4 +189,460 @@ def get_avatar_path_by_user_id(user_id):
         conn.close()
 
 
+def update_user_experience(user_id, experience_value):
+    """Обновление уровня опыта пользователя"""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET experience = %s WHERE id = %s",
+            (experience_value, user_id)
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Ошибка при обновлении опыта: {e}")
+        return False
 
+
+def get_user_experience(user_id):
+    """Получение уровня опыта пользователя"""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT experience FROM users WHERE id = %s",
+            (user_id,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else 0  # Возвращаем 0, если опыта нет
+    except Exception as e:
+        print(f"Ошибка при получении опыта: {e}")
+        return 0
+
+
+# ========== ФУНКЦИИ ПОИСКА ==========
+
+def search_products_and_services(search_text: str) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Выполняет поиск товаров и услуг по тексту
+    """
+    conn = get_connection()
+    if conn is None:
+        return {'services': [], 'parts': [], 'categories': []}
+
+    cursor = conn.cursor(dictionary=True)
+    results = {'services': [], 'parts': [], 'categories': []}
+
+    try:
+        search_pattern = f"%{search_text}%"
+        print(f"Поиск по тексту: '{search_text}'")  # Отладка
+
+        # Поиск услуг
+        cursor.execute("""
+            SELECT 
+                ServiceTypeID as id,
+                ServiceDescription as name,
+                BasePrice as price,
+                Category as category,
+                EstimatedTime as duration,
+                'service' as type
+            FROM ServiceTypes 
+            WHERE IsActive = TRUE 
+                AND (ServiceDescription LIKE %s 
+                     OR Category LIKE %s)
+            ORDER BY 
+                CASE 
+                    WHEN ServiceDescription LIKE %s THEN 1
+                    ELSE 2
+                END,
+                ServiceDescription
+            LIMIT 20
+        """, (search_pattern, search_pattern, f"{search_text}%"))
+
+        services = cursor.fetchall()
+        results['services'] = services
+        print(f"Найдено услуг: {len(services)}")  # Отладка
+
+        # Поиск товаров на складе (запчасти)
+        cursor.execute("""
+            SELECT 
+                StockID as id,
+                DetailName as name,
+                DetailCode as code,
+                Price as price,
+                Brand as brand,
+                Category as category,
+                CountInStock as stock,
+                'part' as type
+            FROM DetailStock 
+            WHERE IsActive = TRUE 
+                AND CountInStock > 0
+                AND (DetailName LIKE %s 
+                     OR DetailCode LIKE %s 
+                     OR Brand LIKE %s 
+                     OR Category LIKE %s)
+            ORDER BY 
+                CASE 
+                    WHEN DetailName LIKE %s THEN 1
+                    WHEN Brand LIKE %s THEN 2
+                    ELSE 3
+                END,
+                DetailName
+            LIMIT 20
+        """, (search_pattern, search_pattern, search_pattern, search_pattern,
+              f"{search_text}%", f"{search_text}%"))
+
+        parts = cursor.fetchall()
+        results['parts'] = parts
+        print(f"Найдено товаров: {len(parts)}")  # Отладка
+
+        # Поиск категорий
+        cursor.execute("""
+            SELECT DISTINCT Category as name, 'category' as type
+            FROM ServiceTypes 
+            WHERE IsActive = TRUE AND Category LIKE %s
+            UNION
+            SELECT DISTINCT Category, 'category'
+            FROM DetailStock 
+            WHERE IsActive = TRUE AND Category LIKE %s
+            LIMIT 10
+        """, (search_pattern, search_pattern))
+
+        categories = cursor.fetchall()
+        results['categories'] = categories
+        print(f"Найдено категорий: {len(categories)}")  # Отладка
+
+        print(f"Всего результатов: {len(services) + len(parts) + len(categories)}")  # Отладка
+        return results
+
+    except Error as e:
+        print(f"Ошибка поиска: {e}")
+        return {'services': [], 'parts': [], 'categories': []}
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_popular_searches(limit: int = 5) -> List[str]:
+    """
+    Получает популярные поисковые запросы
+    """
+    # Для начала вернем статические данные
+    # Позже можно добавить таблицу SearchHistory
+    popular = [
+        "ремонт телефона",
+        "замена экрана",
+        "ноутбук",
+        "аккумулятор",
+        "диагностика"
+    ]
+    return popular[:limit]
+
+
+def save_search_query(query: str, user_id: int = None) -> bool:
+    """
+    Сохраняет поисковый запрос в историю
+
+    Args:
+        query: Поисковый запрос
+        user_id: ID пользователя (если авторизован)
+
+    Returns:
+        True если успешно
+    """
+    # Пока просто логируем, потом можно добавить таблицу
+    print(f"Поисковый запрос от user_id={user_id}: {query}")
+    return True
+
+
+def get_search_history(user_id: int = None, limit: int = 10) -> List[str]:
+    """
+    Получает историю поисковых запросов
+    """
+    # Пока вернем пустой список
+    return []
+
+
+def add_to_favorites(user_id: int, item_type: str, item_id: int, item_name: str,
+                     item_price: float, item_category: str = None, notes: str = None) -> bool:
+    """
+    Добавляет элемент в избранное пользователя
+
+    Args:
+        user_id: ID пользователя
+        item_type: Тип элемента ('service' или 'part')
+        item_id: ID элемента
+        item_name: Название элемента
+        item_price: Цена
+        item_category: Категория
+        notes: Заметки
+
+    Returns:
+        True если успешно добавлено, False если ошибка или уже в избранном
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO Favorites (UserID, ItemType, ItemID, ItemName, ItemPrice, ItemCategory, Notes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (user_id, item_type, item_id, item_name, item_price, item_category, notes))
+        conn.commit()
+        print(f"✅ Добавлено в избранное: {item_name}")
+        return True
+    except mysql.connector.IntegrityError:
+        # Элемент уже в избранном
+        print(f"ℹ️ Элемент уже в избранном: {item_name}")
+        return False
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка добавления в избранное: {err}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def remove_from_favorites(user_id: int, favorite_id: int) -> bool:
+    """
+    Удаляет элемент из избранного по ID записи
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM Favorites 
+            WHERE FavoriteID = %s AND UserID = %s
+        """, (favorite_id, user_id))
+        conn.commit()
+        success = cursor.rowcount > 0
+        if success:
+            print(f"✅ Удалено из избранного, ID: {favorite_id}")
+        return success
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка удаления из избранного: {err}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def remove_from_favorites_by_item(user_id: int, item_type: str, item_id: int) -> bool:
+    """
+    Удаляет элемент из избранного по типу и ID элемента
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM Favorites 
+            WHERE UserID = %s AND ItemType = %s AND ItemID = %s
+        """, (user_id, item_type, item_id))
+        conn.commit()
+        success = cursor.rowcount > 0
+        if success:
+            print(f"✅ Удалено из избранного: type={item_type}, id={item_id}")
+        return success
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка удаления из избранного: {err}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_user_favorites(user_id: int) -> List[Dict[str, Any]]:
+    """
+    Получает все избранные элементы пользователя
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT 
+                FavoriteID,
+                ItemType,
+                ItemID,
+                ItemName,
+                ItemPrice,
+                ItemCategory,
+                DATE_FORMAT(DateAdded, '%d.%m.%Y %H:%i') as DateAddedFormatted,
+                Notes
+            FROM Favorites 
+            WHERE UserID = %s
+            ORDER BY DateAdded DESC
+        """, (user_id,))
+
+        favorites = cursor.fetchall()
+        print(f"📋 Найдено избранных элементов: {len(favorites)}")
+        return favorites
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка получения избранного: {err}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def is_in_favorites(user_id: int, item_type: str, item_id: int) -> bool:
+    """
+    Проверяет, находится ли элемент в избранном у пользователя
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) FROM Favorites 
+            WHERE UserID = %s AND ItemType = %s AND ItemID = %s
+        """, (user_id, item_type, item_id))
+
+        count = cursor.fetchone()[0]
+        return count > 0
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка проверки избранного: {err}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_favorite_by_id(user_id: int, favorite_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Получает информацию о конкретном элементе избранного по ID
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT * FROM Favorites 
+            WHERE FavoriteID = %s AND UserID = %s
+        """, (favorite_id, user_id))
+
+        return cursor.fetchone()
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка получения элемента избранного: {err}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def clear_all_favorites(user_id: int) -> bool:
+    """
+    Очищает всё избранное пользователя
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM Favorites WHERE UserID = %s
+        """, (user_id,))
+        conn.commit()
+        count = cursor.rowcount
+        print(f"✅ Очищено избранное: удалено {count} элементов")
+        return True
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка очистки избранного: {err}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_favorites_count(user_id: int) -> int:
+    """
+    Получает количество элементов в избранном пользователя
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) FROM Favorites WHERE UserID = %s
+        """, (user_id,))
+
+        count = cursor.fetchone()[0]
+        return count
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка получения количества избранного: {err}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_favorites_by_category(user_id: int, category: str) -> List[Dict[str, Any]]:
+    """
+    Получает избранные элементы пользователя по категории
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT * FROM Favorites 
+            WHERE UserID = %s AND ItemCategory = %s
+            ORDER BY DateAdded DESC
+        """, (user_id, category))
+
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка получения избранного по категории: {err}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_favorites_by_type(user_id: int, item_type: str) -> List[Dict[str, Any]]:
+    """
+    Получает избранные элементы пользователя по типу (service/part)
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT * FROM Favorites 
+            WHERE UserID = %s AND ItemType = %s
+            ORDER BY DateAdded DESC
+        """, (user_id, item_type))
+
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print(f"❌ Ошибка получения избранного по типу: {err}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()

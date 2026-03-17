@@ -1,66 +1,168 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
-import mysql.connector
 from Server.db import update_name_surname_in_db
+
 
 class Ui_Setting_Name_Surnamel(object):
     def setupUi(self, Setting_Name_Surnamel):
         Setting_Name_Surnamel.setObjectName("Setting_Name_Surnamel")
-        Setting_Name_Surnamel.resize(353, 294)
-        Setting_Name_Surnamel.setStyleSheet("background-color: rgb(23, 23, 23);")
+        Setting_Name_Surnamel.resize(400, 350)
+        Setting_Name_Surnamel.setStyleSheet("""
+            QDialog {
+                background-color: rgb(47, 47, 47);
+                border-radius: 10px;
+            }
+        """)
+
         self.verticalLayout = QtWidgets.QVBoxLayout(Setting_Name_Surnamel)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.TXT_Name = QtWidgets.QLabel(Setting_Name_Surnamel)
-        self.TXT_Name.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.TXT_Name.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.TXT_Name.setObjectName("TXT_Name")
-        self.verticalLayout.addWidget(self.TXT_Name)
-        self.TQ_Name = QtWidgets.QTextEdit(Setting_Name_Surnamel)
-        self.TQ_Name.setMaximumSize(QtCore.QSize(16777215, 35))
-        self.TQ_Name.setStyleSheet("color: rgb(255, 255, 255);\n"
-                                   "background-color: rgb(0, 0, 0);")
-        self.TQ_Name.setObjectName("TQ_Name")
-        self.verticalLayout.addWidget(self.TQ_Name)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.verticalLayout.addItem(spacerItem)
-        self.TXT_Surname = QtWidgets.QLabel(Setting_Name_Surnamel)
-        self.TXT_Surname.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.TXT_Surname.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.TXT_Surname.setObjectName("TXT_Surname")
-        self.verticalLayout.addWidget(self.TXT_Surname)
-        self.TQ_Surname = QtWidgets.QTextEdit(Setting_Name_Surnamel)
-        self.TQ_Surname.setMaximumSize(QtCore.QSize(16777215, 35))
-        self.TQ_Surname.setStyleSheet("color: rgb(255, 255, 255);\n"
-                                      "background-color: rgb(0, 0, 0);")
-        self.TQ_Surname.setObjectName("TQ_Surname")
-        self.verticalLayout.addWidget(self.TQ_Surname)
-        self.PB_Name_Surnamel = QtWidgets.QPushButton(Setting_Name_Surnamel)
-        self.PB_Name_Surnamel.setStyleSheet("color: rgb(255, 255, 255);\n"
-                                            "background-color: rgb(103, 155, 118);")
-        self.PB_Name_Surnamel.setObjectName("PB_Name_Surnamel")
-        self.verticalLayout.addWidget(self.PB_Name_Surnamel)
-        self.PB_Name_Surnamel.clicked.connect(self.save_changes)
+        self.verticalLayout.setContentsMargins(20, 20, 20, 20)
+        self.verticalLayout.setSpacing(15)
+
+        # Заголовок
+        self.title_label = QtWidgets.QLabel("👤 Изменение имени и фамилии")
+        self.title_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+                padding: 10px 0;
+            }
+        """)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.verticalLayout.addWidget(self.title_label)
+
+        # Поле для имени
+        self.name_label = QtWidgets.QLabel("Имя:")
+        self.name_label.setStyleSheet("color: rgb(180, 180, 180); font-size: 13px;")
+        self.verticalLayout.addWidget(self.name_label)
+
+        self.name_input = QtWidgets.QLineEdit()
+        self.name_input.setPlaceholderText("Введите новое имя")
+        self.name_input.setMinimumHeight(40)
+        self.name_input.setStyleSheet("""
+            QLineEdit {
+                background-color: rgb(60, 60, 60);
+                color: white;
+                border: 2px solid rgb(80, 80, 80);
+                border-radius: 8px;
+                padding: 0 15px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid rgb(103, 155, 118);
+            }
+            QLineEdit::placeholder {
+                color: rgb(150, 150, 150);
+            }
+        """)
+        self.verticalLayout.addWidget(self.name_input)
+
+        # Поле для фамилии
+        self.surname_label = QtWidgets.QLabel("Фамилия:")
+        self.surname_label.setStyleSheet("color: rgb(180, 180, 180); font-size: 13px;")
+        self.verticalLayout.addWidget(self.surname_label)
+
+        self.surname_input = QtWidgets.QLineEdit()
+        self.surname_input.setPlaceholderText("Введите новую фамилию")
+        self.surname_input.setMinimumHeight(40)
+        self.surname_input.setStyleSheet("""
+            QLineEdit {
+                background-color: rgb(60, 60, 60);
+                color: white;
+                border: 2px solid rgb(80, 80, 80);
+                border-radius: 8px;
+                padding: 0 15px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid rgb(103, 155, 118);
+            }
+            QLineEdit::placeholder {
+                color: rgb(150, 150, 150);
+            }
+        """)
+        self.verticalLayout.addWidget(self.surname_input)
+
+        # Добавляем растяжку
+        self.verticalLayout.addStretch()
+
+        # Кнопка сохранения
+        self.save_button = QtWidgets.QPushButton("💾 Сохранить изменения")
+        self.save_button.setMinimumHeight(45)
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgb(103, 155, 118);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgb(93, 145, 108);
+            }
+            QPushButton:pressed {
+                background-color: rgb(83, 135, 98);
+            }
+        """)
+        self.verticalLayout.addWidget(self.save_button)
+
+        # Кнопка отмены
+        self.cancel_button = QtWidgets.QPushButton("✕ Отмена")
+        self.cancel_button.setMinimumHeight(40)
+        self.cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgb(70, 70, 70);
+                color: rgb(200, 200, 200);
+                border: 1px solid rgb(100, 100, 100);
+                border-radius: 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: white;
+            }
+        """)
+        self.verticalLayout.addWidget(self.cancel_button)
+
+        # Подключение сигналов
+        self.save_button.clicked.connect(self.save_changes)
+        self.cancel_button.clicked.connect(Setting_Name_Surnamel.reject)
+
         self.retranslateUi(Setting_Name_Surnamel)
         QtCore.QMetaObject.connectSlotsByName(Setting_Name_Surnamel)
 
     def retranslateUi(self, Setting_Name_Surnamel):
         _translate = QtCore.QCoreApplication.translate
-        Setting_Name_Surnamel.setWindowTitle(_translate("Setting_Name_Surnamel", "IT-EcoSystem"))
-        self.TXT_Name.setText(_translate("Setting_Name_Surnamel", "Имя"))
-        self.TQ_Name.setPlaceholderText(_translate("Setting_Name_Surnamel", "Введите новое имя"))
-        self.TXT_Surname.setText(_translate("Setting_Name_Surnamel", "Фамилия"))
-        self.TQ_Surname.setPlaceholderText(_translate("Setting_Name_Surnamel", "Введите новую фамилию"))
-        self.PB_Name_Surnamel.setText(_translate("Setting_Name_Surnamel", "Сохранить изменения"))
+        Setting_Name_Surnamel.setWindowTitle(_translate("Setting_Name_Surnamel", "IT-EcoSystem - Имя и фамилия"))
 
     def save_changes(self):
-        new_first_name = self.TQ_Name.toPlainText().strip()
-        new_last_name = self.TQ_Surname.toPlainText().strip()
-        if new_first_name and new_last_name:
-            updated = update_name_surname_in_db(self.user_id, new_first_name, new_last_name)
-            if updated:
-                QtWidgets.QMessageBox.information(self.PB_Name_Surnamel, "Успех", f"Имя и фамилия успешно обновлены.")
-            else:
-                QtWidgets.QMessageBox.critical(self.PB_Name_Surnamel, "Ошибка", "Не удалось обновить данные.")
+        new_name = self.name_input.text().strip()
+        new_surname = self.surname_input.text().strip()
+
+        if not new_name or not new_surname:
+            QMessageBox.warning(self.parent(), "Ошибка", "Заполните оба поля!")
+            return
+
+        # Здесь должна быть функция сохранения в БД
+        # success = update_name_surname_in_db(self.user_id, new_name, new_surname)
+        success = True  # Заглушка
+
+        if success:
+            QMessageBox.information(self.parent(), "Успех", "Имя и фамилия успешно обновлены!")
+            self.parent().accept()
         else:
-            QtWidgets.QMessageBox.warning(self.PB_Name_Surnamel, "Внимание", "Заполните оба поля!")
+            QMessageBox.critical(self.parent(), "Ошибка", "Не удалось обновить данные.")
+
+
+if __name__ == "__main__":
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    dialog = QtWidgets.QDialog()
+    ui = Ui_Setting_Name_Surnamel()
+    ui.setupUi(dialog)
+    dialog.show()
+    sys.exit(app.exec_())

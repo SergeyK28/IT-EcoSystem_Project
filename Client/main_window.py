@@ -1,477 +1,689 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMessageBox
+
+from Client.favorites_window import FavoritesWindow
+from Client.search_widget import SearchResultsWidget
+from session_manager import session
 from authorization_window import AuthDialog
-from remont_telefonov import  Ui_Ui_Remont_Telefonov_Dialog
-from remont_laptop import Ui_Ui_Remont_Laptop_Dialog
+from Client.Remont_windows.remont_telefonov import Ui_Ui_Remont_Telefonov_Dialog
+from Client.Remont_windows.remont_laptop import Ui_Ui_Remont_Laptop_Dialog
+from shop_window import ShopWindow
+from profil_window import Ui_profil
+from cart_window import CartWindow
+from Server import db
+from Server import db_crm
+
 
 
 class Ui_main_window_Dialog(object):
     def setupUi(self, main_window_Dialog):
         main_window_Dialog.setObjectName("main_window_Dialog")
-        main_window_Dialog.resize(1062, 902)
+        main_window_Dialog.resize(1200, 950)
+
+        # Настройка иконки
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../Pictures/Screenshot from 2025-09-15 14-30-16.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("../Pictures/Screenshot from 2025-09-15 14-30-16.png"),
+                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
         main_window_Dialog.setWindowIcon(icon)
-        main_window_Dialog.setStyleSheet("background-color: rgb(23, 23, 23);")
+
+        # Главный градиентный фон
+        main_window_Dialog.setStyleSheet("""
+            QDialog {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #1a1a1a, stop:0.5 #232323, stop:1 #1a1a1a);
+            }
+        """)
+
         self.gridLayout_2 = QtWidgets.QGridLayout(main_window_Dialog)
+        self.gridLayout_2.setContentsMargins(20, 20, 20, 20)
+        self.gridLayout_2.setSpacing(15)
         self.gridLayout_2.setObjectName("gridLayout_2")
-        self.splitter_3 = QtWidgets.QSplitter(main_window_Dialog)
-        self.splitter_3.setOrientation(QtCore.Qt.Horizontal)
-        self.splitter_3.setObjectName("splitter_3")
-        self.Adres = QtWidgets.QLabel(self.splitter_3)
-        self.Adres.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.Adres.setStyleSheet("color: rgb(154, 153, 150);\n"
-"")
-        self.Adres.setObjectName("Adres")
-        self.Work = QtWidgets.QLabel(self.splitter_3)
-        self.Work.setMaximumSize(QtCore.QSize(16777215, 20))
-        self.Work.setStyleSheet("color: rgb(154, 153, 150);")
-        self.Work.setObjectName("Work")
-        self.gridLayout_2.addWidget(self.splitter_3, 0, 0, 1, 1)
-        self.splitter_2 = QtWidgets.QSplitter(main_window_Dialog)
-        self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
-        self.splitter_2.setObjectName("splitter_2")
-        self.layoutWidget = QtWidgets.QWidget(self.splitter_2)
-        self.layoutWidget.setObjectName("layoutWidget")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.layoutWidget)
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.Logo_PushButton = QtWidgets.QPushButton(self.layoutWidget)
-        self.Logo_PushButton.setMaximumSize(QtCore.QSize(200, 70))
-        self.Logo_PushButton.setStyleSheet("color: rgb(255, 255, 255);\n"
-"background-color: rgb(103, 155, 118);\n"
-"")
-        self.Logo_PushButton.setObjectName("Logo_PushButton")
-        self.horizontalLayout_3.addWidget(self.Logo_PushButton)
-        self.Search = QtWidgets.QTextEdit(self.layoutWidget)
-        self.Search.setMaximumSize(QtCore.QSize(16777215, 35))
-        self.Search.setStyleSheet("color: rgb(255, 255, 255);\n"
-"background-color: rgb(0, 0, 0);")
-        self.Search.setObjectName("Search")
-        self.horizontalLayout_3.addWidget(self.Search)
-        self.horizontalLayout.addLayout(self.horizontalLayout_3)
-        self.Shop_PushButton = QtWidgets.QPushButton(self.layoutWidget)
-        self.Shop_PushButton.setStyleSheet("color: rgb(119, 118, 123);\n"
-"\n"
-"")
-        self.Shop_PushButton.setObjectName("Shop_PushButton")
-        self.horizontalLayout.addWidget(self.Shop_PushButton)
-        self.Favourites_PushButton = QtWidgets.QPushButton(self.layoutWidget)
-        self.Favourites_PushButton.setStyleSheet("color: rgb(119, 118, 123);\n"
-"\n"
-"")
-        self.Favourites_PushButton.setObjectName("Favourites_PushButton")
-        self.horizontalLayout.addWidget(self.Favourites_PushButton)
-        self.Basket_PushButton = QtWidgets.QPushButton(self.layoutWidget)
-        self.Basket_PushButton.setStyleSheet("color: rgb(119, 118, 123);\n"
-"\n"
-"")
-        self.Basket_PushButton.setObjectName("Basket_PushButton")
-        self.horizontalLayout.addWidget(self.Basket_PushButton)
-        self.Enter_PushButton = QtWidgets.QPushButton(self.layoutWidget)
-        self.Enter_PushButton.setStyleSheet("color: rgb(119, 118, 123);\n"
-"\n"
-"")
-        self.Enter_PushButton.setObjectName("Enter_PushButton")
-        self.horizontalLayout.addWidget(self.Enter_PushButton)
-        self.gridLayout_2.addWidget(self.splitter_2, 1, 0, 1, 1)
+
+        # ========== ВЕРХНЯЯ ПАНЕЛЬ (АДРЕС И РАБОТА) ==========
+        self.top_info_frame = QtWidgets.QFrame(main_window_Dialog)
+        self.top_info_frame.setStyleSheet("""
+            QFrame {
+                background-color: #2d2d2d;
+                border-radius: 10px;
+                padding: 5px;
+            }
+        """)
+
+        # Добавляем тень для верхней панели
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        shadow.setOffset(0, 3)
+        self.top_info_frame.setGraphicsEffect(shadow)
+
+        top_layout = QtWidgets.QHBoxLayout(self.top_info_frame)
+        top_layout.setContentsMargins(15, 8, 15, 8)
+
+        self.Adres = QtWidgets.QLabel("🗺️ Красноярск, Улица Микуцкого, 12")
+        self.Adres.setStyleSheet("""
+            QLabel {
+                color: #b0b0b0;
+                font-size: 13px;
+                font-weight: 400;
+                padding: 5px;
+            }
+        """)
+
+        self.Work = QtWidgets.QLabel("📅 Пн-Пт: 10:00-20:00 | Сб-Вс: 12:00-19:00")
+        self.Work.setStyleSheet("""
+            QLabel {
+                color: #b0b0b0;
+                font-size: 13px;
+                font-weight: 400;
+                padding: 5px;
+            }
+        """)
+
+        top_layout.addWidget(self.Adres)
+        top_layout.addStretch()
+        top_layout.addWidget(self.Work)
+
+        self.gridLayout_2.addWidget(self.top_info_frame, 0, 0, 1, 1)
+
+        # ========== ХЕДЕР С ЛОГОТИПОМ И ПОИСКОМ ==========
+        self.header_frame = QtWidgets.QFrame(main_window_Dialog)
+        self.header_frame.setStyleSheet("""
+            QFrame {
+                background-color: #2a2a2a;
+                border-radius: 12px;
+                padding: 10px;
+            }
+        """)
+
+        # Тень для хедера
+        header_shadow = QGraphicsDropShadowEffect()
+        header_shadow.setBlurRadius(20)
+        header_shadow.setColor(QColor(0, 0, 0, 100))
+        header_shadow.setOffset(0, 4)
+        self.header_frame.setGraphicsEffect(header_shadow)
+
+        header_layout = QtWidgets.QHBoxLayout(self.header_frame)
+        header_layout.setContentsMargins(15, 10, 15, 10)
+        header_layout.setSpacing(20)
+
+        # Логотип
+        self.Logo_PushButton = QtWidgets.QPushButton("IT-EcoSystem")
+        self.Logo_PushButton.setMinimumSize(180, 60)
+        self.Logo_PushButton.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #4CAF50, stop:1 #45a049);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                font-weight: bold;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #45a049, stop:1 #3d8b40);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #3d8b40, stop:1 #357a38);
+            }
+        """)
+
+        # Поиск
+        self.Search = QtWidgets.QLineEdit()
+        self.Search.setPlaceholderText("🔍 Поиск услуг, товаров...")
+        self.Search.setMinimumHeight(45)
+        self.Search.setStyleSheet("""
+            QLineEdit {
+                background-color: #3a3a3a;
+                color: white;
+                border: 2px solid #4a4a4a;
+                border-radius: 22px;
+                padding: 8px 20px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4CAF50;
+                background-color: #404040;
+            }
+            QLineEdit:hover {
+                background-color: #424242;
+            }
+        """)
+
+        # Кнопки действий
+        button_style = """
+            QPushButton {
+                background-color: transparent;
+                color: #b0b0b0;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 15px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            QPushButton:hover {
+                background-color: #404040;
+                color: white;
+            }
+            QPushButton:pressed {
+                background-color: #4a4a4a;
+            }
+        """
+
+        self.Shop_PushButton = QtWidgets.QPushButton("🏪 Магазины")
+        self.Shop_PushButton.setStyleSheet(button_style)
+        self.Shop_PushButton.clicked.connect(self.open_shop_window)
+
+        self.Favourites_PushButton = QtWidgets.QPushButton("❤️ Избранное")
+        self.Favourites_PushButton.setStyleSheet(button_style)
+
+        self.Favourites_PushButton.clicked.connect(self.open_favorites_window)
+
+        self.Basket_PushButton = QtWidgets.QPushButton("🛒 Корзина")
+        self.Basket_PushButton.setStyleSheet(button_style)
+        self.Basket_PushButton.clicked.connect(self.open_cart_window)
+
+        self.auth_container = QtWidgets.QWidget()
+        auth_layout = QtWidgets.QHBoxLayout(self.auth_container)
+        auth_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.Enter_PushButton = QtWidgets.QPushButton("👤 Войти")
+        self.Enter_PushButton.setStyleSheet("""
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #4CAF50, stop:1 #45a049);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 10px 25px;
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #45a049, stop:1 #3d8b40);
+                    }
+                    QPushButton:pressed {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #3d8b40, stop:1 #357a38);
+                    }
+                """)
+
+        # Кнопка профиля (изначально скрыта)
+        self.Profile_PushButton = QtWidgets.QPushButton("👤 Профиль")
+        self.Profile_PushButton.setStyleSheet("""
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #4CAF50, stop:1 #45a049);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 10px 25px;
+                        font-size: 14px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #45a049, stop:1 #3d8b40);
+                    }
+                    QPushButton:pressed {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #3d8b40, stop:1 #357a38);
+                    }
+                """)
+        self.Profile_PushButton.hide()
+        session.set_main_window(main_window_Dialog)
+
+        auth_layout.addWidget(self.Enter_PushButton)
+        auth_layout.addWidget(self.Profile_PushButton)
+
+        header_layout.addWidget(self.Logo_PushButton)
+        header_layout.addWidget(self.Search, 1)
+        header_layout.addWidget(self.Shop_PushButton)
+        header_layout.addWidget(self.Favourites_PushButton)
+        header_layout.addWidget(self.Basket_PushButton)
+        header_layout.addWidget(self.auth_container)
+        self.Enter_PushButton.clicked.connect(self.open_auth_window)
+        self.Profile_PushButton.clicked.connect(self.open_profile_window)
+        if session.is_authenticated():
+            self.update_login_button()
+
+        self.gridLayout_2.addWidget(self.header_frame, 1, 0, 1, 1)
+
+        # ========== НАВИГАЦИОННОЕ МЕНЮ ==========
+        self.nav_frame = QtWidgets.QFrame(main_window_Dialog)
+        self.nav_frame.setStyleSheet("""
+            QFrame {
+                background-color: #2d2d2d;
+                border-radius: 10px;
+                padding: 5px;
+            }
+        """)
+
+        nav_layout = QtWidgets.QHBoxLayout(self.nav_frame)
+        nav_layout.setContentsMargins(10, 5, 10, 5)
+        nav_layout.setSpacing(5)
+
+        nav_button_style = """
+            QPushButton {
+                background-color: transparent;
+                color: #d0d0d0;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            QPushButton:hover {
+                background-color: #404040;
+                color: white;
+            }
+            QPushButton:pressed {
+                background-color: #4a4a4a;
+            }
+        """
+
+        nav_buttons = [
+            ("🔧 Услуги", "Service_pushButton"),
+            ("О нас!", "About_pushButton"),
+            ("💰 Цены", "Price_pushButton"),
+            ("🚚 Доставка", "Delivery_pushButton"),
+            ("⭐ Отзывы", "Reviews_pushButton"),
+            ("💼 Вакансии", "Vacancy_pushButton"),
+            ("📚 Статьи", "Article_pushButton"),
+            ("📞 Контакты", "Contacts_pushButton"),
+            ("🔄 Еще", "XYZ_pushButton")
+        ]
+
+        for text, attr_name in nav_buttons:
+            btn = QtWidgets.QPushButton(text)
+            btn.setStyleSheet(nav_button_style)
+            setattr(self, attr_name, btn)
+            nav_layout.addWidget(btn)
+
+        self.gridLayout_2.addWidget(self.nav_frame, 2, 0, 1, 1)
+
+        # ========== ОСНОВНОЙ КОНТЕНТ ==========
         self.scrollArea = QtWidgets.QScrollArea(main_window_Dialog)
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setObjectName("scrollArea")
+        self.scrollArea.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #2d2d2d;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #4CAF50;
+                border-radius: 6px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #45a049;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1028, 1018))
-        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setStyleSheet("background-color: transparent;")
         self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
-        self.gridLayout.setObjectName("gridLayout")
-        self.QGL_Our_services = QtWidgets.QGridLayout()
-        self.QGL_Our_services.setObjectName("QGL_Our_services")
-        self.QVL_Repair_Video_Technics = QtWidgets.QVBoxLayout()
-        self.QVL_Repair_Video_Technics.setObjectName("QVL_Repair_Video_Technics")
-        self.QGL_Repair_Video_Technics_PB = QtWidgets.QGridLayout()
-        self.QGL_Repair_Video_Technics_PB.setObjectName("QGL_Repair_Video_Technics_PB")
-        self.Security_Camera_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Security_Camera_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Security_Camera_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Security_Camera_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Security_Camera_pushButton.setObjectName("Security_Camera_pushButton")
-        self.QGL_Repair_Video_Technics_PB.addWidget(self.Security_Camera_pushButton, 0, 1, 1, 1)
-        self.Video_Babysitter_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Video_Babysitter_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Video_Babysitter_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Video_Babysitter_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Video_Babysitter_pushButton.setObjectName("Video_Babysitter_pushButton")
-        self.QGL_Repair_Video_Technics_PB.addWidget(self.Video_Babysitter_pushButton, 0, 2, 1, 1)
-        self.DVR_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.DVR_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.DVR_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.DVR_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.DVR_pushButton.setObjectName("DVR_pushButton")
-        self.QGL_Repair_Video_Technics_PB.addWidget(self.DVR_pushButton, 0, 5, 1, 1)
-        self.QVL_Repair_Video_Technics.addLayout(self.QGL_Repair_Video_Technics_PB)
-        self.LB_Repair_Video_Technics = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Repair_Video_Technics.setMaximumSize(QtCore.QSize(16777215, 30))
-        font = QtGui.QFont()
-        font.setPointSize(15)
-        self.LB_Repair_Video_Technics.setFont(font)
-        self.LB_Repair_Video_Technics.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.LB_Repair_Video_Technics.setObjectName("LB_Repair_Video_Technics")
-        self.QVL_Repair_Video_Technics.addWidget(self.LB_Repair_Video_Technics)
-        self.QGL_Our_services.addLayout(self.QVL_Repair_Video_Technics, 3, 0, 1, 1)
-        self.QVB_Audio_equipment_repair = QtWidgets.QVBoxLayout()
-        self.QVB_Audio_equipment_repair.setObjectName("QVB_Audio_equipment_repair")
-        self.gridLayout_5 = QtWidgets.QGridLayout()
-        self.gridLayout_5.setObjectName("gridLayout_5")
-        self.Subwoofer_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Subwoofer_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Subwoofer_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Subwoofer_pushButton.setObjectName("Subwoofer_pushButton")
-        self.gridLayout_5.addWidget(self.Subwoofer_pushButton, 0, 1, 1, 1)
-        self.Columns_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Columns_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Columns_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Columns_pushButton.setObjectName("Columns_pushButton")
-        self.gridLayout_5.addWidget(self.Columns_pushButton, 0, 2, 1, 1)
-        self.Sound_amplifier_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Sound_amplifier_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Sound_amplifier_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Sound_amplifier_pushButton.setObjectName("Sound_amplifier_pushButton")
-        self.gridLayout_5.addWidget(self.Sound_amplifier_pushButton, 0, 5, 1, 1)
-        self.QVB_Audio_equipment_repair.addLayout(self.gridLayout_5)
-        self.LB_Audio_equipment_repair = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Audio_equipment_repair.setMaximumSize(QtCore.QSize(16777215, 30))
-        font = QtGui.QFont()
-        font.setPointSize(15)
-        self.LB_Audio_equipment_repair.setFont(font)
-        self.LB_Audio_equipment_repair.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.LB_Audio_equipment_repair.setObjectName("LB_Audio_equipment_repair")
-        self.QVB_Audio_equipment_repair.addWidget(self.LB_Audio_equipment_repair)
-        self.QGL_Our_services.addLayout(self.QVB_Audio_equipment_repair, 3, 2, 1, 2)
-        self.Our_services = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.Our_services.setMaximumSize(QtCore.QSize(16777215, 50))
-        font = QtGui.QFont()
-        font.setFamily("Liberation Serif")
-        font.setPointSize(20)
-        font.setBold(False)
-        font.setItalic(False)
-        font.setWeight(50)
-        self.Our_services.setFont(font)
-        self.Our_services.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Our_services.setObjectName("Our_services")
-        self.QGL_Our_services.addWidget(self.Our_services, 0, 0, 1, 3)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.QGL_Our_services.addItem(spacerItem, 2, 0, 1, 1)
-        self.QVL_Digital_Repair_Techniques = QtWidgets.QVBoxLayout()
-        self.QVL_Digital_Repair_Techniques.setObjectName("QVL_Digital_Repair_Techniques")
-        self.QGL_Digital_Repair_Techniques_PB = QtWidgets.QGridLayout()
-        self.QGL_Digital_Repair_Techniques_PB.setObjectName("QGL_Digital_Repair_Techniques_PB")
-        self.Tablet_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Tablet_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Tablet_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Tablet_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Tablet_pushButton.setObjectName("Tablet_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.Tablet_pushButton, 0, 3, 1, 1)
-        self.TV_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.TV_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.TV_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.TV_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.TV_pushButton.setObjectName("TV_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.TV_pushButton, 1, 2, 1, 1)
-        self.GameConsole_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.GameConsole_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.GameConsole_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.GameConsole_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.GameConsole_pushButton.setObjectName("GameConsole_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.GameConsole_pushButton, 1, 3, 1, 1)
-        self.Laptop_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Laptop_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Laptop_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Laptop_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Laptop_pushButton.setObjectName("Laptop_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.Laptop_pushButton, 1, 0, 1, 1)
-        self.Smartphone_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Smartphone_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Smartphone_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Smartphone_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Smartphone_pushButton.setObjectName("Smartphone_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.Smartphone_pushButton, 0, 0, 1, 1)
-        self.Ebook_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Ebook_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Ebook_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Ebook_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Ebook_pushButton.setObjectName("Ebook_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.Ebook_pushButton, 0, 1, 1, 1)
-        self.Projector_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Projector_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.Projector_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Projector_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Projector_pushButton.setObjectName("Projector_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.Projector_pushButton, 1, 1, 1, 1)
-        self.PhotoCamera_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.PhotoCamera_pushButton.setMinimumSize(QtCore.QSize(75, 75))
-        self.PhotoCamera_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.PhotoCamera_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.PhotoCamera_pushButton.setObjectName("PhotoCamera_pushButton")
-        self.QGL_Digital_Repair_Techniques_PB.addWidget(self.PhotoCamera_pushButton, 0, 2, 1, 1)
-        self.QVL_Digital_Repair_Techniques.addLayout(self.QGL_Digital_Repair_Techniques_PB)
-        self.LB_Digital_Repair_Techniques = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Digital_Repair_Techniques.setMaximumSize(QtCore.QSize(16777215, 30))
-        font = QtGui.QFont()
-        font.setPointSize(15)
-        self.LB_Digital_Repair_Techniques.setFont(font)
-        self.LB_Digital_Repair_Techniques.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.LB_Digital_Repair_Techniques.setObjectName("LB_Digital_Repair_Techniques")
-        self.QVL_Digital_Repair_Techniques.addWidget(self.LB_Digital_Repair_Techniques)
-        self.QGL_Our_services.addLayout(self.QVL_Digital_Repair_Techniques, 1, 0, 1, 1)
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.QVL_Repair_of_household_appliances = QtWidgets.QGridLayout()
-        self.QVL_Repair_of_household_appliances.setObjectName("QVL_Repair_of_household_appliances")
-        self.Vacuum_Cleaner_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Vacuum_Cleaner_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Vacuum_Cleaner_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Vacuum_Cleaner_pushButton.setObjectName("Vacuum_Cleaner_pushButton")
-        self.QVL_Repair_of_household_appliances.addWidget(self.Vacuum_Cleaner_pushButton, 0, 1, 1, 1)
-        self.Coffee_Machine_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Coffee_Machine_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Coffee_Machine_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Coffee_Machine_pushButton.setObjectName("Coffee_Machine_pushButton")
-        self.QVL_Repair_of_household_appliances.addWidget(self.Coffee_Machine_pushButton, 0, 2, 1, 1)
-        self.Fan_pushButton = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
-        self.Fan_pushButton.setMaximumSize(QtCore.QSize(75, 75))
-        self.Fan_pushButton.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Fan_pushButton.setObjectName("Fan_pushButton")
-        self.QVL_Repair_of_household_appliances.addWidget(self.Fan_pushButton, 0, 5, 1, 1)
-        self.verticalLayout_3.addLayout(self.QVL_Repair_of_household_appliances)
-        self.LB_Repair_of_household_appliances = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Repair_of_household_appliances.setMaximumSize(QtCore.QSize(16777215, 30))
-        font = QtGui.QFont()
-        font.setPointSize(15)
-        self.LB_Repair_of_household_appliances.setFont(font)
-        self.LB_Repair_of_household_appliances.setStyleSheet("background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.LB_Repair_of_household_appliances.setObjectName("LB_Repair_of_household_appliances")
-        self.verticalLayout_3.addWidget(self.LB_Repair_of_household_appliances)
-        self.QGL_Our_services.addLayout(self.verticalLayout_3, 1, 3, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.QGL_Our_services.addItem(spacerItem1, 3, 1, 1, 1)
-        self.gridLayout.addLayout(self.QGL_Our_services, 0, 0, 1, 1)
-        self.QVB_Repair_of_equipment_of_any_kind = QtWidgets.QVBoxLayout()
-        self.QVB_Repair_of_equipment_of_any_kind.setObjectName("QVB_Repair_of_equipment_of_any_kind")
-        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.QVB_Repair_of_equipment_of_any_kind.addItem(spacerItem2)
-        self.LB_Repair_of_equipment_of_any_kind = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Repair_of_equipment_of_any_kind.setMaximumSize(QtCore.QSize(16777215, 50))
-        font = QtGui.QFont()
-        font.setFamily("Liberation Serif")
-        font.setPointSize(20)
-        font.setBold(False)
-        font.setItalic(False)
-        font.setWeight(50)
-        self.LB_Repair_of_equipment_of_any_kind.setFont(font)
-        self.LB_Repair_of_equipment_of_any_kind.setStyleSheet("color: rgb(255, 255, 255);")
-        self.LB_Repair_of_equipment_of_any_kind.setObjectName("LB_Repair_of_equipment_of_any_kind")
-        self.QVB_Repair_of_equipment_of_any_kind.addWidget(self.LB_Repair_of_equipment_of_any_kind)
-        self.TEXT_Repair_of_equipment_of_any_kind = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.TEXT_Repair_of_equipment_of_any_kind.setStyleSheet("color: rgb(255, 255, 255);")
-        self.TEXT_Repair_of_equipment_of_any_kind.setObjectName("TEXT_Repair_of_equipment_of_any_kind")
-        self.QVB_Repair_of_equipment_of_any_kind.addWidget(self.TEXT_Repair_of_equipment_of_any_kind)
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.QVB_Repair_of_equipment_of_any_kind.addItem(spacerItem3)
-        self.gridLayout.addLayout(self.QVB_Repair_of_equipment_of_any_kind, 1, 0, 1, 1)
-        self.QVB_Our_Advantage = QtWidgets.QVBoxLayout()
-        self.QVB_Our_Advantage.setObjectName("QVB_Our_Advantage")
-        self.LB_Our_Advantage = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.LB_Our_Advantage.setMaximumSize(QtCore.QSize(16777215, 50))
-        font = QtGui.QFont()
-        font.setFamily("Liberation Serif")
-        font.setPointSize(20)
-        font.setBold(False)
-        font.setItalic(False)
-        font.setWeight(50)
-        self.LB_Our_Advantage.setFont(font)
-        self.LB_Our_Advantage.setStyleSheet("color: rgb(255, 255, 255);")
-        self.LB_Our_Advantage.setObjectName("LB_Our_Advantage")
-        self.QVB_Our_Advantage.addWidget(self.LB_Our_Advantage)
-        self.splitter = QtWidgets.QSplitter(self.scrollAreaWidgetContents)
-        self.splitter.setOrientation(QtCore.Qt.Horizontal)
-        self.splitter.setObjectName("splitter")
-        self.Professional_pushButton = QtWidgets.QPushButton(self.splitter)
-        self.Professional_pushButton.setMinimumSize(QtCore.QSize(100, 100))
-        self.Professional_pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.Professional_pushButton.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Professional_pushButton.setObjectName("Professional_pushButton")
-        self.Complexity_pushButton = QtWidgets.QPushButton(self.splitter)
-        self.Complexity_pushButton.setMinimumSize(QtCore.QSize(100, 100))
-        self.Complexity_pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.Complexity_pushButton.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Complexity_pushButton.setObjectName("Complexity_pushButton")
-        self.Equipment_pushButton = QtWidgets.QPushButton(self.splitter)
-        self.Equipment_pushButton.setMinimumSize(QtCore.QSize(100, 100))
-        self.Equipment_pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.Equipment_pushButton.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Equipment_pushButton.setObjectName("Equipment_pushButton")
-        self.Quickly_pushButton = QtWidgets.QPushButton(self.splitter)
-        self.Quickly_pushButton.setMinimumSize(QtCore.QSize(100, 100))
-        self.Quickly_pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.Quickly_pushButton.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Quickly_pushButton.setObjectName("Quickly_pushButton")
-        self.Available_pushButton = QtWidgets.QPushButton(self.splitter)
-        self.Available_pushButton.setMinimumSize(QtCore.QSize(100, 100))
-        self.Available_pushButton.setMaximumSize(QtCore.QSize(100, 100))
-        self.Available_pushButton.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.Available_pushButton.setObjectName("Available_pushButton")
-        self.pushButton_34 = QtWidgets.QPushButton(self.splitter)
-        self.pushButton_34.setMinimumSize(QtCore.QSize(100, 100))
-        self.pushButton_34.setMaximumSize(QtCore.QSize(100, 100))
-        self.pushButton_34.setStyleSheet("background-color: rgb(119, 118, 123);\n"
-"selection-background-color: rgb(103, 155, 118);\n"
-"color: rgb(255, 255, 255);")
-        self.pushButton_34.setObjectName("pushButton_34")
-        self.QVB_Our_Advantage.addWidget(self.splitter)
-        self.TXT_Our_Advantage = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.TXT_Our_Advantage.setMinimumSize(QtCore.QSize(100, 200))
-        self.TXT_Our_Advantage.setStyleSheet("color: rgb(255, 255, 255);")
-        self.TXT_Our_Advantage.setObjectName("TXT_Our_Advantage")
-        self.QVB_Our_Advantage.addWidget(self.TXT_Our_Advantage)
-        self.gridLayout.addLayout(self.QVB_Our_Advantage, 2, 0, 1, 1)
+        self.gridLayout.setContentsMargins(20, 20, 20, 20)
+        self.gridLayout.setSpacing(30)
+
+        # ========== НАШИ УСЛУГИ ==========
+        self.Our_services = QtWidgets.QLabel("Наши услуги")
+        self.Our_services.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 32px;
+                font-weight: bold;
+                padding: 10px 0;
+            }
+        """)
+        self.gridLayout.addWidget(self.Our_services, 0, 0, 1, 1, Qt.AlignLeft)
+
+        # Создаем сетку для услуг
+        services_grid = QtWidgets.QGridLayout()
+        services_grid.setSpacing(25)
+
+        # ===== РЕМОНТ ЦИФРОВОЙ ТЕХНИКИ =====
+        digital_frame = self.create_service_category(
+            "💻 Ремонт цифровой техники",
+            [
+                ("📱 Телефон", "Smartphone_pushButton", self.open_remont_telefonov),
+                ("💻 Ноутбук", "Laptop_pushButton", self.open_remont_laptop),
+                ("📟 Планшет", "Tablet_pushButton", None),
+                ("📖 Эл. книги", "Ebook_pushButton", None),
+                ("📸 Фотоаппарат", "PhotoCamera_pushButton", None),
+                ("📺 Телевизор", "TV_pushButton", None),
+                ("🎮 Игр. приставка", "GameConsole_pushButton", None),
+                ("📽️ Проектор", "Projector_pushButton", None)
+            ]
+        )
+        services_grid.addWidget(digital_frame, 0, 0)
+
+        # ===== РЕМОНТ БЫТОВОЙ ТЕХНИКИ =====
+        household_frame = self.create_service_category(
+            "🏠 Ремонт бытовой техники",
+            [
+                ("🧹 Пылесосы", "Vacuum_Cleaner_pushButton", None),
+                ("☕ Кофемашины", "Coffee_Machine_pushButton", None),
+                ("🌀 Вентиляторы", "Fan_pushButton", None)
+            ]
+        )
+        services_grid.addWidget(household_frame, 0, 1)
+
+        # ===== РЕМОНТ ВИДЕОТЕХНИКИ =====
+        video_frame = self.create_service_category(
+            "🎥 Ремонт видеотехники",
+            [
+                ("📹 Видеонаблюдение", "Security_Camera_pushButton", None),
+                ("👶 Видеоняня", "Video_Babysitter_pushButton", None),
+                ("📼 Видеорегистратор", "DVR_pushButton", None)
+            ]
+        )
+        services_grid.addWidget(video_frame, 1, 0)
+
+        # ===== РЕМОНТ АУДИОТЕХНИКИ =====
+        audio_frame = self.create_service_category(
+            "🎵 Ремонт аудиотехники",
+            [
+                ("🔊 Сабвуферы", "Subwoofer_pushButton", None),
+                ("🎵 Колонки", "Columns_pushButton", None),
+                ("🎚️ Усилители", "Sound_amplifier_pushButton", None)
+            ]
+        )
+        services_grid.addWidget(audio_frame, 1, 1)
+
+        self.gridLayout.addLayout(services_grid, 1, 0)
+
+        # ========== БЛОК "О НАС" ==========
+        about_frame = QtWidgets.QFrame()
+        about_frame.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #2a2a2a, stop:1 #323232);
+                border-radius: 20px;
+                padding: 30px;
+            }
+        """)
+
+        about_layout = QtWidgets.QVBoxLayout(about_frame)
+
+        about_title = QtWidgets.QLabel("Ремонт техники любых видов")
+        about_title.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+            }
+        """)
+
+        about_text = QtWidgets.QLabel(
+            "Жизнь современного человека невозможно представить без электроники, "
+            "и ее выход из строя очень часто чреват не только личными неудобствами, "
+            "но и материальными потерями. Сервисный центр «IT-EcoSystem» гарантирует "
+            "выполнение услуг на высоком профессиональном уровне и точно в оговоренные сроки."
+        )
+        about_text.setWordWrap(True)
+        about_text.setStyleSheet("""
+            QLabel {
+                color: #b0b0b0;
+                font-size: 16px;
+                line-height: 1.6;
+                padding: 10px 0;
+            }
+        """)
+
+        about_layout.addWidget(about_title)
+        about_layout.addWidget(about_text)
+
+        self.gridLayout.addWidget(about_frame, 2, 0)
+
+        # ========== НАШИ ПРЕИМУЩЕСТВА ==========
+        advantages_title = QtWidgets.QLabel("Наши преимущества")
+        advantages_title.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                padding: 20px 0 10px 0;
+            }
+        """)
+        self.gridLayout.addWidget(advantages_title, 3, 0)
+
+        advantages_grid = QtWidgets.QGridLayout()
+        advantages_grid.setSpacing(20)
+
+        advantages = [
+            ("👨‍🔧 Профессионализм",
+             "Опытные мастера с многолетним стажем",
+             "Professional_pushButton"),
+            ("⚡ Любая сложность",
+             "Ремонтируем технику любой сложности",
+             "Complexity_pushButton"),
+            ("🔧 Оборудование",
+             "Современное диагностическое оборудование",
+             "Equipment_pushButton"),
+            ("🚀 Быстро",
+             "Срочный ремонт за 1 час",
+             "Quickly_pushButton"),
+            ("💰 Доступно",
+             "Адекватные цены и скидки",
+             "Available_pushButton"),
+            ("✅ Гарантия",
+             "Гарантия на все виды работ",
+             "pushButton_34")
+        ]
+
+        for i, (title, desc, attr) in enumerate(advantages):
+            row, col = divmod(i, 3)
+            adv_card = self.create_advantage_card(title, desc)
+            setattr(self, attr, adv_card.findChild(QtWidgets.QPushButton))
+            advantages_grid.addWidget(adv_card, row, col)
+
+        self.gridLayout.addLayout(advantages_grid, 4, 0)
+
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout_2.addWidget(self.scrollArea, 3, 0, 1, 1)
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.Service_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Service_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Service_pushButton.setObjectName("Service_pushButton")
-        self.horizontalLayout_4.addWidget(self.Service_pushButton)
-        self.About_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.About_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.About_pushButton.setObjectName("About_pushButton")
-        self.horizontalLayout_4.addWidget(self.About_pushButton)
-        self.Price_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Price_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Price_pushButton.setObjectName("Price_pushButton")
-        self.horizontalLayout_4.addWidget(self.Price_pushButton)
-        self.Delivery_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Delivery_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Delivery_pushButton.setObjectName("Delivery_pushButton")
-        self.horizontalLayout_4.addWidget(self.Delivery_pushButton)
-        self.Reviews_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Reviews_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Reviews_pushButton.setObjectName("Reviews_pushButton")
-        self.horizontalLayout_4.addWidget(self.Reviews_pushButton)
-        self.Vacancy_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Vacancy_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Vacancy_pushButton.setObjectName("Vacancy_pushButton")
-        self.horizontalLayout_4.addWidget(self.Vacancy_pushButton)
-        self.Article_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Article_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Article_pushButton.setObjectName("Article_pushButton")
-        self.horizontalLayout_4.addWidget(self.Article_pushButton)
-        self.Contacts_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.Contacts_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.Contacts_pushButton.setObjectName("Contacts_pushButton")
-        self.horizontalLayout_4.addWidget(self.Contacts_pushButton)
-        self.XYZ_pushButton = QtWidgets.QPushButton(main_window_Dialog)
-        self.XYZ_pushButton.setStyleSheet("color: rgb(255, 255, 255);")
-        self.XYZ_pushButton.setObjectName("XYZ_pushButton")
-        self.horizontalLayout_4.addWidget(self.XYZ_pushButton)
-        self.gridLayout_2.addLayout(self.horizontalLayout_4, 2, 0, 1, 1)
 
+        # Подключаем сигналы
         self.Enter_PushButton.clicked.connect(self.open_auth_window)
-        self.Laptop_pushButton.clicked.connect(self.open_remont_laptop)
-        self.Smartphone_pushButton.clicked.connect(self.open_remont_telefonov)
-        self.retranslateUi(main_window_Dialog)
+        if hasattr(self, 'Laptop_pushButton'):
+            self.Laptop_pushButton.clicked.connect(self.open_remont_laptop)
+        if hasattr(self, 'Smartphone_pushButton'):
+            self.Smartphone_pushButton.clicked.connect(self.open_remont_telefonov)
+
+        # Настраиваем поиск
+        self.setup_search()
+
         QtCore.QMetaObject.connectSlotsByName(main_window_Dialog)
 
-    def retranslateUi(self, main_window_Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        main_window_Dialog.setWindowTitle(_translate("main_window_Dialog", "IT-EcoSystem"))
-        self.Adres.setText(_translate("main_window_Dialog", "🗺️ ​Красноярск, Улица Микуцкого, 12"))
-        self.Work.setText(_translate("main_window_Dialog", "📅 Пн-Пт: 10:00-20:00 | Сб-Вс: 12:00-19:00"))
-        self.Logo_PushButton.setText(_translate("main_window_Dialog", "Логотип"))
-        self.Search.setPlaceholderText(_translate("main_window_Dialog", "Поиск"))
-        self.Shop_PushButton.setText(_translate("main_window_Dialog", "Магазины"))
-        self.Favourites_PushButton.setText(_translate("main_window_Dialog", "Избраное"))
-        self.Basket_PushButton.setText(_translate("main_window_Dialog", "Корзина"))
-        self.Enter_PushButton.setText(_translate("main_window_Dialog", "Войти"))
-        self.Security_Camera_pushButton.setText(_translate("main_window_Dialog", "Вид набл"))
-        self.Video_Babysitter_pushButton.setText(_translate("main_window_Dialog", "Вид няня"))
-        self.DVR_pushButton.setText(_translate("main_window_Dialog", "Вид регис"))
-        self.LB_Repair_Video_Technics.setText(_translate("main_window_Dialog", "Ремонт видео технике"))
-        self.Subwoofer_pushButton.setText(_translate("main_window_Dialog", "Сабвуф"))
-        self.Columns_pushButton.setText(_translate("main_window_Dialog", "Колонки"))
-        self.Sound_amplifier_pushButton.setText(_translate("main_window_Dialog", "Усел звук"))
-        self.LB_Audio_equipment_repair.setText(_translate("main_window_Dialog", "Ремонт аудио технике"))
-        self.Our_services.setText(_translate("main_window_Dialog", "Наши услуи:"))
-        self.Tablet_pushButton.setText(_translate("main_window_Dialog", "Планшет"))
-        self.TV_pushButton.setText(_translate("main_window_Dialog", "Телевизор"))
-        self.GameConsole_pushButton.setText(_translate("main_window_Dialog", "Игр. Прист"))
-        self.Laptop_pushButton.setText(_translate("main_window_Dialog", "Ноутбук"))
-        self.Smartphone_pushButton.setText(_translate("main_window_Dialog", "Телефон"))
-        self.Ebook_pushButton.setText(_translate("main_window_Dialog", "Эл. книги"))
-        self.Projector_pushButton.setText(_translate("main_window_Dialog", "Проектор"))
-        self.PhotoCamera_pushButton.setText(_translate("main_window_Dialog", "Фотоопарат"))
-        self.LB_Digital_Repair_Techniques.setText(_translate("main_window_Dialog", "Ремонт цифровой технике"))
-        self.Vacuum_Cleaner_pushButton.setText(_translate("main_window_Dialog", "Пылесосы"))
-        self.Coffee_Machine_pushButton.setText(_translate("main_window_Dialog", "Кофемаш"))
-        self.Fan_pushButton.setText(_translate("main_window_Dialog", "Тепловинт"))
-        self.LB_Repair_of_household_appliances.setText(_translate("main_window_Dialog", "Ремонт бытовой технике"))
-        self.LB_Repair_of_equipment_of_any_kind.setText(_translate("main_window_Dialog", "Ремонт техники любых видов:"))
-        self.TEXT_Repair_of_equipment_of_any_kind.setText(_translate("main_window_Dialog", "<html><head/><body><p>Жизнь современного человека невозможно представить без электроники,</p><p>и ее выход из строя очень часто чреват не только личными неудобствами,</p><p>но и материальными потерями, ведь такое оборудование обеспечивает многие рабочие процессы. </p><p>Поэтому очень важно, чтобы ремонт электроники был не только безупречно качественным, но и оперативным. </p><p>Сервисный центр «IT-EcoSustem» гарантирует выполнение услуг на высоком профессиональном уровне и точно в оговоренные сроки. </p><p>При этом стоимость работ всегда остается максимально доступной и объективной,</p><p>ведь наш приоритет – высококачественный сервис и доверие клиентов, а не материальная выгода.</p></body></html>"))
-        self.LB_Our_Advantage.setText(_translate("main_window_Dialog", "Наши преимущество: "))
-        self.Professional_pushButton.setText(_translate("main_window_Dialog", "Профессиональность"))
-        self.Complexity_pushButton.setText(_translate("main_window_Dialog", "Любая сложность"))
-        self.Equipment_pushButton.setText(_translate("main_window_Dialog", "Оборудование"))
-        self.Quickly_pushButton.setText(_translate("main_window_Dialog", "Быстро"))
-        self.Available_pushButton.setText(_translate("main_window_Dialog", "Доступно"))
-        self.pushButton_34.setText(_translate("main_window_Dialog", "Гарантия"))
-        self.TXT_Our_Advantage.setText(_translate("main_window_Dialog", "TextLabel"))
-        self.Service_pushButton.setText(_translate("main_window_Dialog", "Услуги"))
-        self.About_pushButton.setText(_translate("main_window_Dialog", "О нас"))
-        self.Price_pushButton.setText(_translate("main_window_Dialog", "Цена"))
-        self.Delivery_pushButton.setText(_translate("main_window_Dialog", "Доставка"))
-        self.Reviews_pushButton.setText(_translate("main_window_Dialog", "Отзывы"))
-        self.Vacancy_pushButton.setText(_translate("main_window_Dialog", "Вакансии"))
-        self.Article_pushButton.setText(_translate("main_window_Dialog", "Статьи"))
-        self.Contacts_pushButton.setText(_translate("main_window_Dialog", "Контакты"))
-        self.XYZ_pushButton.setText(_translate("main_window_Dialog", "PushButton"))
+    def create_service_category(self, title, buttons_data):
+        """Создает карточку категории услуг"""
+        frame = QtWidgets.QFrame()
+        frame.setStyleSheet("""
+            QFrame {
+                background-color: #2d2d2d;
+                border-radius: 15px;
+                padding: 20px;
+            }
+            QFrame:hover {
+                background-color: #333333;
+                border: 1px solid #4CAF50;
+            }
+        """)
+
+        # Тень для карточки
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        shadow.setOffset(0, 5)
+        frame.setGraphicsEffect(shadow)
+
+        layout = QtWidgets.QVBoxLayout(frame)
+
+        # Заголовок
+        title_label = QtWidgets.QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #4CAF50;
+                font-size: 20px;
+                font-weight: bold;
+                padding-bottom: 15px;
+            }
+        """)
+        layout.addWidget(title_label)
+
+        # Сетка кнопок
+        buttons_layout = QtWidgets.QGridLayout()
+        buttons_layout.setSpacing(10)
+
+        for i, (text, attr_name, callback) in enumerate(buttons_data):
+            row, col = divmod(i, 4)
+            btn = QtWidgets.QPushButton(text)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #3a3a3a;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 12px 15px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    text-align: left;
+                }
+                QPushButton:hover {
+                    background-color: #4CAF50;
+                    color: white;
+                }
+                QPushButton:pressed {
+                    background-color: #45a049;
+                }
+            """)
+            setattr(self, attr_name, btn)
+            if callback:
+                btn.clicked.connect(callback)
+            buttons_layout.addWidget(btn, row, col)
+
+        layout.addLayout(buttons_layout)
+        layout.addStretch()
+
+        return frame
+
+    def create_advantage_card(self, title, description):
+        """Создает карточку преимущества"""
+        card = QtWidgets.QFrame()
+        card.setMinimumSize(250, 150)
+        card.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2d2d2d, stop:1 #262626);
+                border-radius: 12px;
+                padding: 20px;
+            }
+            QFrame:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #333333, stop:1 #2d2d2d);
+                border: 1px solid #4CAF50;
+            }
+        """)
+
+        # Тень для карточки
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        shadow.setOffset(0, 4)
+        card.setGraphicsEffect(shadow)
+
+        layout = QtWidgets.QVBoxLayout(card)
+
+        btn = QtWidgets.QPushButton(title)
+        btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+
+        desc_label = QtWidgets.QLabel(description)
+        desc_label.setWordWrap(True)
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #b0b0b0;
+                font-size: 13px;
+                padding: 5px 0;
+            }
+        """)
+
+        layout.addWidget(btn)
+        layout.addWidget(desc_label)
+        layout.addStretch()
+
+        return card
+
+    def update_login_button(self):
+        """Обновляет отображение кнопки входа/профиля"""
+        if session.is_authenticated():
+            # Пользователь авторизован - показываем кнопку профиля
+            self.Enter_PushButton.hide()
+            user_name = session.get_user_name()
+            if user_name:
+                # Показываем только первое слово (имя)
+                short_name = user_name.split()[0] if user_name else "Профиль"
+                self.Profile_PushButton.setText(f"👤 {short_name}")
+            else:
+                self.Profile_PushButton.setText("👤 Профиль")
+            self.Profile_PushButton.show()
+        else:
+            # Пользователь не авторизован - показываем кнопку входа
+            self.Profile_PushButton.hide()
+            self.Enter_PushButton.show()
 
     def open_auth_window(self):
+        """Открывает окно авторизации"""
         self.Dialog = QtWidgets.QDialog()
         self.ui = AuthDialog()
         self.ui.setupUi(self.Dialog)
+        # Подключаем сигнал закрытия для обновления кнопки
+        self.Dialog.finished.connect(self.check_auth_result)
         self.Dialog.show()
+
+    def check_auth_result(self, result):
+        """Проверяет результат авторизации"""
+        if session.is_authenticated():
+            self.update_login_button()
+
+    def open_profile_window(self):
+        """Открывает окно профиля"""
+        if session.is_authenticated():
+            self.Dialog = QtWidgets.QDialog()
+            self.ui = Ui_profil(session.get_user_id(), session.get_user_name())
+            # Передаем ссылку на главное окно
+            self.ui.main_window = self
+            self.ui.setupUi(self.Dialog)
+            # Подключаем сигнал закрытия для обновления кнопки при выходе
+            self.Dialog.finished.connect(self.update_login_button)
+            self.Dialog.show()
 
     def open_remont_telefonov(self):
         self.Dialog = QtWidgets.QDialog()
@@ -480,7 +692,311 @@ class Ui_main_window_Dialog(object):
         self.Dialog.show()
 
     def open_remont_laptop(self):
-            self.Dialog = QtWidgets.QDialog()
-            self.ui = Ui_Ui_Remont_Laptop_Dialog()
-            self.ui.setupUi(self.Dialog)
-            self.Dialog.show()
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Laptop_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_shop_window(self):
+        self.shop_dialog = QtWidgets.QDialog()
+        self.shop_ui = ShopWindow()
+        self.shop_ui.setupUi(self.shop_dialog)
+        self.shop_dialog.exec_()
+
+    def open_cart_window(self):
+        """Открывает окно корзины"""
+        if not session.is_authenticated():
+            # Если пользователь не авторизован, показываем сообщение
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Требуется авторизация")
+            msg_box.setText("🔐 Войдите в аккаунт для просмотра корзины")
+            msg_box.setIcon(QMessageBox.Information)
+
+            login_btn = msg_box.addButton("Войти", QMessageBox.AcceptRole)
+            cancel_btn = msg_box.addButton("Отмена", QMessageBox.RejectRole)
+
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background-color: rgb(47, 47, 47);
+                    color: white;
+                }
+                QMessageBox QLabel {
+                    color: white;
+                }
+                QPushButton {
+                    background-color: rgb(103, 155, 118);
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 5px 15px;
+                }
+            """)
+
+            result = msg_box.exec_()
+
+            if msg_box.clickedButton() == login_btn:
+                self.open_auth_window()
+            return
+
+        # Если авторизован - открываем корзину
+        try:
+            self.cart_dialog = CartWindow()
+            self.cart_dialog.exec_()
+        except Exception as e:
+            print(f"Ошибка открытия корзины: {e}")
+            QMessageBox.critical(
+                None,
+                "Ошибка",
+                f"Не удалось открыть корзину: {e}"
+            )
+
+    def setup_search(self):
+        """Настраивает функционал поиска"""
+        # Создаем виджет результатов поиска
+        self.search_results = SearchResultsWidget(self.header_frame)
+        self.search_results.hide()
+        self.search_results.result_selected.connect(self.on_search_result_clicked)
+
+        # Поднимаем виджет на передний план
+        self.search_results.raise_()
+
+        # Устанавливаем атрибуты для правильного отображения
+        self.search_results.setAttribute(Qt.WA_ShowWithoutActivating)
+
+        # Таймер для debounce
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.setInterval(500)
+        self.search_timer.timeout.connect(self.perform_search)
+
+        # Подключаем сигналы
+        self.Search.textChanged.connect(self.on_search_text_changed)
+        self.Search.returnPressed.connect(self.perform_search)
+
+    def on_search_text_changed(self, text):
+        """Обработчик изменения текста поиска"""
+        if len(text) >= 2:  # Начинаем поиск при 2+ символах
+            self.search_timer.start()
+        else:
+            self.search_results.hide()
+
+    def perform_search(self):
+        """Выполняет поиск"""
+        search_text = self.Search.text().strip()
+
+        if len(search_text) < 2:
+            return
+
+        # Показываем индикатор загрузки
+        self.search_results.show_loading()
+        self.update_search_results_position()
+        self.search_results.show()
+
+        # Выполняем поиск в БД
+        import threading
+        def search_thread():
+            try:
+                # Используем db.search_products_and_services
+                results = db.search_products_and_services(search_text)
+
+                # Сохраняем запрос если авторизован
+                if session.is_authenticated():
+                    db.save_search_query(search_text, session.get_user_id())
+
+                # Используем сигнал вместо invokeMethod
+                self.search_results.show_results_signal.emit(results)
+
+            except Exception as e:
+                print(f"Ошибка в потоке поиска: {e}")
+                # В случае ошибки показываем пустые результаты
+                self.search_results.show_results_signal.emit({'services': [], 'parts': [], 'categories': []})
+
+        thread = threading.Thread(target=search_thread)
+        thread.daemon = True
+        thread.start()
+
+    def update_search_results_position(self):
+        """Обновляет позицию виджета результатов"""
+        if not hasattr(self, 'search_results'):
+            return
+
+        # Получаем глобальные координаты поля поиска
+        search_rect = self.Search.rect()
+        global_pos = self.Search.mapToGlobal(search_rect.topLeft())
+
+        # Конвертируем в координаты относительно header_frame
+        local_pos = self.header_frame.mapFromGlobal(global_pos)
+
+        # Устанавливаем геометрию виджета
+        self.search_results.setGeometry(
+            local_pos.x(),
+            self.Search.height() + 5,
+            self.Search.width(),
+            0
+        )
+
+        # Поднимаем на передний план при каждом обновлении позиции
+        self.search_results.raise_()
+        self.search_results.show()  # Убеждаемся, что виджет показан
+
+    def on_search_focus_out(self, event):
+        """Обработчик потери фокуса полем поиска"""
+        # Вызываем оригинальный обработчик
+        if hasattr(self, 'original_focus_out') and self.original_focus_out:
+            self.original_focus_out(event)
+
+        # Проверяем, не кликнули ли по результатам поиска
+        if hasattr(self, 'search_results') and self.search_results.isVisible():
+            # Проверяем, находится ли мышь над результатами
+            if not self.search_results.underMouse():
+                # Задержка перед скрытием
+                QTimer.singleShot(200, self.search_results.hide)
+
+    def on_search_result_clicked(self, result):
+        """Обработчик клика по результату поиска"""
+        # Скрываем результаты
+        self.search_results.hide()
+
+        # Очищаем поле поиска (опционально)
+        # self.Search.clear()
+
+        result_type = result.get('type')
+
+        if result_type == 'service':
+            # Открываем окно услуги
+            self.open_service_window(result)
+        elif result_type == 'part':
+            # Открываем окно товара
+            self.open_part_window(result)
+        elif result_type == 'category':
+            # Показываем все услуги категории
+            self.show_category_results(result.get('name'))
+
+    def open_service_window(self, service_data):
+        """Открывает окно услуги"""
+        # Здесь можно открыть окно с деталями услуги
+        # Например, окно ремонта телефона с предзаполненными данными
+        if "телефон" in service_data.get('name', '').lower():
+            self.open_remont_telefonov()
+        elif "ноутбук" in service_data.get('name', '').lower():
+            self.open_remont_laptop()
+        else:
+            # Для других услуг можно показать сообщение
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(
+                None,
+                "Услуга",
+                f"Вы выбрали: {service_data.get('name')}\n"
+                f"Стоимость: {service_data.get('price', 0)} ₽"
+            )
+
+    def open_part_window(self, part_data):
+        """Открывает окно товара"""
+        if session.is_authenticated():
+            from PyQt5.QtWidgets import QMessageBox
+            reply = QMessageBox.question(
+                None,
+                "Добавление в корзину",
+                f"Добавить '{part_data.get('name')}' в корзину?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                # Добавляем в корзину
+                cart_item = {
+                    'device_type': part_data.get('category', 'Запчасть'),
+                    'device_brand': part_data.get('brand', ''),
+                    'device_model': part_data.get('name', ''),
+                    'reason': 'Покупка запчасти',
+                    'price': float(part_data.get('price', 0))
+                }
+
+                # Используем db_crm для корзины (это специфично для CRM)
+                from Server import db_crm
+                if db_crm.add_to_cart_db(session.get_user_id(), cart_item):
+                    QMessageBox.information(None, "Успех", "✅ Товар добавлен в корзину")
+                else:
+                    QMessageBox.warning(None, "Ошибка", "❌ Не удалось добавить товар в корзину")
+        else:
+            # Предлагаем авторизоваться
+            from PyQt5.QtWidgets import QMessageBox
+            msg = QMessageBox()
+            msg.setWindowTitle("Требуется авторизация")
+            msg.setText("Для добавления товаров в корзину необходимо войти в аккаунт")
+            msg.setIcon(QMessageBox.Information)
+            msg.addButton("Войти", QMessageBox.AcceptRole)
+            msg.addButton("Отмена", QMessageBox.RejectRole)
+
+            if msg.exec_() == 0:  # Нажали "Войти"
+                self.open_auth_window()
+
+    def open_favorites_window(self):
+        """Открывает окно избранного"""
+        if not session.is_authenticated():
+            # Если пользователь не авторизован, показываем сообщение
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Требуется авторизация")
+            msg_box.setText("🔐 Войдите в аккаунт для просмотра избранного")
+            msg_box.setIcon(QMessageBox.Information)
+
+            login_btn = msg_box.addButton("Войти", QMessageBox.AcceptRole)
+            cancel_btn = msg_box.addButton("Отмена", QMessageBox.RejectRole)
+
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background-color: #2d2d2d;
+                    color: white;
+                }
+                QMessageBox QLabel {
+                    color: white;
+                    font-size: 14px;
+                    padding: 20px;
+                }
+                QPushButton {
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #45a049;
+                }
+            """)
+
+            result = msg_box.exec_()
+
+            if msg_box.clickedButton() == login_btn:
+                self.open_auth_window()
+            return
+
+        # Если авторизован - открываем окно избранного
+        try:
+            self.favorites_dialog = FavoritesWindow(self)
+            self.favorites_dialog.exec_()
+        except Exception as e:
+            print(f"Ошибка открытия избранного: {e}")
+            QMessageBox.critical(
+                None,
+                "Ошибка",
+                f"Не удалось открыть избранное: {e}"
+            )
+
+    def show_category_results(self, category_name):
+        """Показывает все услуги категории"""
+        # Здесь можно открыть окно со всеми услугами категории
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.information(
+            None,
+            "Категория",
+            f"Категория: {category_name}\n"
+            f"Здесь будут отображены все услуги этой категории"
+        )
+
+    def enable_search_field(self):
+        """Разблокирует поле поиска"""
+        self.Search.setEnabled(True)
+        self.Search.setPlaceholderText("🔍 Поиск услуг, товаров...")

@@ -1,48 +1,146 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox
 
 
 class Ui_Setting_Email(object):
     def setupUi(self, Setting_Email):
         Setting_Email.setObjectName("Setting_Email")
-        Setting_Email.resize(353, 198)
-        Setting_Email.setStyleSheet("background-color: rgb(23, 23, 23);")
+        Setting_Email.resize(400, 250)
+        Setting_Email.setStyleSheet("""
+            QDialog {
+                background-color: rgb(47, 47, 47);
+                border-radius: 10px;
+            }
+        """)
+
         self.verticalLayout = QtWidgets.QVBoxLayout(Setting_Email)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.TXT_Email = QtWidgets.QLabel(Setting_Email)
-        self.TXT_Email.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.TXT_Email.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.TXT_Email.setObjectName("TXT_Email")
-        self.verticalLayout.addWidget(self.TXT_Email)
-        self.TQ_Email = QtWidgets.QTextEdit(Setting_Email)
-        self.TQ_Email.setMaximumSize(QtCore.QSize(16777215, 35))
-        self.TQ_Email.setStyleSheet("color: rgb(255, 255, 255);\n"
-"background-color: rgb(0, 0, 0);")
-        self.TQ_Email.setMarkdown("")
-        self.TQ_Email.setObjectName("TQ_Email")
-        self.verticalLayout.addWidget(self.TQ_Email)
-        self.PB_Email = QtWidgets.QPushButton(Setting_Email)
-        self.PB_Email.setStyleSheet("color: rgb(255, 255, 255);\n"
-"background-color: rgb(103, 155, 118);")
-        self.PB_Email.setObjectName("PB_Email")
-        self.verticalLayout.addWidget(self.PB_Email)
+        self.verticalLayout.setContentsMargins(20, 20, 20, 20)
+        self.verticalLayout.setSpacing(15)
+
+        # Заголовок
+        self.title_label = QtWidgets.QLabel("📧 Изменение Email")
+        self.title_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+                padding: 10px 0;
+            }
+        """)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.verticalLayout.addWidget(self.title_label)
+
+        # Информация
+        info_label = QtWidgets.QLabel("Введите новый email адрес")
+        info_label.setStyleSheet("color: rgb(180, 180, 180); font-size: 12px;")
+        self.verticalLayout.addWidget(info_label)
+
+        # Поле ввода
+        self.email_input = QtWidgets.QLineEdit()
+        self.email_input.setPlaceholderText("example@domain.com")
+        self.email_input.setMinimumHeight(40)
+        self.email_input.setStyleSheet("""
+            QLineEdit {
+                background-color: rgb(60, 60, 60);
+                color: white;
+                border: 2px solid rgb(80, 80, 80);
+                border-radius: 8px;
+                padding: 0 15px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid rgb(103, 155, 118);
+            }
+            QLineEdit::placeholder {
+                color: rgb(150, 150, 150);
+            }
+        """)
+        self.verticalLayout.addWidget(self.email_input)
+
+        # Добавляем растяжку
+        self.verticalLayout.addStretch()
+
+        # Кнопка сохранения
+        self.save_button = QtWidgets.QPushButton("💾 Сохранить изменения")
+        self.save_button.setMinimumHeight(45)
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgb(103, 155, 118);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgb(93, 145, 108);
+            }
+            QPushButton:pressed {
+                background-color: rgb(83, 135, 98);
+            }
+        """)
+        self.verticalLayout.addWidget(self.save_button)
+
+        # Кнопка отмены
+        self.cancel_button = QtWidgets.QPushButton("✕ Отмена")
+        self.cancel_button.setMinimumHeight(40)
+        self.cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgb(70, 70, 70);
+                color: rgb(200, 200, 200);
+                border: 1px solid rgb(100, 100, 100);
+                border-radius: 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: white;
+            }
+        """)
+        self.verticalLayout.addWidget(self.cancel_button)
+
+        # Подключение сигналов
+        self.save_button.clicked.connect(self.save_changes)
+        self.cancel_button.clicked.connect(Setting_Email.reject)
 
         self.retranslateUi(Setting_Email)
         QtCore.QMetaObject.connectSlotsByName(Setting_Email)
 
     def retranslateUi(self, Setting_Email):
         _translate = QtCore.QCoreApplication.translate
-        Setting_Email.setWindowTitle(_translate("Setting_Email", "IT-EcoSystem"))
-        self.TXT_Email.setText(_translate("Setting_Email", "Электронная почта"))
-        self.TQ_Email.setPlaceholderText(_translate("Setting_Email", "Ведите новый Email"))
-        self.PB_Email.setText(_translate("Setting_Email", "Сохранить изменения"))
+        Setting_Email.setWindowTitle(_translate("Setting_Email", "IT-EcoSystem - Email"))
+
+    def save_changes(self):
+        new_email = self.email_input.text().strip()
+
+        if not new_email:
+            QMessageBox.warning(self.parent(), "Ошибка", "Введите email адрес!")
+            return
+
+        if '@' not in new_email or '.' not in new_email:
+            QMessageBox.warning(self.parent(), "Ошибка",
+                                "Введите корректный email адрес!\nНапример: example@domain.com")
+            return
+
+        # Здесь должна быть функция сохранения в БД
+        # success = update_email_in_db(self.user_id, new_email)
+        success = True  # Заглушка
+
+        if success:
+            QMessageBox.information(self.parent(), "Успех", "Email адрес успешно обновлен!")
+            self.parent().accept()
+        else:
+            QMessageBox.critical(self.parent(), "Ошибка", "Не удалось обновить email адрес.")
 
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
-    Setting_Email = QtWidgets.QDialog()
+    dialog = QtWidgets.QDialog()
     ui = Ui_Setting_Email()
-    ui.setupUi(Setting_Email)
-    Setting_Email.show()
+    ui.setupUi(dialog)
+    dialog.show()
     sys.exit(app.exec_())
