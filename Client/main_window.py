@@ -292,7 +292,7 @@ class Ui_main_window_Dialog(object):
             ("🔧 Услуги", "Service_pushButton"),
             ("О нас!", "About_pushButton"),
             ("⭐ Отзывы", "Reviews_pushButton"),
-            ("📞 Контакты", "Contacts_pushButton"),
+            ("📞 Контакты", "Contacts_pushButton")
         ]
 
         for text, attr_name in nav_buttons:
@@ -504,6 +504,9 @@ class Ui_main_window_Dialog(object):
         self.setup_search()
 
         QtCore.QMetaObject.connectSlotsByName(main_window_Dialog)
+
+        self.setup_navigation_buttons()
+        self.setup_advantages_buttons()
 
     def create_service_category(self, title, buttons_data):
         """Создает карточку категории услуг"""
@@ -995,3 +998,175 @@ class Ui_main_window_Dialog(object):
         """Разблокирует поле поиска"""
         self.Search.setEnabled(True)
         self.Search.setPlaceholderText("🔍 Поиск услуг, товаров...")
+
+    def setup_navigation_buttons(self):
+        """Настраивает кнопки навигации для прокрутки к разделам"""
+
+        # Словарь с соответствием кнопок и виджетов разделов
+        self.navigation_sections = {
+            'Service_pushButton': self.Our_services,  # Раздел "Наши услуги"
+            'About_pushButton': self.get_about_section(),  # Раздел "О нас" (текстовый блок)
+            'Reviews_pushButton': None,  # Пока нет раздела отзывов
+            'Contacts_pushButton': None,  # Пока нет раздела контактов
+        }
+
+        # Подключаем обработчики для кнопок навигации
+        if hasattr(self, 'Service_pushButton'):
+            self.Service_pushButton.clicked.connect(
+                lambda: self.scroll_to_section('Service_pushButton')
+            )
+
+        if hasattr(self, 'About_pushButton'):
+            self.About_pushButton.clicked.connect(
+                lambda: self.scroll_to_section('About_pushButton')
+            )
+
+        if hasattr(self, 'Reviews_pushButton'):
+            self.Reviews_pushButton.clicked.connect(
+                lambda: self.scroll_to_section('Reviews_pushButton')
+            )
+
+        if hasattr(self, 'Contacts_pushButton'):
+            self.Contacts_pushButton.clicked.connect(
+                lambda: self.scroll_to_section('Contacts_pushButton')
+            )
+
+    def get_about_section(self):
+        """Возвращает виджет раздела 'О нас'"""
+        # Ищем виджет с текстом о компании
+        # В вашем коде это about_frame, который содержит about_title и about_text
+        for i in range(self.gridLayout.count()):
+            item = self.gridLayout.itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                # Проверяем, содержит ли виджет текст о компании
+                if hasattr(widget, 'findChild'):
+                    # Ищем QLabel с текстом о компании
+                    labels = widget.findChildren(QtWidgets.QLabel)
+                    for label in labels:
+                        if label.text() and "Ремонт техники любых видов" in label.text():
+                            return widget
+        return None
+
+    def scroll_to_section(self, button_name):
+        """Прокручивает к указанному разделу"""
+        target_widget = self.navigation_sections.get(button_name)
+
+        if not target_widget:
+            # Если раздел еще не создан, показываем сообщение
+            QtWidgets.QMessageBox.information(
+                self.scrollArea,
+                "Информация",
+                f"Раздел '{button_name.replace('_pushButton', '')} находится в разработке'"
+            )
+            return
+
+        # Получаем позицию целевого виджета
+        target_pos = target_widget.mapTo(self.scrollAreaWidgetContents, QtCore.QPoint(0, 0))
+
+        # Создаем анимацию прокрутки
+        self.animate_scroll(target_pos.y())
+
+    def animate_scroll(self, target_y):
+        """Анимированная прокрутка к целевой позиции"""
+        current_scrollbar = self.scrollArea.verticalScrollBar()
+        current_value = current_scrollbar.value()
+
+        # Разница в позиции
+        delta = target_y - current_value
+
+        # Количество шагов анимации
+        steps = 30
+        # Время одного шага (мс)
+        step_time = 10
+
+        # Если разница небольшая, прокручиваем сразу
+        if abs(delta) < 50:
+            current_scrollbar.setValue(target_y)
+            return
+
+        # Создаем таймер для анимации
+        self.scroll_timer = QtCore.QTimer()
+        self.scroll_step = 0
+        self.scroll_delta = delta
+
+        def scroll_step_func():
+            nonlocal current_value
+            self.scroll_step += 1
+
+            # Используем easing function для плавности
+            progress = self.scroll_step / steps
+            # Простое easing: замедление в конце
+            eased_progress = 1 - (1 - progress) ** 3
+
+            new_value = int(current_value + self.scroll_delta * eased_progress)
+            current_scrollbar.setValue(new_value)
+
+            if self.scroll_step >= steps:
+                self.scroll_timer.stop()
+                # Убеждаемся, что достигли точной позиции
+                current_scrollbar.setValue(target_y)
+
+        self.scroll_timer.timeout.connect(scroll_step_func)
+        self.scroll_timer.start(step_time)
+
+    # Добавьте этот метод для обработки кликов по кнопкам преимуществ
+    def setup_advantages_buttons(self):
+        """Настраивает кнопки в разделе преимуществ"""
+        advantage_buttons = [
+            ('Professional_pushButton', "👨‍🔧 Профессионализм",
+             "Наши мастера имеют сертификаты и многолетний опыт работы"),
+            ('Complexity_pushButton', "⚡ Любая сложность",
+             "Мы беремся за ремонт любой сложности, от замены экрана до восстановления после залития"),
+            ('Equipment_pushButton', "🔧 Оборудование",
+             "Используем профессиональное диагностическое и ремонтное оборудование"),
+            ('Quickly_pushButton', "🚀 Быстро",
+             "Срочный ремонт большинства устройств за 1 час"),
+            ('Available_pushButton', "💰 Доступно",
+             "Гибкая система скидок и доступные цены на все виды работ"),
+            ('pushButton_34', "✅ Гарантия",
+             "Даем гарантию до 1 года на все виды работ и запчасти")
+        ]
+
+        for btn_name, title, description in advantage_buttons:
+            if hasattr(self, btn_name):
+                btn = getattr(self, btn_name)
+                # При клике показываем подробную информацию
+                btn.clicked.connect(
+                    lambda checked, t=title, d=description:
+                    self.show_advantage_details(t, d)
+                )
+
+    def show_advantage_details(self, title, description):
+        """Показывает подробную информацию о преимуществе"""
+        msg_box = QtWidgets.QMessageBox()
+        msg_box.setWindowTitle(title)
+        msg_box.setText(description)
+        msg_box.setIcon(QtWidgets.QMessageBox.Information)
+
+        # Добавляем дополнительную информацию в зависимости от выбранного преимущества
+        if "Профессионализм" in title:
+            msg_box.setDetailedText(
+                "• Сертифицированные специалисты\n"
+                "• Регулярное обучение новым технологиям\n"
+                "• Опыт работы от 5 лет\n"
+                "• Специализация на конкретных типах устройств"
+            )
+        elif "Любая сложность" in title:
+            msg_box.setDetailedText(
+                "• Замена экранов и матриц\n"
+                "• Восстановление после залития\n"
+                "• Ремонт материнских плат\n"
+                "• Замена разъемов и шлейфов\n"
+                "• Восстановление данных"
+            )
+        elif "Оборудование" in title:
+            msg_box.setDetailedText(
+                "• Профессиональная паяльная станция\n"
+                "• Термовоздушная пайка\n"
+                "• Осциллографы и мультиметры\n"
+                "• Программаторы для всех типов устройств\n"
+                "• Диагностическое ПО"
+            )
+
+        msg_box.exec_()
