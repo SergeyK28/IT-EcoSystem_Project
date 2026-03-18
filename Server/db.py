@@ -646,3 +646,208 @@ def get_favorites_by_type(user_id: int, item_type: str) -> List[Dict[str, Any]]:
             cursor.close()
         if conn.is_connected():
             conn.close()
+
+
+def get_user_statistics(user_id):
+    """
+    Получает статистику пользователя из базы данных
+    Возвращает словарь со статистикой
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Получаем количество заказов пользователя
+        cursor.execute("""
+            SELECT COUNT(*) as orders_count 
+            FROM Orders 
+            WHERE ClientID = %s
+        """, (user_id,))
+        orders_result = cursor.fetchone()
+        orders_count = orders_result['orders_count'] if orders_result else 0
+
+        # Получаем дату регистрации для расчета дней
+        cursor.execute("""
+            SELECT RegistrationDate 
+            FROM Client 
+            WHERE ID = %s
+        """, (user_id,))
+        reg_result = cursor.fetchone()
+
+        days_with_us = 0
+        if reg_result and reg_result['RegistrationDate']:
+            from datetime import datetime
+            reg_date = reg_result['RegistrationDate']
+            if isinstance(reg_date, datetime):
+                days_with_us = (datetime.now() - reg_date).days
+            else:
+                # Если это строка, конвертируем
+                try:
+                    if isinstance(reg_date, str):
+                        reg_date = datetime.strptime(reg_date, '%Y-%m-%d %H:%M:%S')
+                        days_with_us = (datetime.now() - reg_date).days
+                except:
+                    days_with_us = 0
+
+        # Получаем количество избранного (если есть таблица Favorites)
+        favorites_count = 0
+        try:
+            # Проверяем существование таблицы Favorites
+            cursor.execute("""
+                SELECT COUNT(*) as table_exists
+                FROM information_schema.tables 
+                WHERE table_schema = DATABASE() AND table_name = 'Favorites'
+            """)
+            table_check = cursor.fetchone()
+
+            if table_check and table_check['table_exists'] > 0:
+                cursor.execute("""
+                    SELECT COUNT(*) as fav_count 
+                    FROM Favorites 
+                    WHERE UserID = %s
+                """, (user_id,))
+                fav_result = cursor.fetchone()
+                favorites_count = fav_result['fav_count'] if fav_result else 0
+        except Exception as e:
+            print(f"Ошибка при проверке таблицы Favorites: {e}")
+            favorites_count = 0
+
+        # Получаем бонусные баллы (сумма всех оплаченных заказов * 0.05)
+        cursor.execute("""
+            SELECT COALESCE(SUM(FinalAmount), 0) as total_spent
+            FROM Orders 
+            WHERE ClientID = %s AND IsPaid = 1
+        """, (user_id,))
+        spent_result = cursor.fetchone()
+
+        # Исправление: конвертируем Decimal в float или int
+        if spent_result and spent_result['total_spent']:
+            total_spent = float(spent_result['total_spent'])  # Конвертируем Decimal в float
+            bonus_points = int(total_spent * 0.05)  # Теперь можно умножать
+        else:
+            bonus_points = 0
+
+        return {
+            'orders_count': orders_count,
+            'favorites_count': favorites_count,
+            'days_with_us': days_with_us,
+            'bonus_points': bonus_points
+        }
+
+    except Exception as e:
+        print(f"❌ Ошибка получения статистики пользователя: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'orders_count': 0,
+            'favorites_count': 0,
+            'days_with_us': 0,
+            'bonus_points': 0
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+def get_user_info(user_id):
+    """
+    Получает полную информацию о пользователе
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT ID, Login, FirstName, LastName, Email, PhoneNumber, 
+                   RegistrationDate, AvatarPath, Birthdate
+            FROM Client 
+            WHERE ID = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        return user
+    except Exception as e:
+        print(f"❌ Ошибка получения информации пользователя: {e}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+def get_user_orders_count(user_id):
+    """
+    Получает количество заказов пользователя
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(*) FROM Orders WHERE ClientID = %s
+        """, (user_id,))
+        count = cursor.fetchone()[0]
+        return count
+    except Exception as e:
+        print(f"❌ Ошибка получения количества заказов: {e}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+def get_user_registration_date(user_id):
+    """
+    Получает дату регистрации пользователя
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT RegistrationDate FROM Client WHERE ID = %s
+        """, (user_id,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+    except Exception as e:
+        print(f"❌ Ошибка получения даты регистрации: {e}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+def get_user_bonus_points(user_id):
+    """
+    Рассчитывает бонусные баллы пользователя (5% от суммы оплаченных заказов)
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COALESCE(SUM(FinalAmount), 0) FROM Orders 
+            WHERE ClientID = %s AND IsPaid = 1
+        """, (user_id,))
+        total_spent = cursor.fetchone()[0]
+        return int(total_spent * 0.05)  # 5% бонусами
+    except Exception as e:
+        print(f"❌ Ошибка расчета бонусов: {e}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()

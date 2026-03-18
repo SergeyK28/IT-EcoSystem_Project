@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+from datetime import datetime
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QPainter, QPen, QPainterPath, QIcon
@@ -8,11 +9,12 @@ from PyQt5.QtWidgets import (QGraphicsDropShadowEffect, QLabel, QPushButton, QFr
                              QMessageBox, QDialog, QFileDialog, QVBoxLayout, QHBoxLayout,
                              QScrollArea, QWidget, QSpacerItem, QSizePolicy, QGridLayout)
 
-# Импорты ваших модулей (оставляем как есть)
-from Server.db import update_avatar_in_db, get_avatar_path_by_user_id
+# Импорты ваших модулей
+from Server.db import update_avatar_in_db, get_avatar_path_by_user_id, get_user_statistics, get_user_info
 from Setting_profil import Ui_Setting_Profil
 from session_manager import session
 from client_orders_window import ClientOrdersWindow
+
 
 class ModernLineEdit(QtWidgets.QLineEdit):
     """Современное поле ввода с анимацией (как в identification_window)"""
@@ -52,6 +54,7 @@ class ModernLineEdit(QtWidgets.QLineEdit):
         shadow.setColor(QColor(0, 0, 0, 30))
         shadow.setOffset(0, 2)
         self.setGraphicsEffect(shadow)
+
 
 class ModernButton(QPushButton):
     """Современная кнопка с анимацией (как в authorization_window)"""
@@ -103,18 +106,20 @@ class ModernButton(QPushButton):
                 }
             """)
 
+
 class StatCard(QFrame):
     """Стильная карточка статистики с градиентом и тенью"""
 
     def __init__(self, icon="📊", title="0", subtitle="Заказов", parent=None):
         super().__init__(parent)
+        self.title_label = None
         self.setup_ui(icon, title, subtitle)
 
     def setup_ui(self, icon, title, subtitle):
         self.setMinimumSize(120, 90)
         self.setMaximumHeight(90)
 
-        # Стиль с градиентом как в identification_window
+        # Стиль с градиентом
         self.setStyleSheet("""
             StatCard {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -124,7 +129,7 @@ class StatCard(QFrame):
             }
         """)
 
-        # Добавляем тень как в identification_window
+        # Добавляем тень
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(15)
         shadow.setColor(QColor(0, 0, 0, 60))
@@ -166,8 +171,8 @@ class StatCard(QFrame):
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
 
-        title_label = QLabel(title)
-        title_label.setStyleSheet("""
+        self.title_label = QLabel(title)
+        self.title_label.setStyleSheet("""
             QLabel {
                 color: white;
                 font-size: 22px;
@@ -187,12 +192,18 @@ class StatCard(QFrame):
             }
         """)
 
-        text_layout.addWidget(title_label)
+        text_layout.addWidget(self.title_label)
         text_layout.addWidget(subtitle_label)
 
         layout.addWidget(icon_container)
         layout.addLayout(text_layout)
         layout.addStretch()
+
+    def set_value(self, value):
+        """Обновляет значение в карточке статистики"""
+        if self.title_label:
+            self.title_label.setText(str(value))
+
 
 class AvatarWidget(QLabel):
     """Улучшенный виджет аватара с круглой обрезкой и анимацией"""
@@ -203,7 +214,7 @@ class AvatarWidget(QLabel):
         self.setCursor(Qt.PointingHandCursor)
         self.setAlignment(Qt.AlignCenter)
 
-        # Тень как в identification_window
+        # Тень
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
         shadow.setColor(QColor(0, 0, 0, 100))
@@ -281,12 +292,20 @@ class AvatarWidget(QLabel):
         anim.setEndValue(self.geometry().adjusted(-5, -5, 5, 5))
         anim.start()
 
+
 class Ui_profil(object):
     def __init__(self, user_id, full_name):
         self.user_id = user_id
         self.full_name = full_name
         self.dialog = None
         self.main_window = None
+        self.user_data = None
+        self.stat_orders = None
+        self.stat_favorites = None
+        self.stat_days = None
+        self.stat_bonus = None
+        self.contact_phone = None
+        self.contact_email = None
 
     def setupUi(self, Dialog):
         self.dialog = Dialog
@@ -296,7 +315,10 @@ class Ui_profil(object):
         Dialog.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         Dialog.setAttribute(Qt.WA_TranslucentBackground)
 
-        # Главный контейнер с градиентом как в authorization_window
+        # Загружаем данные пользователя
+        self.load_user_data()
+
+        # Главный контейнер с градиентом
         main_container = QFrame(Dialog)
         main_container.setObjectName("main_container")
         main_container.setGeometry(0, 0, Dialog.width(), Dialog.height())
@@ -365,7 +387,7 @@ class Ui_profil(object):
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Кнопка закрытия (стилизованная)
+        # Кнопка закрытия
         self.btn_close = QPushButton("✕")
         self.btn_close.setFixedSize(40, 40)
         self.btn_close.setCursor(Qt.PointingHandCursor)
@@ -388,7 +410,7 @@ class Ui_profil(object):
         """)
         self.btn_close.clicked.connect(Dialog.close)
 
-        # Кнопка настроек (стилизованная)
+        # Кнопка настроек
         self.btn_settings_quick = QPushButton("⚙️")
         self.btn_settings_quick.setFixedSize(40, 40)
         self.btn_settings_quick.setCursor(Qt.PointingHandCursor)
@@ -436,15 +458,7 @@ class Ui_profil(object):
 
         # Аватар
         self.Ava_Profile = AvatarWidget()
-        avatar_path = get_avatar_path_by_user_id(self.user_id)
-        if avatar_path and os.path.exists(avatar_path):
-            ava_pixmap = QPixmap(avatar_path)
-            if not ava_pixmap.isNull():
-                self.Ava_Profile.setPixmap(ava_pixmap)
-            else:
-                self.load_standard_avatar()
-        else:
-            self.load_standard_avatar()
+        self.load_user_avatar()
 
         # Имя пользователя
         self.Name_Profile = QLabel(self.full_name)
@@ -505,10 +519,13 @@ class Ui_profil(object):
         stats_grid = QGridLayout()
         stats_grid.setSpacing(15)
 
-        self.stat_orders = StatCard("📦", "24", "Заказов")
-        self.stat_favorites = StatCard("❤️", "12", "В избранном")
-        self.stat_days = StatCard("📅", "180", "Дней с нами")
-        self.stat_bonus = StatCard("🎁", "1500", "Бонусов")
+        # Получаем статистику
+        stats = self.load_user_statistics()
+
+        self.stat_orders = StatCard("📦", str(stats['orders_count']), "Заказов")
+        self.stat_favorites = StatCard("❤️", str(stats['favorites_count']), "В избранном")
+        self.stat_days = StatCard("📅", str(stats['days_with_us']), "Дней с нами")
+        self.stat_bonus = StatCard("🎁", str(stats['bonus_points']), "Бонусов")
 
         stats_grid.addWidget(self.stat_orders, 0, 0)
         stats_grid.addWidget(self.stat_favorites, 0, 1)
@@ -553,24 +570,6 @@ class Ui_profil(object):
         self.btn_history = ModernButton("📜 История заказов", False)
         layout.addWidget(self.btn_history)
 
-        # ===== ПОДДЕРЖКА =====
-        support_title = QLabel("💬 Поддержка")
-        support_title.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 18px;
-                font-weight: 600;
-                margin-top: 10px;
-            }
-        """)
-        layout.addWidget(support_title)
-
-        self.btn_support = ModernButton("💬 Чат с поддержкой", False)
-        layout.addWidget(self.btn_support)
-
-        self.btn_faq = ModernButton("❓ Часто задаваемые вопросы", False)
-        layout.addWidget(self.btn_faq)
-
         # ===== КОНТАКТНАЯ ИНФОРМАЦИЯ =====
         contact_frame = QFrame()
         contact_frame.setStyleSheet("""
@@ -613,11 +612,13 @@ class Ui_profil(object):
         phone_icon = QLabel("📱")
         phone_icon.setStyleSheet("font-size: 16px;")
 
-        phone_label = QLabel("+7 (923) 294-29-24")
-        phone_label.setStyleSheet("color: white; font-size: 13px;")
+        phone_number = self.user_data.get('PhoneNumber',
+                                          '+7 (___) ___-__-__') if self.user_data else '+7 (___) ___-__-__'
+        self.contact_phone = QLabel(phone_number)
+        self.contact_phone.setStyleSheet("color: white; font-size: 13px;")
 
         phone_layout.addWidget(phone_icon)
-        phone_layout.addWidget(phone_label)
+        phone_layout.addWidget(self.contact_phone)
         phone_layout.addStretch()
 
         contact_layout.addWidget(phone_widget)
@@ -630,11 +631,12 @@ class Ui_profil(object):
         email_icon = QLabel("📧")
         email_icon.setStyleSheet("font-size: 16px;")
 
-        email_label = QLabel("it.ecosystem.krsk@gmail.com")
-        email_label.setStyleSheet("color: white; font-size: 13px;")
+        email = self.user_data.get('Email', 'email@example.com') if self.user_data else 'email@example.com'
+        self.contact_email = QLabel(email)
+        self.contact_email.setStyleSheet("color: white; font-size: 13px;")
 
         email_layout.addWidget(email_icon)
-        email_layout.addWidget(email_label)
+        email_layout.addWidget(self.contact_email)
         email_layout.addStretch()
 
         contact_layout.addWidget(email_widget)
@@ -683,6 +685,29 @@ class Ui_profil(object):
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def load_user_data(self):
+        """Загружает данные пользователя из БД"""
+        self.user_data = get_user_info(self.user_id)
+        if self.user_data:
+            # Обновляем полное имя, если оно отличается
+            self.full_name = f"{self.user_data.get('FirstName', '')} {self.user_data.get('LastName', '')}".strip()
+            if not self.full_name:
+                self.full_name = self.user_data.get('Login', 'Пользователь')
+
+    def load_user_statistics(self):
+        """Загружает статистику пользователя из БД"""
+        return get_user_statistics(self.user_id)
+
+    def load_user_avatar(self):
+        """Загружает аватар пользователя"""
+        avatar_path = get_avatar_path_by_user_id(self.user_id)
+        if avatar_path and os.path.exists(avatar_path):
+            ava_pixmap = QPixmap(avatar_path)
+            if not ava_pixmap.isNull():
+                self.Ava_Profile.setPixmap(ava_pixmap)
+                return
+        self.load_standard_avatar()
 
     def fade_in_animation(self, widget):
         """Анимация появления окна"""
@@ -763,10 +788,26 @@ class Ui_profil(object):
                 self.Ava_Profile.setPixmap(pixmap)
                 if update_avatar_in_db(self.user_id, file_path):
                     self.show_message("Успех", "✅ Аватар успешно обновлен!")
+
+                    # Обновляем статистику после изменения аватара
+                    self.refresh_statistics()
                 else:
                     self.show_message("Ошибка", "❌ Не удалось сохранить аватар", "error")
             else:
                 self.show_message("Ошибка", "❌ Не удалось загрузить изображение", "error")
+
+    def refresh_statistics(self):
+        """Обновляет статистику на экране"""
+        stats = self.load_user_statistics()
+
+        if self.stat_orders:
+            self.stat_orders.set_value(stats['orders_count'])
+        if self.stat_favorites:
+            self.stat_favorites.set_value(stats['favorites_count'])
+        if self.stat_days:
+            self.stat_days.set_value(stats['days_with_us'])
+        if self.stat_bonus:
+            self.stat_bonus.set_value(stats['bonus_points'])
 
     def show_message(self, title, text, msg_type="success"):
         """Уведомление в стиле authorization_window"""
@@ -856,6 +897,7 @@ class Ui_profil(object):
         self.orders_window.setModal(True)
         self.orders_window.show()
 
+
 if __name__ == "__main__":
     import sys
 
@@ -886,6 +928,7 @@ if __name__ == "__main__":
     palette.setColor(QPalette.HighlightedText, Qt.black)
     app.setPalette(palette)
 
+    # Для теста используем user_id = 1
     dialog = QtWidgets.QDialog()
     ui = Ui_profil(1, "Анна Смирнова")
     ui.setupUi(dialog)

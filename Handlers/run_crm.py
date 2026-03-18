@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Handlers.employee_login import EmployeeLoginDialog
 from Handlers.main_CRM import MainCRMWindow
 from Handlers.employee_session import employee_session
+from Handlers.splash_screen_CRM import SplashScreen  # Импортируем загрузочное окно
 
 
 def main():
@@ -42,24 +43,37 @@ def main():
     palette.setColor(QPalette.Highlight, QColor(76, 175, 80))
     app.setPalette(palette)
 
-    # Сначала показываем окно входа
-    login_dialog = EmployeeLoginDialog()
+    # Показываем загрузочное окно
+    splash = SplashScreen()
 
-    # Если пользователь успешно вошел
-    if login_dialog.exec_() == QDialog.Accepted:
-        employee_data = login_dialog.get_employee_data()
-        if employee_data:
-            # Выполняем вход в сессию
-            employee_session.login(employee_data)
+    # Функция для продолжения загрузки после сплэша
+    def continue_loading():
+        # Сначала показываем окно входа
+        login_dialog = EmployeeLoginDialog()
 
-            # Показываем главное окно CRM
-            window = MainCRMWindow()
-            window.show()
+        # Если пользователь успешно вошел
+        if login_dialog.exec_() == QDialog.Accepted:
+            employee_data = login_dialog.get_employee_data()
+            if employee_data:
+                # Выполняем вход в сессию
+                employee_session.login(employee_data)
 
-            sys.exit(app.exec_())
-    else:
-        # Если пользователь закрыл окно входа, завершаем программу
-        sys.exit(0)
+                # Показываем главное окно CRM
+                window = MainCRMWindow()
+                window.show()
+
+                sys.exit(app.exec_())
+        else:
+            # Если пользователь закрыл окно входа, завершаем программу
+            sys.exit(0)
+
+    # Подключаем сигнал завершения загрузки
+    splash.finished.connect(continue_loading)
+
+    # Запускаем загрузку
+    splash.start_loading()
+
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":

@@ -291,13 +291,8 @@ class Ui_main_window_Dialog(object):
         nav_buttons = [
             ("🔧 Услуги", "Service_pushButton"),
             ("О нас!", "About_pushButton"),
-            ("💰 Цены", "Price_pushButton"),
-            ("🚚 Доставка", "Delivery_pushButton"),
             ("⭐ Отзывы", "Reviews_pushButton"),
-            ("💼 Вакансии", "Vacancy_pushButton"),
-            ("📚 Статьи", "Article_pushButton"),
             ("📞 Контакты", "Contacts_pushButton"),
-            ("🔄 Еще", "XYZ_pushButton")
         ]
 
         for text, attr_name in nav_buttons:

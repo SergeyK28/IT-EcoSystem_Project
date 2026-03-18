@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QEvent
 from PyQt5.QtWidgets import QDialog, QApplication
 from main_window import Ui_main_window_Dialog
 from session_manager import session
+from splash_screen import SplashScreen, LoadingThread
 import sys
 import os
 
@@ -11,9 +12,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class MainWindow(QDialog, Ui_main_window_Dialog):
-    def __init__(self):
+    def __init__(self, splash=None):
+        self.splash = splash
         super().__init__()
+
+        # Обновляем прогресс загрузки
+        if self.splash:
+            self.splash.set_progress(60, "Загрузка интерфейса...")
+
         self.setupUi(self)
+
+        if self.splash:
+            self.splash.set_progress(80, "Настройка компонентов...")
 
         # Устанавливаем ссылку на главное окно в менеджере сессии
         session.set_main_window(self)
@@ -21,8 +31,21 @@ class MainWindow(QDialog, Ui_main_window_Dialog):
         # Устанавливаем event filter на себя
         self.installEventFilter(self)
 
+        if self.splash:
+            self.splash.set_progress(90, "Проверка сессии...")
+
         # Проверяем, есть ли сохраненная сессия при запуске
         self.check_saved_session()
+
+        if self.splash:
+            self.splash.set_progress(100, "Готово!")
+            QTimer.singleShot(500, self.close_splash)  # Даем время увидеть 100%
+
+    def close_splash(self):
+        """Закрываем загрузочный экран"""
+        if self.splash:
+            self.splash.finish(self)
+            self.splash = None
 
     def check_saved_session(self):
         """Проверяет наличие сохраненной сессии при запуске"""
@@ -97,10 +120,34 @@ class MainWindow(QDialog, Ui_main_window_Dialog):
         return super().eventFilter(obj, event)
 
 
-if __name__ == "__main__":
-    import sys
-
+def main():
     app = QtWidgets.QApplication(sys.argv)
-    main_window = MainWindow()
+
+    # Создаем и показываем загрузочный экран
+    splash = SplashScreen()
+    splash.show()
+    app.processEvents()  # Обновляем интерфейс
+
+    # Создаем поток загрузки
+    loading_thread = LoadingThread()
+
+    # Подключаем сигналы
+    loading_thread.progress_updated.connect(splash.set_progress)
+
+    # Запускаем загрузку в потоке
+    loading_thread.start()
+
+    # Ждем завершения загрузки с обработкой событий
+    while loading_thread.isRunning():
+        app.processEvents()
+        loading_thread.wait(100)
+
+    # Создаем главное окно
+    main_window = MainWindow(splash)
     main_window.show()
+
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
