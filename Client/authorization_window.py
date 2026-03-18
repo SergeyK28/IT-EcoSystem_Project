@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint
+from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, QTimer, pyqtSlot
 from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QIcon
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, \
     QPushButton, QCheckBox, QFrame, QMessageBox, QDialog
@@ -8,9 +8,12 @@ from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHB
 from identification_window import IdenDialog
 from profil_window import Ui_profil
 from Server.db import check_user, get_user_data_by_login, hash_password, get_connection
+from Server.email_service import send_verification_email, generate_verification_code
 from session_manager import session
 import random
 import string
+import threading
+from datetime import datetime, timedelta
 
 
 class PasswordLineEdit(QLineEdit):
@@ -197,7 +200,13 @@ class ForgotPasswordDialog(QDialog):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.current_user_id = None
+        self.current_user_email = None
+        self.current_user_name = None
         self.verification_code = None
+        self.code_expiry = None
+        self.remaining_seconds = 0
+        self.timer = None
+        self.code_timer_label = None
         self.setupUi()
 
     def setupUi(self):
@@ -318,12 +327,12 @@ class ForgotPasswordDialog(QDialog):
         self.code_input.hide()
         layout.addWidget(self.code_input)
 
-        # Новый пароль (скрыт) - используем PasswordLineEdit
+        # Новый пароль (скрыт)
         self.new_password_input = PasswordLineEdit("Новый пароль")
         self.new_password_input.hide()
         layout.addWidget(self.new_password_input)
 
-        # Подтверждение пароля (скрыт) - используем PasswordLineEdit
+        # Подтверждение пароля (скрыт)
         self.confirm_password_input = PasswordLineEdit("Подтвердите пароль")
         self.confirm_password_input.hide()
         layout.addWidget(self.confirm_password_input)
@@ -402,22 +411,26 @@ class ForgotPasswordDialog(QDialog):
         # Подключаем проверку пароля
         self.new_password_input.textChanged.connect(self.check_password_strength)
 
-    def generate_verification_code(self):
-        """Генерирует 6-значный код подтверждения"""
-        return ''.join(random.choices(string.digits, k=6))
-
     def find_user_by_login_or_email(self, login_or_email):
         """Поиск пользователя по логину или email"""
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         try:
             # Сначала ищем по логину
-            cursor.execute("SELECT ID, Login, Email FROM Client WHERE Login = %s", (login_or_email,))
+            cursor.execute("""
+                SELECT ID, Login, Email, FirstName, LastName 
+                FROM Client 
+                WHERE Login = %s
+            """, (login_or_email,))
             user = cursor.fetchone()
 
             # Если не нашли, ищем по email
             if not user:
-                cursor.execute("SELECT ID, Login, Email FROM Client WHERE Email = %s", (login_or_email,))
+                cursor.execute("""
+                    SELECT ID, Login, Email, FirstName, LastName 
+                    FROM Client 
+                    WHERE Email = %s
+                """, (login_or_email,))
                 user = cursor.fetchone()
 
             return user
@@ -433,23 +446,52 @@ class ForgotPasswordDialog(QDialog):
             self.show_custom_message("Ошибка", "❌ Введите email или логин!", "error")
             return
 
+        # Показываем индикатор загрузки
+        self.send_code_btn.setEnabled(False)
+        self.send_code_btn.setText("⏳ Отправка...")
+
         # Поиск пользователя
         user = self.find_user_by_login_or_email(login_or_email)
 
         if not user:
             self.show_custom_message("Ошибка", "❌ Пользователь с таким логином или email не найден!", "error")
+            self.send_code_btn.setEnabled(True)
+            self.send_code_btn.setText("📧 Отправить код")
             return
 
-        # Сохраняем ID пользователя
+        # Сохраняем данные пользователя
         self.current_user_id = user['ID']
+        self.current_user_email = user['Email']
+        self.current_user_name = f"{user['FirstName']} {user['LastName']}"
 
         # Генерируем код подтверждения
-        self.verification_code = self.generate_verification_code()
+        self.verification_code = generate_verification_code(6)
+        self.code_expiry = datetime.now() + timedelta(minutes=15)
 
-        # Здесь должна быть отправка email
-        self.show_custom_message("Код подтверждения",
-                                 f"✅ Ваш код подтверждения: {self.verification_code}\n\n"
-                                 f"(В реальном приложении код будет отправлен на {user['Email']})",
+        # Отправляем код в отдельном потоке
+        def send_email_thread():
+            success = send_verification_email(
+                self.current_user_email,
+                self.verification_code,
+                user['FirstName']
+            )
+
+            # Возвращаемся в главный поток
+            from PyQt5.QtCore import QMetaObject, Qt
+            if success:
+                QMetaObject.invokeMethod(self, "on_email_sent_success", Qt.QueuedConnection)
+            else:
+                QMetaObject.invokeMethod(self, "on_email_sent_failed", Qt.QueuedConnection)
+
+        thread = threading.Thread(target=send_email_thread)
+        thread.daemon = True
+        thread.start()
+
+    @pyqtSlot()
+    def on_email_sent_success(self):
+        """Вызывается при успешной отправке email"""
+        self.show_custom_message("Успех",
+                                 f"✅ Код подтверждения отправлен на {self.current_user_email}",
                                  "success")
 
         # Переключаем интерфейс на ввод кода
@@ -460,8 +502,90 @@ class ForgotPasswordDialog(QDialog):
         self.verify_code_btn.show()
         self.cancel_btn.setText("← Назад")
 
+        # Создаем label для таймера
+        self.code_timer_label = QLabel()
+        self.code_timer_label.setStyleSheet("""
+            QLabel {
+                color: #4CAF50;
+                font-size: 12px;
+                padding: 5px;
+                background-color: rgba(76, 175, 80, 0.1);
+                border-radius: 5px;
+            }
+        """)
+
+        # Вставляем после code_input
+        layout = self.layout()
+        if layout:
+            index = layout.indexOf(self.code_input)
+            if index >= 0:
+                layout.insertWidget(index + 1, self.code_timer_label)
+
+        # Запускаем таймер для отсчета времени
+        self.start_code_timer()
+
+    @pyqtSlot()
+    def on_email_sent_failed(self):
+        """Вызывается при ошибке отправки email"""
+        self.show_custom_message("Ошибка",
+                                 "❌ Не удалось отправить код подтверждения.\n"
+                                 "Проверьте подключение к интернету или попробуйте позже.",
+                                 "error")
+        self.send_code_btn.setEnabled(True)
+        self.send_code_btn.setText("📧 Отправить код")
+
+    def start_code_timer(self):
+        """Запускает таймер для отсчета времени действия кода"""
+        self.remaining_seconds = 15 * 60  # 15 минут в секундах
+
+        # Таймер для обновления
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000)  # Каждую секунду
+        self.update_timer()
+
+    def update_timer(self):
+        """Обновляет отображение таймера"""
+        self.remaining_seconds -= 1
+
+        if self.remaining_seconds <= 0:
+            self.timer.stop()
+            self.code_timer_label.setText("⏱️ Срок действия кода истек")
+            self.code_timer_label.setStyleSheet("""
+                QLabel {
+                    color: #ff4444;
+                    font-size: 12px;
+                    padding: 5px;
+                    background-color: rgba(255, 68, 68, 0.1);
+                    border-radius: 5px;
+                }
+            """)
+            # Делаем кнопку проверки неактивной
+            self.verify_code_btn.setEnabled(False)
+            return
+
+        minutes = self.remaining_seconds // 60
+        seconds = self.remaining_seconds % 60
+        self.code_timer_label.setText(f"⏱️ Код действителен: {minutes:02d}:{seconds:02d}")
+
+        # Меняем цвет при приближении к концу
+        if self.remaining_seconds < 60:  # Меньше минуты
+            self.code_timer_label.setStyleSheet("""
+                QLabel {
+                    color: #ffaa44;
+                    font-size: 12px;
+                    padding: 5px;
+                    background-color: rgba(255, 170, 68, 0.1);
+                    border-radius: 5px;
+                }
+            """)
+
     def verify_code(self):
         """Проверяет введенный код подтверждения"""
+        if self.remaining_seconds <= 0:
+            self.show_custom_message("Ошибка", "❌ Срок действия кода истек!", "error")
+            return
+
         entered_code = self.code_input.text().strip()
 
         if not entered_code:
@@ -470,8 +594,13 @@ class ForgotPasswordDialog(QDialog):
 
         if entered_code == self.verification_code:
             # Код верный - показываем поля для нового пароля
+            if self.timer:
+                self.timer.stop()
+
             self.code_input.setEnabled(False)
             self.verify_code_btn.hide()
+            if self.code_timer_label:
+                self.code_timer_label.hide()
 
             self.new_password_input.show()
             self.confirm_password_input.show()
@@ -773,7 +902,7 @@ class AuthDialog(QDialog):
         login = self.login.text()
         password = self.password.text()
 
-        # Всегда запоминаем пользователя (убрали чекбокс)
+        # Всегда запоминаем пользователя
         remember_me = True
 
         if login and password:
@@ -782,8 +911,8 @@ class AuthDialog(QDialog):
 
                 # Выполняем вход через менеджер сессии с сохранением
                 session.login(user_data["ID"],
-                             user_data["FirstName"] + " " + user_data["LastName"],
-                             remember_me)
+                              user_data["FirstName"] + " " + user_data["LastName"],
+                              remember_me)
 
                 # Закрываем окно авторизации
                 self.close()
@@ -791,7 +920,7 @@ class AuthDialog(QDialog):
                 # Открываем профиль
                 self.profile_dialog = QDialog()
                 self.profile_ui = Ui_profil(user_data["ID"],
-                                           user_data["FirstName"] + " " + user_data["LastName"])
+                                            user_data["FirstName"] + " " + user_data["LastName"])
                 self.profile_ui.setupUi(self.profile_dialog)
 
                 # Подключаем сигнал закрытия профиля для обновления кнопки
