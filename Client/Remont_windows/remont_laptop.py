@@ -526,7 +526,7 @@ class Ui_Ui_Remont_Laptop_Dialog(object):
         bottom_layout.setContentsMargins(20, 15, 20, 15)
 
         # Контактная информация
-        contact_info = QLabel("📞 +7 (***) ***-**-**  |  ✉️ info@it-ecosystem.ru  |  🏢 Красноярск, ул. Микуцкого, 12")
+        contact_info = QLabel("📞 +7 (929) 356-23-78  |  ✉️ info@it-ecosystem.ru  |  🏢 Красноярск, ул. Микуцкого, 12")
         contact_info.setStyleSheet("""
             QLabel {
                 color: #b0b0b0;
@@ -672,7 +672,7 @@ class Ui_Ui_Remont_Laptop_Dialog(object):
             <div style='background-color: #2d2d2d; border-radius: 15px; padding: 25px; margin-top: 25px;'>
                 <h3 style='color: #4CAF50; margin-bottom: 15px; font-size: 20px;'>📞 Свяжитесь с нами</h3>
                 <p style='font-size: 18px; margin-bottom: 10px; color: #e0e0e0;'>📍 Красноярск, Улица Микуцкого, 12</p>
-                <p style='font-size: 24px; margin: 15px 0; color: #4CAF50; font-weight: bold;'>📱 +7 (***) ***-**-**</p>
+                <p style='font-size: 24px; margin: 15px 0; color: #4CAF50; font-weight: bold;'>📱 +7 (929) 356-23-78</p>
                 <p style='font-size: 16px; color: #b0b0b0;'>✉️ info@it-ecosystem.ru</p>
                 <p style='font-size: 16px; color: #b0b0b0; margin-top: 10px;'>🕒 Пн-Пт: 10:00-20:00 | Сб-Вс: 12:00-19:00</p>
             </div>

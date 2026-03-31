@@ -10,8 +10,6 @@ from Client.favorites_window import FavoritesWindow  # Окно избранно
 from Client.search_widget import SearchResultsWidget  # Виджет результатов поиска
 from session_manager import session  # Менеджер сессий пользователя
 from authorization_window import AuthDialog  # Окно авторизации
-from Client.Remont_windows.remont_telefonov import Ui_Ui_Remont_Telefonov_Dialog  # Окно ремонта телефонов
-from Client.Remont_windows.remont_laptop import Ui_Ui_Remont_Laptop_Dialog  # Окно ремонта ноутбуков
 from shop_window import ShopWindow  # Окно магазина
 from profil_window import Ui_profil  # Окно профиля
 from cart_window import CartWindow  # Окно корзины
@@ -19,7 +17,23 @@ from map_widget import MapWidget  # Импортируем виджет карт
 from gis_reviews import ReviewsSectionWidget  # Виджет отзывов из 2GIS
 from Server import db  # Модуль работы с БД
 from Server import db_crm  # Модуль работы с CRM
-
+from Client.Remont_windows.remont_telefonov import Ui_Ui_Remont_Telefonov_Dialog  # Окно ремонта телефонов
+from Client.Remont_windows.remont_laptop import Ui_Ui_Remont_Laptop_Dialog  # Окно ремонта ноутбуков
+from Client.Remont_windows.remont_tablet import Ui_Ui_Remont_Tablet_Dialog  # Окно ремонта планшетов
+from Client.Remont_windows.remont_ebook import Ui_Ui_Remont_Ebook_Dialog  # Окно ремонта электронных книг
+from Client.Remont_windows.remont_camera import Ui_Ui_Remont_Camera_Dialog  # Окно ремонта фотоаппаратов
+from Client.Remont_windows.remont_tv import Ui_Ui_Remont_TV_Dialog  # Окно ремонта телевизоров
+from Client.Remont_windows.remont_console import Ui_Ui_Remont_Console_Dialog  # Окно ремонта игровых консолей
+from Client.Remont_windows.remont_projector import Ui_Ui_Remont_Projector_Dialog  # Окно ремонта проекторов
+from Client.Remont_windows.remont_vacuum import Ui_Ui_Remont_Vacuum_Dialog  # Окно ремонта пылесосов
+from Client.Remont_windows.remont_coffee import Ui_Ui_Remont_Coffee_Dialog  # Окно ремонта кофемашин
+from Client.Remont_windows.remont_fan import Ui_Ui_Remont_Fan_Dialog  # Окно ремонта вентиляторов
+from Client.Remont_windows.remont_security_camera import Ui_Ui_Remont_SecurityCamera_Dialog  # Окно ремонта камер видеонаблюдения
+from Client.Remont_windows.remont_babysitter import Ui_Ui_Remont_Babysitter_Dialog  # Окно ремонта радионянь
+from Client.Remont_windows.remont_dvr import Ui_Ui_Remont_DVR_Dialog  # Окно ремонта видеорегистраторов
+from Client.Remont_windows.remont_subwoofer import Ui_Ui_Remont_Subwoofer_Dialog  # Окно ремонта сабвуферов
+from Client.Remont_windows.remont_columns import Ui_Ui_Remont_Columns_Dialog  # Окно ремонта колонок
+from Client.Remont_windows.remont_amplifier import Ui_Ui_Remont_Amplifier_Dialog  # Окно ремонта усилителей звука
 
 class Ui_main_window_Dialog(object):
     """
@@ -410,12 +424,12 @@ class Ui_main_window_Dialog(object):
             [
                 ("📱 Телефон", "Smartphone_pushButton", self.open_remont_telefonov),
                 ("💻 Ноутбук", "Laptop_pushButton", self.open_remont_laptop),
-                ("📟 Планшет", "Tablet_pushButton", None),
-                ("📖 Эл. книги", "Ebook_pushButton", None),
-                ("📸 Фотоаппарат", "PhotoCamera_pushButton", None),
-                ("📺 Телевизор", "TV_pushButton", None),
-                ("🎮 Игр. приставка", "GameConsole_pushButton", None),
-                ("📽️ Проектор", "Projector_pushButton", None)
+                ("📟 Планшет", "Tablet_pushButton", self.open_remont_tablet),
+                ("📖 Эл. книги", "Ebook_pushButton", self.open_remont_ebook),
+                ("📸 Фотоаппарат", "PhotoCamera_pushButton", self.open_remont_camera),
+                ("📺 Телевизор", "TV_pushButton", self.open_remont_tv),
+                ("🎮 Игр. приставка", "GameConsole_pushButton", self.open_remont_console),
+                ("📽️ Проектор", "Projector_pushButton", self.open_remont_projector)
             ]
         )
         services_grid.addWidget(digital_frame, 0, 0)
@@ -424,9 +438,9 @@ class Ui_main_window_Dialog(object):
         household_frame = self.create_service_category(
             "🏠 Ремонт бытовой техники",
             [
-                ("🧹 Пылесосы", "Vacuum_Cleaner_pushButton", None),
-                ("☕ Кофемашины", "Coffee_Machine_pushButton", None),
-                ("🌀 Вентиляторы", "Fan_pushButton", None)
+                ("🧹 Пылесосы", "Vacuum_Cleaner_pushButton", self.open_remont_vacuum),
+                ("☕ Кофемашины", "Coffee_Machine_pushButton", self.open_remont_coffee),
+                ("🌀 Вентиляторы", "Fan_pushButton", self.open_remont_fan)
             ]
         )
         services_grid.addWidget(household_frame, 0, 1)
@@ -435,9 +449,9 @@ class Ui_main_window_Dialog(object):
         video_frame = self.create_service_category(
             "🎥 Ремонт видеотехники",
             [
-                ("📹 Видеонаблюдение", "Security_Camera_pushButton", None),
-                ("👶 Видеоняня", "Video_Babysitter_pushButton", None),
-                ("📼 Видеорегистратор", "DVR_pushButton", None)
+                ("📹 Видеонаблюдение", "Security_Camera_pushButton", self.open_remont_security_camera),
+                ("👶 Видеоняня", "Video_Babysitter_pushButton", self.open_remont_babysitter),
+                ("📼 Видеорегистратор", "DVR_pushButton", self.open_remont_dvr)
             ]
         )
         services_grid.addWidget(video_frame, 1, 0)
@@ -446,9 +460,9 @@ class Ui_main_window_Dialog(object):
         audio_frame = self.create_service_category(
             "🎵 Ремонт аудиотехники",
             [
-                ("🔊 Сабвуферы", "Subwoofer_pushButton", None),
-                ("🎵 Колонки", "Columns_pushButton", None),
-                ("🎚️ Усилители", "Sound_amplifier_pushButton", None)
+                ("🔊 Сабвуферы", "Subwoofer_pushButton", self.open_remont_subwoofer),
+                ("🎵 Колонки", "Columns_pushButton", self.open_remont_columns),
+                ("🎚️ Усилители", "Sound_amplifier_pushButton", self.open_remont_amplifier)
             ]
         )
         services_grid.addWidget(audio_frame, 1, 1)
@@ -633,7 +647,7 @@ class Ui_main_window_Dialog(object):
         # Информация о местоположении
         location_info = QtWidgets.QLabel(
             "📍 Красноярск, Улица Микуцкого, 12\n"
-            "📞 +7 (999) 123-45-67"
+            "📞 +7 (929) 356-23-78"
         )
         location_info.setStyleSheet("""
             QLabel {
@@ -899,6 +913,111 @@ class Ui_main_window_Dialog(object):
         """Открывает окно ремонта ноутбуков"""
         self.Dialog = QtWidgets.QDialog()
         self.ui = Ui_Ui_Remont_Laptop_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_tablet(self):
+        """Открывает окно ремонта планшетов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Tablet_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_ebook(self):
+        """Открывает окно ремонта электронных книг"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Ebook_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_camera(self):
+        """Открывает окно ремонта фотоаппаратов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Camera_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_tv(self):
+        """Открывает окно ремонта телевизоров"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_TV_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_console(self):
+        """Открывает окно ремонта игровых приставок"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Console_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_projector(self):
+        """Открывает окно ремонта проекторов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Projector_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_vacuum(self):
+        """Открывает окно ремонта пылесосов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Vacuum_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_coffee(self):
+        """Открывает окно ремонта кофемашин"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Coffee_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_fan(self):
+        """Открывает окно ремонта вентиляторов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Fan_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_security_camera(self):
+        """Открывает окно ремонта видеонаблюдения"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_SecurityCamera_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_babysitter(self):
+        """Открывает окно ремонта видеонянь"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Babysitter_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_dvr(self):
+        """Открывает окно ремонта видеорегистраторов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_DVR_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_subwoofer(self):
+        """Открывает окно ремонта сабвуферов"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Subwoofer_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_columns(self):
+        """Открывает окно ремонта колонок"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Columns_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+    def open_remont_amplifier(self):
+        """Открывает окно ремонта усилителей"""
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Ui_Remont_Amplifier_Dialog()
         self.ui.setupUi(self.Dialog)
         self.Dialog.show()
 

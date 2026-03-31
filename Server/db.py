@@ -922,3 +922,196 @@ def update_password_in_db(user_id, current_password, new_password):
         if conn.is_connected():
             cursor.close()
             conn.close()
+
+
+# ========== УВЕДОМЛЕНИЯ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ==========
+
+def create_user_notification(user_id: int, title: str, message: str,
+                             notification_type: str = 'info',
+                             link_to: str = None, link_type: str = None,
+                             link_id: int = None) -> bool:
+    """
+    Создает уведомление для пользователя
+    """
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    cursor = conn.cursor()
+
+    try:
+        query = """
+        INSERT INTO UserNotifications (UserID, Title, Message, Type, LinkTo, LinkType, LinkID)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (user_id, title[:255], message, notification_type,
+                               link_to, link_type, link_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Ошибка создания уведомления: {e}")
+        conn.rollback()
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_user_notifications(user_id: int, limit: int = 50, include_read: bool = False) -> List[Dict[str, Any]]:
+    """
+    Получает уведомления пользователя
+    """
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        query = """
+        SELECT 
+            NotificationID,
+            Title,
+            Message,
+            Type,
+            IsRead,
+            LinkTo,
+            LinkType,
+            LinkID,
+            DATE_FORMAT(CreatedAt, '%%d.%%m.%%Y %%H:%%i') as CreatedAtFormatted,
+            CreatedAt
+        FROM UserNotifications
+        WHERE UserID = %s
+        """
+        params = [user_id]
+
+        if not include_read:
+            query += " AND IsRead = 0"
+
+        query += " ORDER BY CreatedAt DESC LIMIT %s"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Ошибка получения уведомлений: {e}")
+        return []
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def get_unread_notifications_count(user_id: int) -> int:
+    """
+    Получает количество непрочитанных уведомлений пользователя
+    """
+    conn = get_connection()
+    if conn is None:
+        return 0
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) FROM UserNotifications 
+            WHERE UserID = %s AND IsRead = 0
+        """, (user_id,))
+        return cursor.fetchone()[0]
+    except Exception as e:
+        print(f"Ошибка получения количества уведомлений: {e}")
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def mark_notification_as_read(notification_id: int, user_id: int) -> bool:
+    """
+    Отмечает уведомление как прочитанное
+    """
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE UserNotifications 
+            SET IsRead = 1 
+            WHERE NotificationID = %s AND UserID = %s
+        """, (notification_id, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"Ошибка отметки уведомления: {e}")
+        conn.rollback()
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def mark_all_notifications_as_read(user_id: int) -> int:
+    """
+    Отмечает все уведомления пользователя как прочитанные
+    """
+    conn = get_connection()
+    if conn is None:
+        return 0
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE UserNotifications 
+            SET IsRead = 1 
+            WHERE UserID = %s AND IsRead = 0
+        """, (user_id,))
+        conn.commit()
+        return cursor.rowcount
+    except Exception as e:
+        print(f"Ошибка отметки всех уведомлений: {e}")
+        conn.rollback()
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
+
+
+def delete_notification(notification_id: int, user_id: int) -> bool:
+    """
+    Удаляет уведомление
+    """
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM UserNotifications 
+            WHERE NotificationID = %s AND UserID = %s
+        """, (notification_id, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"Ошибка удаления уведомления: {e}")
+        conn.rollback()
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn.is_connected():
+            conn.close()
