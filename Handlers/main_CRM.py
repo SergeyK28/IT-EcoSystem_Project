@@ -1,24 +1,59 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor, QLinearGradient, QPalette
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMessageBox, QDialog
+"""
+Модуль главного окна CRM системы IT-EcoSystem.
+Содержит основной интерфейс для управления заказами, клиентами, складом и другими функциями.
+
+Основные возможности:
+- Отображение списка заказов в таблице
+- Фильтрация заказов по статусу
+- Поиск заказов по тексту
+- Открытие детальной информации о заказе
+- Навигация по разделам CRM (клиенты, склад, услуги, платежи и т.д.)
+- Авторизация сотрудников
+- Уведомления о событиях
+"""
+
 import sys
 import os
+from typing import Dict, List, Any
 
-# Добавляем путь к модулям
+from PyQt5 import QtGui, QtWidgets
+from PyQt5.QtCore import Qt, QTimer, QDate
+from PyQt5.QtGui import QColor, QPalette, QFont
+from PyQt5.QtWidgets import (
+    QGraphicsDropShadowEffect, QMessageBox, QDialog, QTableWidgetItem,
+    QApplication
+)
+
+# Добавляем путь к модулям проекта
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from Handlers.employee_session import employee_session
-from Handlers.employee_profile import EmployeeProfileDialog
+
+# Импорты из других модулей проекта
+from Handlers.Employees.employee_session import employee_session
+from Handlers.Dialog.reports_dialog import ReportsDialog
+from Handlers.Employees.employee_profile import EmployeeProfileDialog
+from Handlers.Dialog.trends_dialog import TrendsDialog
 from Server import db_crm
 
 
-class Ui_main_window_CRM(object):
+class Ui_main_window_CRM:
+    """
+    Класс, отвечающий за создание и управление интерфейсом главного окна CRM.
+    Содержит все элементы управления и их обработчики.
+    """
+
     def setupUi(self, main_window_CRM):
+        """
+        Настраивает пользовательский интерфейс главного окна.
+
+        Аргументы:
+            main_window_CRM: Родительское окно, в которое встраивается интерфейс
+        """
+        # ==================== ОСНОВНЫЕ НАСТРОЙКИ ОКНА ====================
         main_window_CRM.setObjectName("main_window_CRM")
         main_window_CRM.resize(1400, 950)
 
-        # Главный градиентный фон
+        # Устанавливаем градиентный фон для главного окна
         main_window_CRM.setStyleSheet("""
             QDialog {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -26,16 +61,22 @@ class Ui_main_window_CRM(object):
             }
         """)
 
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../Pictures/Screenshot from 2025-09-15 14-30-16.png"),
-                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        main_window_CRM.setWindowIcon(icon)
+        # Устанавливаем иконку окна
+        icon_path = "../Pictures/Screenshot from 2025-09-15 14-30-16.png"
+        if os.path.exists(icon_path):
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap(icon_path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            main_window_CRM.setWindowIcon(icon)
 
+        # ==================== ГЛАВНЫЙ КОНТЕЙНЕР ====================
+        # Основной горизонтальный макет с отступами
         self.horizontalLayout = QtWidgets.QHBoxLayout(main_window_CRM)
         self.horizontalLayout.setContentsMargins(20, 20, 20, 20)
         self.horizontalLayout.setSpacing(20)
         self.horizontalLayout.setObjectName("horizontalLayout")
 
+        # ==================== ОБЛАСТЬ ПРОКРУТКИ ====================
+        # Создаем область прокрутки для всего содержимого
         self.scrollArea = QtWidgets.QScrollArea(main_window_CRM)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setStyleSheet("""
@@ -63,16 +104,18 @@ class Ui_main_window_CRM(object):
         """)
         self.scrollArea.setObjectName("scrollArea")
 
+        # Контейнер для содержимого области прокрутки
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setStyleSheet("background-color: transparent;")
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
 
+        # Горизонтальный макет внутри контейнера
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
         self.horizontalLayout_4.setContentsMargins(10, 10, 10, 10)
         self.horizontalLayout_4.setSpacing(20)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
 
-        # ========== ЛЕВАЯ ПАНЕЛЬ С КНОПКАМИ ==========
+        # ==================== ЛЕВАЯ ПАНЕЛЬ НАВИГАЦИИ ====================
         self.left_panel = QtWidgets.QFrame(self.scrollAreaWidgetContents)
         self.left_panel.setFixedWidth(240)
         self.left_panel.setStyleSheet("""
@@ -83,18 +126,19 @@ class Ui_main_window_CRM(object):
             }
         """)
 
-        # Тень для левой панели
+        # Добавляем тень для левой панели
         panel_shadow = QGraphicsDropShadowEffect()
         panel_shadow.setBlurRadius(20)
         panel_shadow.setColor(QColor(0, 0, 0, 100))
         panel_shadow.setOffset(0, 5)
         self.left_panel.setGraphicsEffect(panel_shadow)
 
+        # Вертикальный макет для кнопок навигации
         self.left_layout = QtWidgets.QVBoxLayout(self.left_panel)
         self.left_layout.setContentsMargins(10, 20, 10, 20)
         self.left_layout.setSpacing(10)
 
-        # Логотип в левой панели
+        # ========== ЛОГОТИП ==========
         self.logo_label = QtWidgets.QLabel("IT-EcoSystem\nCRM")
         self.logo_label.setAlignment(Qt.AlignCenter)
         self.logo_label.setStyleSheet("""
@@ -109,8 +153,9 @@ class Ui_main_window_CRM(object):
         """)
         self.left_layout.addWidget(self.logo_label)
 
-        # Стиль для кнопок левой панели (как в main_window)
-        left_button_style = """
+        # ========== КНОПКИ НАВИГАЦИИ ==========
+        # Стиль для кнопок навигации
+        nav_button_style = """
             QPushButton {
                 background-color: transparent;
                 color: #d0d0d0;
@@ -128,45 +173,43 @@ class Ui_main_window_CRM(object):
             QPushButton:pressed {
                 background-color: #4a4a4a;
             }
-            QPushButton:checked {
-                background-color: #4CAF50;
-                color: white;
-            }
         """
 
-        # Создаем кнопки (НЕ checkable, как в оригинале)
-        self.PB_Trends = self.create_nav_button("📊 Тренды", left_button_style, checkable=False)
+        # Создаем все кнопки навигации
+        self.PB_Trends = self._create_nav_button("📊 Тренды", nav_button_style)
         self.left_layout.addWidget(self.PB_Trends)
 
-        self.PB_Objectives = self.create_nav_button("✅ Задачи", left_button_style, checkable=False)
+        self.PB_Objectives = self._create_nav_button("✅ Задачи", nav_button_style)
         self.left_layout.addWidget(self.PB_Objectives)
 
-        self.PB_Orders = self.create_nav_button("📦 Заказы", left_button_style, checkable=False)
-        self.left_layout.addWidget(self.PB_Orders)
-
-        self.PB_Pay = self.create_nav_button("💰 Платежи", left_button_style, checkable=False)
+        self.PB_Pay = self._create_nav_button("💰 Платежи", nav_button_style)
         self.left_layout.addWidget(self.PB_Pay)
 
-        self.PB_Customers = self.create_nav_button("👥 Клиенты", left_button_style, checkable=False)
+        self.PB_Customers = self._create_nav_button("👥 Клиенты", nav_button_style)
         self.left_layout.addWidget(self.PB_Customers)
 
-        self.PB_Warehouses = self.create_nav_button("📦 Склад", left_button_style, checkable=False)
+        self.PB_Services = self._create_nav_button("🛠️ Услуги", nav_button_style)
+        self.left_layout.addWidget(self.PB_Services)
+
+        self.PB_Warehouses = self._create_nav_button("📦 Склад", nav_button_style)
         self.left_layout.addWidget(self.PB_Warehouses)
 
-        self.PB_Shops = self.create_nav_button("🏪 Магазин", left_button_style, checkable=False)
+        self.PB_Shops = self._create_nav_button("🏪 Магазин", nav_button_style)
         self.left_layout.addWidget(self.PB_Shops)
 
-        self.PB_Reports = self.create_nav_button("📈 Отчеты", left_button_style, checkable=False)
+        self.PB_Reports = self._create_nav_button("📈 Отчеты", nav_button_style)
         self.left_layout.addWidget(self.PB_Reports)
 
-        self.PB_Customization = self.create_nav_button("⚙️ Настройка", left_button_style, checkable=False)
+        self.PB_Customization = self._create_nav_button("⚙️ Настройка", nav_button_style)
         self.left_layout.addWidget(self.PB_Customization)
 
+        # Растягивающий элемент для прижатия кнопок к верху
         self.left_layout.addStretch()
 
+        # Добавляем левую панель в основной макет
         self.horizontalLayout_4.addWidget(self.left_panel)
 
-        # ========== ПРАВАЯ ПАНЕЛЬ С ТАБЛИЦЕЙ ==========
+        # ==================== ПРАВАЯ ПАНЕЛЬ (ОСНОВНОЙ КОНТЕНТ) ====================
         self.right_panel = QtWidgets.QFrame(self.scrollAreaWidgetContents)
         self.right_panel.setStyleSheet("""
             QFrame {
@@ -176,18 +219,19 @@ class Ui_main_window_CRM(object):
             }
         """)
 
-        # Тень для правой панели
+        # Добавляем тень для правой панели
         right_shadow = QGraphicsDropShadowEffect()
         right_shadow.setBlurRadius(20)
         right_shadow.setColor(QColor(0, 0, 0, 100))
         right_shadow.setOffset(0, 5)
         self.right_panel.setGraphicsEffect(right_shadow)
 
+        # Вертикальный макет для содержимого правой панели
         self.right_layout = QtWidgets.QVBoxLayout(self.right_panel)
         self.right_layout.setContentsMargins(20, 20, 20, 20)
         self.right_layout.setSpacing(15)
 
-        # ========== ВЕРХНЯЯ ПАНЕЛЬ (как в main_window) ==========
+        # ==================== ВЕРХНЯЯ ИНФОРМАЦИОННАЯ ПАНЕЛЬ ====================
         self.top_info_frame = QtWidgets.QFrame()
         self.top_info_frame.setStyleSheet("""
             QFrame {
@@ -200,8 +244,9 @@ class Ui_main_window_CRM(object):
         top_layout = QtWidgets.QHBoxLayout(self.top_info_frame)
         top_layout.setContentsMargins(15, 8, 15, 8)
 
+        # Текущая дата
         self.date_label = QtWidgets.QLabel()
-        self.date_label.setText(QtCore.QDate.currentDate().toString("dd MMMM yyyy"))
+        self.date_label.setText(QDate.currentDate().toString("dd MMMM yyyy"))
         self.date_label.setStyleSheet("""
             QLabel {
                 color: #b0b0b0;
@@ -211,6 +256,7 @@ class Ui_main_window_CRM(object):
             }
         """)
 
+        # Статистика заказов
         self.stats_label = QtWidgets.QLabel("Активных заказов: 0 | Новых: 0")
         self.stats_label.setStyleSheet("""
             QLabel {
@@ -227,7 +273,7 @@ class Ui_main_window_CRM(object):
 
         self.right_layout.addWidget(self.top_info_frame)
 
-        # ========== ХЕДЕР (как в main_window) ==========
+        # ==================== ХЕДЕР (ЗАГОЛОВОК И ПОИСК) ====================
         self.header_frame = QtWidgets.QFrame()
         self.header_frame.setStyleSheet("""
             QFrame {
@@ -241,7 +287,7 @@ class Ui_main_window_CRM(object):
         header_layout.setContentsMargins(15, 10, 15, 10)
         header_layout.setSpacing(20)
 
-        # Заголовок раздела
+        # Заголовок раздела с количеством заказов
         self.LBTEXT_Ordes = QtWidgets.QLabel("Заказы /")
         self.LBTEXT_Ordes.setStyleSheet("""
             QLabel {
@@ -252,7 +298,7 @@ class Ui_main_window_CRM(object):
         """)
         header_layout.addWidget(self.LBTEXT_Ordes)
 
-        # Кнопки статусов
+        # Кнопки фильтрации по типу заказа
         button_style = """
             QPushButton {
                 background-color: transparent;
@@ -282,8 +328,7 @@ class Ui_main_window_CRM(object):
 
         header_layout.addStretch()
 
-        # Правая часть хедера (как в main_window - поиск, уведомления, профиль)
-        # ПОИСК (как в main_window)
+        # ========== ПОЛЕ ПОИСКА ==========
         self.Search = QtWidgets.QLineEdit()
         self.Search.setPlaceholderText("🔍 Поиск заказов...")
         self.Search.setMinimumWidth(250)
@@ -307,7 +352,7 @@ class Ui_main_window_CRM(object):
         """)
         header_layout.addWidget(self.Search)
 
-        # Кнопка уведомлений
+        # ========== КНОПКА УВЕДОМЛЕНИЙ ==========
         self.PB_Notification = QtWidgets.QPushButton("🔔")
         self.PB_Notification.setStyleSheet("""
             QPushButton {
@@ -328,12 +373,12 @@ class Ui_main_window_CRM(object):
         """)
         header_layout.addWidget(self.PB_Notification)
 
-        # КОНТЕЙНЕР ДЛЯ КНОПОК ВХОДА/ПРОФИЛЯ (как в main_window)
+        # ========== КОНТЕЙНЕР АВТОРИЗАЦИИ ==========
         self.auth_container = QtWidgets.QWidget()
         auth_layout = QtWidgets.QHBoxLayout(self.auth_container)
         auth_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Кнопка входа (стиль как в main_window)
+        # Кнопка входа (показывается когда пользователь не авторизован)
         self.Enter_PushButton = QtWidgets.QPushButton("👤 Войти")
         self.Enter_PushButton.setStyleSheet("""
             QPushButton {
@@ -356,7 +401,7 @@ class Ui_main_window_CRM(object):
             }
         """)
 
-        # Кнопка профиля (изначально скрыта)
+        # Кнопка профиля (показывается когда пользователь авторизован)
         self.Profile_PushButton = QtWidgets.QPushButton("👤 Профиль")
         self.Profile_PushButton.setStyleSheet("""
             QPushButton {
@@ -378,7 +423,7 @@ class Ui_main_window_CRM(object):
                     stop:0 #3d8b40, stop:1 #357a38);
             }
         """)
-        self.Profile_PushButton.hide()
+        self.Profile_PushButton.hide()  # Изначально скрыта
 
         auth_layout.addWidget(self.Enter_PushButton)
         auth_layout.addWidget(self.Profile_PushButton)
@@ -387,7 +432,7 @@ class Ui_main_window_CRM(object):
 
         self.right_layout.addWidget(self.header_frame)
 
-        # ========== ПАНЕЛЬ ФИЛЬТРОВ (как в оригинале) ==========
+        # ==================== ПАНЕЛЬ ФИЛЬТРОВ ПО СТАТУСУ ====================
         self.filter_frame = QtWidgets.QFrame()
         self.filter_frame.setStyleSheet("""
             QFrame {
@@ -400,6 +445,7 @@ class Ui_main_window_CRM(object):
         filter_layout.setContentsMargins(10, 5, 10, 5)
         filter_layout.setSpacing(5)
 
+        # Стиль для кнопок фильтра
         filter_button_style = """
             QPushButton {
                 background-color: transparent;
@@ -419,6 +465,7 @@ class Ui_main_window_CRM(object):
             }
         """
 
+        # Создаем все кнопки фильтрации по статусу
         self.PB_All = QtWidgets.QPushButton("Все")
         self.PB_All.setStyleSheet(filter_button_style)
         filter_layout.addWidget(self.PB_All)
@@ -457,7 +504,7 @@ class Ui_main_window_CRM(object):
 
         filter_layout.addStretch()
 
-        # Кнопка фильтра
+        # Кнопка принудительного поиска/фильтра
         self.PB_Filter = QtWidgets.QPushButton("🔍 Фильтр")
         self.PB_Filter.setStyleSheet("""
             QPushButton {
@@ -477,7 +524,7 @@ class Ui_main_window_CRM(object):
 
         self.right_layout.addWidget(self.filter_frame)
 
-        # ========== ТАБЛИЦА CRM ==========
+        # ==================== ТАБЛИЦА ЗАКАЗОВ ====================
         self.tableCRM = QtWidgets.QTableWidget()
         self.tableCRM.setStyleSheet("""
             QTableWidget {
@@ -506,20 +553,22 @@ class Ui_main_window_CRM(object):
         """)
         self.tableCRM.setAlternatingRowColors(True)
 
-        # Устанавливаем количество столбцов
+        # Настройка столбцов таблицы
         self.tableCRM.setColumnCount(11)  # 10 видимых + 1 скрытый
 
-        # Устанавливаем заголовки столбцов
+        # Заголовки столбцов
         headers = [
             "Заказы", "Статус", "Клиент", "Менеджер", "Исполнитель",
-            "Причины обращения", "Бренд", "Модель", "Тип устройства", "Внешний вид", "OrderID"
+            "Причины обращения", "Бренд", "Модель", "Тип устройства",
+            "Внешний вид", "OrderID"
         ]
+
         for i, header in enumerate(headers):
-            item = QtWidgets.QTableWidgetItem(header)
-            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item = QTableWidgetItem(header)
+            item.setTextAlignment(Qt.AlignCenter)
             self.tableCRM.setHorizontalHeaderItem(i, item)
 
-        # Скрываем последний столбец с OrderID
+        # Скрываем столбец с OrderID (он нужен для внутренней работы)
         self.tableCRM.setColumnHidden(10, True)
 
         self.tableCRM.setRowCount(0)
@@ -528,7 +577,7 @@ class Ui_main_window_CRM(object):
 
         self.right_layout.addWidget(self.tableCRM)
 
-        # ========== НИЖНЯЯ ПАНЕЛЬ ==========
+        # ==================== НИЖНЯЯ ПАНЕЛЬ ====================
         self.bottom_frame = QtWidgets.QFrame()
         self.bottom_frame.setStyleSheet("""
             QFrame {
@@ -540,10 +589,11 @@ class Ui_main_window_CRM(object):
         bottom_layout = QtWidgets.QHBoxLayout(self.bottom_frame)
         bottom_layout.setContentsMargins(15, 10, 15, 10)
 
+        # Информация о количестве строк
         self.pagination_label = QtWidgets.QLabel("Строк: 0")
         self.pagination_label.setStyleSheet("color: #b0b0b0; font-size: 12px;")
 
-        # Кнопка добавления заказа (как в оригинале)
+        # Кнопка добавления нового заказа
         self.PB_Add_Order = QtWidgets.QPushButton("Добавить заказ")
         self.PB_Add_Order.setStyleSheet("""
             QPushButton {
@@ -565,8 +615,6 @@ class Ui_main_window_CRM(object):
                     stop:0 #3d8b40, stop:1 #357a38);
             }
         """)
-        self.PB_Add_Order.setIcon(QtGui.QIcon())
-        self.PB_Add_Order.setIconSize(QtCore.QSize(20, 20))
 
         bottom_layout.addWidget(self.pagination_label)
         bottom_layout.addStretch()
@@ -574,19 +622,67 @@ class Ui_main_window_CRM(object):
 
         self.right_layout.addWidget(self.bottom_frame)
 
+        # Завершаем сборку интерфейса
         self.horizontalLayout_4.addWidget(self.right_panel)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.horizontalLayout.addWidget(self.scrollArea)
 
-        # ПОДКЛЮЧАЕМ СИГНАЛЫ
+        # ==================== ПОДКЛЮЧЕНИЕ СИГНАЛОВ ====================
+        self._connect_signals()
+
+        # ==================== ЗАГРУЗКА ДАННЫХ ====================
+        self.load_orders_data()
+        self.update_login_button()
+
+        # Устанавливаем таймер для обновления уведомлений (каждые 30 секунд)
+        self.notification_timer = QTimer()
+        self.notification_timer.timeout.connect(self.update_notification_badge)
+        self.notification_timer.start(30000)  # 30 секунд
+
+        # Запускаем таймер обновления даты
+        self.date_timer = QTimer()
+        self.date_timer.timeout.connect(self._update_current_date)
+        self.date_timer.start(60000)  # Обновлять каждую минуту
+
+    def _create_nav_button(self, text: str, style: str) -> QtWidgets.QPushButton:
+        """
+        Создает кнопку навигации с заданным стилем.
+
+        Аргументы:
+            text: Текст кнопки
+            style: CSS стиль для кнопки
+
+        Returns:
+            QPushButton: Созданная кнопка
+        """
+        btn = QtWidgets.QPushButton(text)
+        btn.setStyleSheet(style)
+        btn.setCursor(Qt.PointingHandCursor)
+        return btn
+
+    def _connect_signals(self):
+        """
+        Подключает все сигналы к соответствующим слотам.
+        """
+        # Сигналы таблицы
         self.tableCRM.cellDoubleClicked.connect(self.open_order_details)
+
+        # Сигналы поиска и фильтрации
         self.Search.returnPressed.connect(self.apply_search_filter)
         self.PB_Filter.clicked.connect(self.apply_search_filter)
-        self.PB_Add_Order.clicked.connect(self.add_new_order)
-        self.Enter_PushButton.clicked.connect(self.open_profile)
-        self.Profile_PushButton.clicked.connect(self.open_profile)
 
-        # Подключаем фильтры
+        # Сигналы кнопок навигации
+        self.PB_Trends.clicked.connect(self.open_trends)
+        self.PB_Objectives.clicked.connect(self.open_objectives)
+        self.PB_Services.clicked.connect(self.open_services)
+        self.PB_Warehouses.clicked.connect(self.open_warehouse)
+        self.PB_Pay.clicked.connect(self.open_payments)
+        self.PB_Customers.clicked.connect(self.open_customers)
+        self.PB_Shops.clicked.connect(self.open_shops)
+        self.PB_Reports.clicked.connect(self.open_reports)
+        self.PB_Customization.clicked.connect(self.open_settings)
+
+        # Сигналы кнопок фильтрации по статусу
         self.PB_All.clicked.connect(lambda: self.load_orders_data())
         self.PB_New.clicked.connect(lambda: self.load_orders_data("Новая"))
         self.PB_Active.clicked.connect(lambda: self.load_orders_data("Активная"))
@@ -597,31 +693,213 @@ class Ui_main_window_CRM(object):
         self.PB_CloUns.clicked.connect(lambda: self.load_orders_data("Закрыто неуспешно"))
         self.PB_Carrying.clicked.connect(lambda: self.load_orders_data("Клиент несет заказ"))
 
-        # Подключаем остальные кнопки
-        self.PB_Objectives.clicked.connect(self.open_objectives)
-        self.PB_Customers.clicked.connect(self.open_customers)
-        self.PB_Shops.clicked.connect(self.open_shops)
+        # Сигналы авторизации
+        self.PB_Add_Order.clicked.connect(self.add_new_order)
+        self.Enter_PushButton.clicked.connect(self.open_profile)
+        self.Profile_PushButton.clicked.connect(self.open_profile)
 
-        self.retranslateUi(main_window_CRM)
-        QtCore.QMetaObject.connectSlotsByName(main_window_CRM)
+        # Сигнал уведомлений
+        self.PB_Notification.clicked.connect(self.show_notifications)
 
-        # Загружаем данные
-        self.load_orders_data()
-        self.update_login_button()
+    def _update_current_date(self):
+        """
+        Обновляет текущую дату в интерфейсе.
+        """
+        self.date_label.setText(QDate.currentDate().toString("dd MMMM yyyy"))
 
-    def create_nav_button(self, text, style, checkable=False):
-        """Создает кнопку навигации"""
-        btn = QtWidgets.QPushButton(text)
-        btn.setStyleSheet(style)
-        btn.setCursor(Qt.PointingHandCursor)
-        return btn
+    # ==================== МЕТОДЫ РАБОТЫ С ЗАКАЗАМИ ====================
 
-    def retranslateUi(self, main_window_CRM):
-        _translate = QtCore.QCoreApplication.translate
-        main_window_CRM.setWindowTitle(_translate("main_window_CRM", "IT-EcoSystem - CRM"))
+    def load_orders_data(self, status_filter: str = None):
+        """
+        Загружает данные заказов из базы данных в таблицу.
+
+        Аргументы:
+            status_filter: Фильтр по статусу (None - все заказы)
+        """
+        try:
+            # Получаем заказы из базы данных
+            orders = db_crm.get_orders_for_crm_table(filter_status=status_filter)
+            self._update_table_with_data(orders)
+
+            # Обновляем статистику
+            new_count = sum(1 for o in orders if o.get('Статус') == 'Новая')
+            active_count = len(orders)
+            self.stats_label.setText(f"Активных заказов: {active_count} | Новых: {new_count}")
+
+            # Обновляем счетчик уведомлений
+            self.update_notification_badge()
+
+        except Exception as e:
+            print(f"Ошибка загрузки данных: {e}")
+            QMessageBox.critical(None, "Ошибка", f"Ошибка при загрузке данных: {e}")
+
+    def _update_table_with_data(self, orders: List[Dict[str, Any]]):
+        """
+        Обновляет таблицу полученными данными.
+
+        Аргументы:
+            orders: Список словарей с данными заказов
+        """
+        self.tableCRM.setRowCount(len(orders))
+
+        # Список полей для отображения в таблице (порядок соответствует заголовкам)
+        fields = [
+            'Заказы', 'Статус', 'Клиент', 'Менеджер', 'Исполнитель',
+            'Причины обращения', 'Бренд', 'Модель', 'Тип устройства', 'Внешний вид'
+        ]
+
+        for row, order in enumerate(orders):
+            for col, field in enumerate(fields):
+                value = order.get(field, '')
+                if value is None:
+                    value = ''
+
+                item = QTableWidgetItem(str(value))
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+
+                # Специальная обработка для столбца со статусом
+                if field == 'Статус':
+                    item.setTextAlignment(Qt.AlignCenter)
+                    self._color_status_item(item, str(value))
+                elif col == 0:  # Номер заказа
+                    item.setTextAlignment(Qt.AlignCenter)
+
+                self.tableCRM.setItem(row, col, item)
+
+            # Сохраняем OrderID в скрытый столбец
+            order_id = order.get('OrderID', '')
+            if order_id:
+                order_id_item = QTableWidgetItem(str(order_id))
+                self.tableCRM.setItem(row, 10, order_id_item)
+
+        # Настраиваем размеры столбцов
+        self.tableCRM.resizeColumnsToContents()
+        self.LBTEXT_Ordes.setText(f"Заказы ({len(orders)}) /")
+        self.pagination_label.setText(f"Строк: {len(orders)}")
+
+    def _color_status_item(self, item: QTableWidgetItem, status: str):
+        """
+        Добавляет цветовое оформление для ячеек статуса.
+
+        Аргументы:
+            item: Элемент таблицы
+            status: Текст статуса
+        """
+        colors = {
+            'Новая': QColor(66, 135, 245),  # Синий
+            'Активная': QColor(255, 193, 7),  # Желтый
+            'Срочное': QColor(220, 53, 69),  # Красный
+            'В работе': QColor(25, 135, 84),  # Зеленый
+            'Ждут запчасти': QColor(255, 149, 0),  # Оранжевый
+            'Готовое': QColor(40, 167, 69),  # Зеленый
+            'Завершен': QColor(108, 117, 125),  # Серый
+            'Закрыто неуспешно': QColor(108, 117, 125),  # Серый
+            'Клиент несет заказ': QColor(155, 89, 182)  # Фиолетовый
+        }
+
+        if status in colors:
+            item.setBackground(colors[status])
+            item.setForeground(QColor(255, 255, 255))
+
+    def apply_search_filter(self):
+        """
+        Применяет поисковый фильтр при вводе текста в поле поиска.
+        """
+        search_text = self.Search.text().strip()
+        if not search_text:
+            self.load_orders_data()
+            return
+
+        try:
+            orders = db_crm.get_orders_for_crm_table(search_text=search_text)
+            self._update_table_with_data(orders)
+        except Exception as e:
+            print(f"Ошибка поиска: {e}")
+            QMessageBox.critical(None, "Ошибка", f"Ошибка при поиске: {e}")
+
+    def open_order_details(self, row: int, column: int):
+        """
+        Открывает форму редактирования заказа при двойном клике.
+
+        Аргументы:
+            row: Номер строки
+            column: Номер столбца
+        """
+        try:
+            order_id_item = self.tableCRM.item(row, 10)
+            if not order_id_item:
+                QMessageBox.warning(None, "Ошибка", "Не удалось получить ID заказа")
+                return
+
+            order_id = int(order_id_item.text())
+            order_data = db_crm.get_order_for_edit_form(order_id)
+
+            if not order_data:
+                QMessageBox.warning(None, "Ошибка", f"Не удалось загрузить данные заказа #{order_id}")
+                return
+
+            self._open_order_edit_dialog(order_id, order_data)
+
+        except ValueError as e:
+            print(f"Ошибка преобразования ID заказа: {e}")
+            QMessageBox.warning(None, "Ошибка", "Некорректный ID заказа")
+        except Exception as e:
+            print(f"Ошибка открытия деталей заказа: {e}")
+            QMessageBox.warning(None, "Ошибка", f"Не удалось открыть детали заказа: {e}")
+
+    def _open_order_edit_dialog(self, order_id: int, order_data: Dict[str, Any]):
+        """
+        Открывает диалог редактирования заказа.
+
+        Аргументы:
+            order_id: ID заказа
+            order_data: Данные заказа
+        """
+        try:
+            from CRM_Order_Edit import OrderEditDialog
+            dialog = OrderEditDialog(order_id, order_data)
+            result = dialog.exec_()
+
+            if result == QDialog.Accepted:
+                self.load_orders_data()
+                QMessageBox.information(None, "Успех", "Изменения сохранены")
+
+        except ImportError as e:
+            print(f"Не удалось импортировать модуль редактирования: {e}")
+            QMessageBox.warning(None, "Функция недоступна",
+                                "Модуль редактирования заказов временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия диалога редактирования: {e}")
+            QMessageBox.critical(None, "Ошибка",
+                                 f"Не удалось открыть форму редактирования: {e}")
+
+    def add_new_order(self):
+        """
+        Открывает форму добавления нового заказа.
+        """
+        try:
+            from CRM_Add_Order import AddOrderDialog
+            dialog = AddOrderDialog()
+            result = dialog.exec_()
+
+            if result == QDialog.Accepted:
+                self.load_orders_data()
+                QMessageBox.information(None, "Успех", "Новый заказ добавлен!")
+
+        except ImportError as e:
+            print(f"Не удалось импортировать модуль добавления заказа: {e}")
+            QMessageBox.critical(None, "Ошибка", "Модуль добавления заказов не найден")
+        except Exception as e:
+            print(f"Ошибка открытия формы добавления заказа: {e}")
+            QMessageBox.critical(None, "Ошибка",
+                                 f"Не удалось открыть форму добавления заказа: {e}")
+
+    # ==================== МЕТОДЫ АВТОРИЗАЦИИ ====================
 
     def update_login_button(self):
-        """Обновляет отображение кнопки входа/профиля"""
+        """
+        Обновляет отображение кнопки входа/профиля в зависимости от статуса авторизации.
+        """
         if employee_session.is_authenticated():
             # Пользователь авторизован - показываем кнопку профиля
             self.Enter_PushButton.hide()
@@ -632,20 +910,27 @@ class Ui_main_window_CRM(object):
             else:
                 self.Profile_PushButton.setText("👤 Профиль")
             self.Profile_PushButton.show()
+
+            # Обновляем счетчик уведомлений
+            self.update_notification_badge()
         else:
             # Пользователь не авторизован - показываем кнопку входа
             self.Profile_PushButton.hide()
             self.Enter_PushButton.show()
+            self.PB_Notification.setText("🔔")
 
     def open_profile(self):
-        """Открывает профиль сотрудника или окно входа"""
+        """
+        Открывает профиль сотрудника или окно входа в зависимости от статуса авторизации.
+        """
         if employee_session.is_authenticated():
-            from Handlers.employee_profile import EmployeeProfileDialog
-            self.profile_dialog = EmployeeProfileDialog(self.Profile_PushButton)
-            self.profile_dialog.exec_()
+            # Открываем профиль авторизованного сотрудника
+            profile_dialog = EmployeeProfileDialog(self.Profile_PushButton)
+            profile_dialog.exec_()
             self.update_login_button()
         else:
-            from Handlers.employee_login import EmployeeLoginDialog
+            # Открываем окно входа
+            from Handlers.Employees.employee_login import EmployeeLoginDialog
             login_dialog = EmployeeLoginDialog(self.Enter_PushButton)
             result = login_dialog.exec_()
 
@@ -664,139 +949,79 @@ class Ui_main_window_CRM(object):
 
                     self.load_orders_data()
 
-    def load_orders_data(self, status_filter=None):
-        """Загружает данные заказов из базы данных в таблицу"""
-        try:
-            orders = db_crm.get_orders_for_crm_table(filter_status=status_filter)
-            self.update_table_with_data(orders)
+    # ==================== МЕТОДЫ УВЕДОМЛЕНИЙ ====================
 
-            # Обновляем статистику
-            new_count = sum(1 for o in orders if o.get('Статус') == 'Новая')
-            active_count = len(orders)
-            self.stats_label.setText(f"Активных заказов: {active_count} | Новых: {new_count}")
-
-        except Exception as e:
-            print(f"Ошибка загрузки данных: {e}")
-            QtWidgets.QMessageBox.critical(None, "Ошибка", f"Ошибка при загрузке данных: {e}")
-
-    def apply_search_filter(self):
-        """Применяет поисковый фильтр"""
-        search_text = self.Search.text().strip()
-        if not search_text:
-            self.load_orders_data()
+    def show_notifications(self):
+        """
+        Показывает диалог с уведомлениями.
+        """
+        if not employee_session.is_authenticated():
+            QMessageBox.warning(
+                self.PB_Notification,
+                "Требуется авторизация",
+                "Пожалуйста, войдите в систему для просмотра уведомлений"
+            )
             return
 
         try:
-            orders = db_crm.get_orders_for_crm_table(search_text=search_text)
-            self.update_table_with_data(orders)
-        except Exception as e:
-            print(f"Ошибка поиска: {e}")
-            QtWidgets.QMessageBox.critical(None, "Ошибка", f"Ошибка при поиске: {e}")
+            from Handlers.Dialog.notifications_dialog import NotificationsDialog
+            notifications_dialog = NotificationsDialog(
+                employee_id=employee_session.get_employee_id(),
+                parent=self.PB_Notification
+            )
+            notifications_dialog.exec_()
 
-    def update_table_with_data(self, orders):
-        """Обновляет таблицу с полученными данными"""
-        self.tableCRM.setRowCount(len(orders))
-
-        for row, order in enumerate(orders):
-            for col, field in enumerate([
-                'Заказы', 'Статус', 'Клиент', 'Менеджер', 'Исполнитель',
-                'Причины обращения', 'Бренд', 'Модель', 'Тип устройства', 'Внешний вид'
-            ]):
-                value = order.get(field, '')
-                if value is None:
-                    value = ''
-
-                item = QtWidgets.QTableWidgetItem(str(value))
-                item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
-                if col == 0:  # Заказы
-                    item.setTextAlignment(Qt.AlignCenter)
-                elif col == 1:  # Статус
-                    item.setTextAlignment(Qt.AlignCenter)
-                    self.color_status_item(item, str(value))
-
-                self.tableCRM.setItem(row, col, item)
-
-            # Добавляем OrderID в скрытый столбец
-            order_id = order.get('OrderID', '')
-            if order_id:
-                order_id_item = QtWidgets.QTableWidgetItem(str(order_id))
-                self.tableCRM.setItem(row, 10, order_id_item)
-
-        self.tableCRM.resizeColumnsToContents()
-        self.LBTEXT_Ordes.setText(f"Заказы ({len(orders)}) /")
-        self.pagination_label.setText(f"Строк: {len(orders)}")
-
-    def color_status_item(self, item, status):
-        """Добавляет цветовое оформление для ячеек статуса (как в оригинале)"""
-        colors = {
-            'Новая': QColor(66, 135, 245),  # Синий
-            'Активная': QColor(255, 193, 7),  # Желтый
-            'Срочное': QColor(220, 53, 69),  # Красный
-            'В работе': QColor(25, 135, 84),  # Зеленый
-            'Ждут запчасти': QColor(255, 149, 0),  # Оранжевый
-            'Готовое': QColor(40, 167, 69),  # Зеленый
-            'Завершен': QColor(108, 117, 125),  # Серый
-            'Закрыто неуспешно': QColor(108, 117, 125),  # Серый
-            'Клиент несет заказ': QColor(155, 89, 182)  # Фиолетовый
-        }
-
-        if status in colors:
-            item.setBackground(colors[status])
-            item.setForeground(QColor(255, 255, 255))
-
-    def open_order_details(self, row, column):
-        """Открывает детальную форму заказа при двойном клике"""
-        try:
-            order_id_item = self.tableCRM.item(row, 10)
-            if not order_id_item:
-                QtWidgets.QMessageBox.warning(None, "Ошибка",
-                                              "Не удалось получить ID заказа")
-                return
-
-            order_id = int(order_id_item.text())
-            order_data = db_crm.get_order_for_edit_form(order_id)
-
-            if not order_data:
-                QtWidgets.QMessageBox.warning(None, "Ошибка",
-                                              f"Не удалось загрузить данные заказа #{order_id}")
-                return
-
-            self.open_order_edit_dialog(order_id, order_data)
-
-        except ValueError as e:
-            print(f"Ошибка преобразования ID заказа: {e}")
-            QtWidgets.QMessageBox.warning(None, "Ошибка",
-                                          "Некорректный ID заказа")
-        except Exception as e:
-            print(f"Ошибка открытия деталей заказа: {e}")
-            QtWidgets.QMessageBox.warning(None, "Ошибка",
-                                          f"Не удалось открыть детали заказа: {e}")
-
-    def open_order_edit_dialog(self, order_id, order_data):
-        """Открывает диалог редактирования заказа"""
-        try:
-            from CRM_Order_Edit import OrderEditDialog
-            dialog = OrderEditDialog(order_id, order_data)
-            result = dialog.exec_()
-
-            if result == QtWidgets.QDialog.Accepted:
-                self.load_orders_data()
-                QtWidgets.QMessageBox.information(None, "Успех", "Изменения сохранены")
+            # После закрытия диалога обновляем счетчик уведомлений
+            self.update_notification_badge()
 
         except ImportError as e:
-            print(f"Не удалось импортировать модуль редактирования: {e}")
-            QtWidgets.QMessageBox.warning(None, "Функция недоступна",
-                                          "Модуль редактирования заказов временно недоступен")
+            print(f"Ошибка импорта модуля уведомлений: {e}")
+            QMessageBox.warning(
+                self.PB_Notification,
+                "Функция недоступна",
+                "Модуль уведомлений временно недоступен"
+            )
         except Exception as e:
-            print(f"Ошибка открытия диалога редактирования: {e}")
-            QtWidgets.QMessageBox.critical(None, "Ошибка",
-                                           f"Не удалось открыть форму редактирования: {e}")
+            print(f"Ошибка открытия уведомлений: {e}")
+            QMessageBox.critical(
+                self.PB_Notification,
+                "Ошибка",
+                f"Не удалось открыть уведомления: {e}"
+            )
+
+    def update_notification_badge(self):
+        """
+        Обновляет значок-счетчик непрочитанных уведомлений на кнопке.
+        """
+        if not employee_session.is_authenticated():
+            self.PB_Notification.setText("🔔")
+            return
+
+        try:
+            unread_count = db_crm.get_unread_notifications_count(
+                employee_session.get_employee_id()
+            )
+
+            if unread_count > 0:
+                # Показываем значок с количеством
+                if unread_count > 99:
+                    self.PB_Notification.setText(f"🔔{unread_count}")
+                else:
+                    self.PB_Notification.setText(f"🔔 {unread_count}")
+            else:
+                self.PB_Notification.setText("🔔")
+
+        except Exception as e:
+            print(f"Ошибка обновления счетчика уведомлений: {e}")
+
+    # ==================== МЕТОДЫ ОТКРЫТИЯ РАЗДЕЛОВ ====================
 
     def open_objectives(self):
-        """Открывает окно задач"""
+        """
+        Открывает окно задач.
+        """
         try:
-            from Handlers.employee_objectives import ObjectivesDialog
+            from Handlers.Employees.employee_objectives import ObjectivesDialog
             objectives_dialog = ObjectivesDialog(self.PB_Objectives)
             objectives_dialog.exec_()
         except ImportError as e:
@@ -809,9 +1034,11 @@ class Ui_main_window_CRM(object):
                                  f"Не удалось открыть окно задач: {e}")
 
     def open_customers(self):
-        """Открывает окно управления клиентами"""
+        """
+        Открывает окно управления клиентами.
+        """
         try:
-            from Handlers.employee_customers import CustomersDialog
+            from Handlers.Employees.employee_customers import CustomersDialog
             customers_dialog = CustomersDialog(self.PB_Customers)
             customers_dialog.exec_()
         except ImportError as e:
@@ -824,9 +1051,11 @@ class Ui_main_window_CRM(object):
                                  f"Не удалось открыть окно клиентов: {e}")
 
     def open_shops(self):
-        """Открывает окно с магазинами"""
+        """
+        Открывает окно с магазинами.
+        """
         try:
-            from Handlers.shops_dialog import ShopsDialog
+            from Handlers.Dialog.shops_dialog import ShopsDialog
             shops_dialog = ShopsDialog(self.PB_Shops)
             shops_dialog.exec_()
         except ImportError as e:
@@ -838,47 +1067,223 @@ class Ui_main_window_CRM(object):
             QMessageBox.critical(self.PB_Shops, "Ошибка",
                                  f"Не удалось открыть окно магазинов: {e}")
 
-    def add_new_order(self):
-        """Открывает форму добавления нового заказа"""
+    def open_warehouse(self):
+        """
+        Открывает окно управления складом.
+        """
         try:
-            try:
-                from CRM_Add_Order import AddOrderDialog
-            except ImportError as e:
-                print(f"Не удалось импортировать модуль добавления заказа: {e}")
-                QtWidgets.QMessageBox.critical(None, "Ошибка",
-                                               "Модуль добавления заказов не найден")
-                return
-
-            dialog = AddOrderDialog()
-            result = dialog.exec_()
-
-            if result == QtWidgets.QDialog.Accepted:
-                self.load_orders_data()
-                QtWidgets.QMessageBox.information(None, "Успех", "Новый заказ добавлен!")
-
+            from Handlers.Dialog.warehouse_dialog import WarehouseDialog
+            warehouse_dialog = WarehouseDialog(self.PB_Warehouses)
+            warehouse_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля склада: {e}")
+            QMessageBox.warning(self.PB_Warehouses, "Функция недоступна",
+                                "Модуль управления складом временно недоступен")
         except Exception as e:
-            print(f"Ошибка открытия формы добавления заказа: {e}")
-            QtWidgets.QMessageBox.critical(None, "Ошибка",
-                                           f"Не удалось открыть форму добавления заказа: {e}")
+            print(f"Ошибка открытия окна склада: {e}")
+            QMessageBox.critical(self.PB_Warehouses, "Ошибка",
+                                 f"Не удалось открыть окно склада: {e}")
+
+    def open_payments(self):
+        """
+        Открывает окно платежей.
+        """
+        try:
+            from Handlers.Dialog.payments_dialog import PaymentsDialog
+            payments_dialog = PaymentsDialog(self.PB_Pay)
+            payments_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля платежей: {e}")
+            QMessageBox.warning(self.PB_Pay, "Функция недоступна",
+                                "Модуль платежей временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия окна платежей: {e}")
+            QMessageBox.critical(self.PB_Pay, "Ошибка",
+                                 f"Не удалось открыть окно платежей: {e}")
+
+    def open_services(self):
+        """
+        Открывает окно управления услугами.
+        """
+        try:
+            from Handlers.Dialog.services_dialog import ServicesDialog
+            services_dialog = ServicesDialog(self.PB_Services)
+            services_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля услуг: {e}")
+            QMessageBox.warning(self.PB_Services, "Функция недоступна",
+                                "Модуль управления услугами временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия окна услуг: {e}")
+            QMessageBox.critical(self.PB_Services, "Ошибка",
+                                 f"Не удалось открыть окно услуг: {e}")
+
+    def open_reports(self):
+        """
+        Открывает окно отчетов.
+        """
+        try:
+            reports_dialog = ReportsDialog(self.PB_Reports)
+            reports_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля отчетов: {e}")
+            QMessageBox.warning(self.PB_Reports, "Функция недоступна",
+                                "Модуль отчетов временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия окна отчетов: {e}")
+            QMessageBox.critical(self.PB_Reports, "Ошибка",
+                                 f"Не удалось открыть окно отчетов: {e}")
+
+    def open_trends(self):
+        """
+        Открывает окно трендов и аналитики.
+        """
+        try:
+            trends_dialog = TrendsDialog(self.PB_Trends)
+            trends_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля трендов: {e}")
+            QMessageBox.warning(self.PB_Trends, "Функция недоступна",
+                                "Модуль трендов временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия окна трендов: {e}")
+            QMessageBox.critical(self.PB_Trends, "Ошибка",
+                                 f"Не удалось открыть окно трендов: {e}")
+
+    def open_settings(self):
+        """
+        Открывает окно настроек CRM.
+        """
+        try:
+            from Handlers.Dialog.settings_dialog import SettingsDialog
+            settings_dialog = SettingsDialog(self.PB_Customization)
+
+            # Подключаем сигналы для обновления интерфейса после сохранения
+            settings_dialog.settings_saved.connect(self._on_settings_saved)
+            settings_dialog.theme_changed.connect(self._apply_theme_from_settings)
+            settings_dialog.font_changed.connect(self._apply_font_from_settings)
+
+            settings_dialog.exec_()
+        except ImportError as e:
+            print(f"Ошибка импорта модуля настроек: {e}")
+            QMessageBox.warning(self.PB_Customization, "Функция недоступна",
+                                "Модуль настроек временно недоступен")
+        except Exception as e:
+            print(f"Ошибка открытия окна настроек: {e}")
+            QMessageBox.critical(self.PB_Customization, "Ошибка",
+                                 f"Не удалось открыть окно настроек: {e}")
+
+    def _on_settings_saved(self):
+        """
+        Обработчик сохранения настроек.
+        """
+        self.load_orders_data()
+        self.update_login_button()
+
+    def _apply_theme_from_settings(self, theme_name: str):
+        """
+        Применяет тему из настроек.
+
+        Аргументы:
+            theme_name: Название темы
+        """
+        print(f"Применяем тему: {theme_name}")
+        # Здесь можно реализовать смену темы интерфейса
+
+    def _apply_font_from_settings(self, font: QFont):
+        """
+        Применяет шрифт из настроек ко всем элементам интерфейса.
+
+        Аргументы:
+            font: Объект шрифта
+        """
+        self.tableCRM.setFont(font)
+        self.Search.setFont(font)
+        self.LBTEXT_Ordes.setFont(font)
 
 
 class MainCRMWindow(QtWidgets.QDialog):
+    """
+    Главное окно CRM приложения.
+    """
+
     def __init__(self, parent=None):
+        """
+        Инициализирует главное окно CRM.
+
+        Аргументы:
+            parent: Родительский виджет
+        """
         super().__init__(parent)
         self.ui = Ui_main_window_CRM()
         self.ui.setupUi(self)
 
+        # Сохраняем ссылку на интерфейс в сессии
         employee_session.set_main_window(self.ui)
 
+        # Если пользователь не авторизован, показываем окно входа через 100 мс
         if not employee_session.is_authenticated():
-            QTimer.singleShot(100, self.show_login_dialog)
+            QTimer.singleShot(100, self._show_login_dialog)
+
+    def _show_login_dialog(self):
+        """
+        Показывает диалог входа в систему.
+        """
+        from Handlers.Employees.employee_login import EmployeeLoginDialog
+        login_dialog = EmployeeLoginDialog(self)
+        result = login_dialog.exec_()
+
+        if result == QDialog.Accepted:
+            employee_data = login_dialog.get_employee_data()
+            if employee_data:
+                employee_session.login(employee_data)
+                self.ui.update_login_button()
+
+                QMessageBox.information(
+                    self,
+                    "Добро пожаловать!",
+                    f"✅ Вы вошли как {employee_data.get('FirstName')} {employee_data.get('LastName')}\n"
+                    f"Должность: {employee_data.get('Position', 'Сотрудник')}"
+                )
+
+                self.ui.load_orders_data()
 
     def closeEvent(self, event):
+        """
+        Обработчик закрытия окна.
+
+        Аргументы:
+            event: Событие закрытия
+        """
         event.accept()
 
 
+# ==================== ТОЧКА ВХОДА ====================
+
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
+
+    # Настройка темной палитры
+    app.setStyle('Fusion')
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(30, 30, 30))
+    palette.setColor(QPalette.WindowText, Qt.white)
+    palette.setColor(QPalette.Base, QColor(45, 45, 45))
+    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    palette.setColor(QPalette.ToolTipBase, Qt.white)
+    palette.setColor(QPalette.ToolTipText, Qt.white)
+    palette.setColor(QPalette.Text, Qt.white)
+    palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    palette.setColor(QPalette.ButtonText, Qt.white)
+    palette.setColor(QPalette.Highlight, QColor(76, 175, 80))
+    app.setPalette(palette)
+
+    # Устанавливаем шрифт
+    font = QFont("Segoe UI", 10)
+    app.setFont(font)
+
+    # Создаем и показываем главное окно
     main_window = MainCRMWindow()
     main_window.show()
+
     sys.exit(app.exec_())

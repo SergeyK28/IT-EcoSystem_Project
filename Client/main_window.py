@@ -1,35 +1,47 @@
 # -*- coding: utf-8 -*-
+import threading
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QMessageBox
 
-from Client.favorites_window import FavoritesWindow
-from Client.search_widget import SearchResultsWidget
-from session_manager import session
-from authorization_window import AuthDialog
-from Client.Remont_windows.remont_telefonov import Ui_Ui_Remont_Telefonov_Dialog
-from Client.Remont_windows.remont_laptop import Ui_Ui_Remont_Laptop_Dialog
-from shop_window import ShopWindow
-from profil_window import Ui_profil
-from cart_window import CartWindow
-from Server import db
-from Server import db_crm
-
+# Импорты модулей приложения
+from Client.favorites_window import FavoritesWindow  # Окно избранного
+from Client.search_widget import SearchResultsWidget  # Виджет результатов поиска
+from session_manager import session  # Менеджер сессий пользователя
+from authorization_window import AuthDialog  # Окно авторизации
+from Client.Remont_windows.remont_telefonov import Ui_Ui_Remont_Telefonov_Dialog  # Окно ремонта телефонов
+from Client.Remont_windows.remont_laptop import Ui_Ui_Remont_Laptop_Dialog  # Окно ремонта ноутбуков
+from shop_window import ShopWindow  # Окно магазина
+from profil_window import Ui_profil  # Окно профиля
+from cart_window import CartWindow  # Окно корзины
+from map_widget import MapWidget  # Импортируем виджет карты
+from gis_reviews import ReviewsSectionWidget  # Виджет отзывов из 2GIS
+from Server import db  # Модуль работы с БД
+from Server import db_crm  # Модуль работы с CRM
 
 
 class Ui_main_window_Dialog(object):
-    def setupUi(self, main_window_Dialog):
-        main_window_Dialog.setObjectName("main_window_Dialog")
-        main_window_Dialog.resize(1200, 950)
+    """
+    Главный класс пользовательского интерфейса основного окна приложения
+    Содержит все виджеты и логику главного окна
+    """
 
-        # Настройка иконки
+    def setupUi(self, main_window_Dialog):
+        """
+        Инициализация пользовательского интерфейса
+        Создает и настраивает все виджеты главного окна
+        """
+        main_window_Dialog.setObjectName("main_window_Dialog")
+        main_window_Dialog.resize(1200, 950)  # Устанавливаем размер окна
+
+        # Настройка иконки приложения
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("../Pictures/Screenshot from 2025-09-15 14-30-16.png"),
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         main_window_Dialog.setWindowIcon(icon)
 
-        # Главный градиентный фон
+        # Главный градиентный фон окна
         main_window_Dialog.setStyleSheet("""
             QDialog {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -37,12 +49,13 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
+        # Основной сеточный layout для всего окна
         self.gridLayout_2 = QtWidgets.QGridLayout(main_window_Dialog)
-        self.gridLayout_2.setContentsMargins(20, 20, 20, 20)
-        self.gridLayout_2.setSpacing(15)
+        self.gridLayout_2.setContentsMargins(20, 20, 20, 20)  # Отступы от краев
+        self.gridLayout_2.setSpacing(15)  # Расстояние между элементами
         self.gridLayout_2.setObjectName("gridLayout_2")
 
-        # ========== ВЕРХНЯЯ ПАНЕЛЬ (АДРЕС И РАБОТА) ==========
+        # ========== ВЕРХНЯЯ ПАНЕЛЬ (АДРЕС И РАБОЧЕЕ ВРЕМЯ) ==========
         self.top_info_frame = QtWidgets.QFrame(main_window_Dialog)
         self.top_info_frame.setStyleSheet("""
             QFrame {
@@ -59,9 +72,11 @@ class Ui_main_window_Dialog(object):
         shadow.setOffset(0, 3)
         self.top_info_frame.setGraphicsEffect(shadow)
 
+        # Горизонтальный layout для верхней панели
         top_layout = QtWidgets.QHBoxLayout(self.top_info_frame)
         top_layout.setContentsMargins(15, 8, 15, 8)
 
+        # Метка с адресом
         self.Adres = QtWidgets.QLabel("🗺️ Красноярск, Улица Микуцкого, 12")
         self.Adres.setStyleSheet("""
             QLabel {
@@ -72,6 +87,7 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
+        # Метка с режимом работы
         self.Work = QtWidgets.QLabel("📅 Пн-Пт: 10:00-20:00 | Сб-Вс: 12:00-19:00")
         self.Work.setStyleSheet("""
             QLabel {
@@ -83,7 +99,7 @@ class Ui_main_window_Dialog(object):
         """)
 
         top_layout.addWidget(self.Adres)
-        top_layout.addStretch()
+        top_layout.addStretch()  # Добавляем растяжимое пространство
         top_layout.addWidget(self.Work)
 
         self.gridLayout_2.addWidget(self.top_info_frame, 0, 0, 1, 1)
@@ -105,11 +121,12 @@ class Ui_main_window_Dialog(object):
         header_shadow.setOffset(0, 4)
         self.header_frame.setGraphicsEffect(header_shadow)
 
+        # Горизонтальный layout для хедера
         header_layout = QtWidgets.QHBoxLayout(self.header_frame)
         header_layout.setContentsMargins(15, 10, 15, 10)
         header_layout.setSpacing(20)
 
-        # Логотип
+        # Кнопка-логотип
         self.Logo_PushButton = QtWidgets.QPushButton("IT-EcoSystem")
         self.Logo_PushButton.setMinimumSize(180, 60)
         self.Logo_PushButton.setStyleSheet("""
@@ -133,7 +150,7 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
-        # Поиск
+        # Поле поиска
         self.Search = QtWidgets.QLineEdit()
         self.Search.setPlaceholderText("🔍 Поиск услуг, товаров...")
         self.Search.setMinimumHeight(45)
@@ -155,7 +172,7 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
-        # Кнопки действий
+        # Базовый стиль для кнопок действий
         button_style = """
             QPushButton {
                 background-color: transparent;
@@ -175,23 +192,27 @@ class Ui_main_window_Dialog(object):
             }
         """
 
+        # Кнопка магазинов
         self.Shop_PushButton = QtWidgets.QPushButton("🏪 Магазины")
         self.Shop_PushButton.setStyleSheet(button_style)
         self.Shop_PushButton.clicked.connect(self.open_shop_window)
 
+        # Кнопка избранного
         self.Favourites_PushButton = QtWidgets.QPushButton("❤️ Избранное")
         self.Favourites_PushButton.setStyleSheet(button_style)
-
         self.Favourites_PushButton.clicked.connect(self.open_favorites_window)
 
+        # Кнопка корзины
         self.Basket_PushButton = QtWidgets.QPushButton("🛒 Корзина")
         self.Basket_PushButton.setStyleSheet(button_style)
         self.Basket_PushButton.clicked.connect(self.open_cart_window)
 
+        # Контейнер для кнопок авторизации
         self.auth_container = QtWidgets.QWidget()
         auth_layout = QtWidgets.QHBoxLayout(self.auth_container)
         auth_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Кнопка входа
         self.Enter_PushButton = QtWidgets.QPushButton("👤 Войти")
         self.Enter_PushButton.setStyleSheet("""
                     QPushButton {
@@ -213,8 +234,9 @@ class Ui_main_window_Dialog(object):
                             stop:0 #3d8b40, stop:1 #357a38);
                     }
                 """)
+        self.Enter_PushButton.clicked.connect(self.open_auth_window)
 
-        # Кнопка профиля (изначально скрыта)
+        # Кнопка профиля (изначально скрыта, показывается после авторизации)
         self.Profile_PushButton = QtWidgets.QPushButton("👤 Профиль")
         self.Profile_PushButton.setStyleSheet("""
                     QPushButton {
@@ -236,20 +258,25 @@ class Ui_main_window_Dialog(object):
                             stop:0 #3d8b40, stop:1 #357a38);
                     }
                 """)
-        self.Profile_PushButton.hide()
+        self.Profile_PushButton.hide()  # Скрываем по умолчанию
+        self.Profile_PushButton.clicked.connect(self.open_profile_window)
+
+        # Устанавливаем ссылку на главное окно в менеджере сессий
         session.set_main_window(main_window_Dialog)
 
+        # Добавляем кнопки в контейнер авторизации
         auth_layout.addWidget(self.Enter_PushButton)
         auth_layout.addWidget(self.Profile_PushButton)
 
+        # Собираем хедер
         header_layout.addWidget(self.Logo_PushButton)
-        header_layout.addWidget(self.Search, 1)
+        header_layout.addWidget(self.Search, 1)  # 1 - фактор растяжения
         header_layout.addWidget(self.Shop_PushButton)
         header_layout.addWidget(self.Favourites_PushButton)
         header_layout.addWidget(self.Basket_PushButton)
         header_layout.addWidget(self.auth_container)
-        self.Enter_PushButton.clicked.connect(self.open_auth_window)
-        self.Profile_PushButton.clicked.connect(self.open_profile_window)
+
+        # Проверяем, авторизован ли пользователь при запуске
         if session.is_authenticated():
             self.update_login_button()
 
@@ -269,6 +296,7 @@ class Ui_main_window_Dialog(object):
         nav_layout.setContentsMargins(10, 5, 10, 5)
         nav_layout.setSpacing(5)
 
+        # Стиль для обычных кнопок навигации
         nav_button_style = """
             QPushButton {
                 background-color: transparent;
@@ -288,13 +316,36 @@ class Ui_main_window_Dialog(object):
             }
         """
 
+        # Стиль для кнопки-ссылки (карта)
+        link_button_style = """
+            QPushButton {
+                background-color: transparent;
+                color: #4CAF50;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: 500;
+                text-decoration: underline;
+            }
+            QPushButton:hover {
+                background-color: #404040;
+                color: #6fbf73;
+            }
+            QPushButton:pressed {
+                background-color: #4a4a4a;
+            }
+        """
+
+        # Список кнопок навигации с их атрибутами
         nav_buttons = [
             ("🔧 Услуги", "Service_pushButton"),
             ("О нас!", "About_pushButton"),
             ("⭐ Отзывы", "Reviews_pushButton"),
-            ("📞 Контакты", "Contacts_pushButton")
+            ("🗺️ На карте", "Map_pushButton")  # Кнопка карты теперь ссылается на раздел внизу
         ]
 
+        # Создаем и добавляем кнопки навигации
         for text, attr_name in nav_buttons:
             btn = QtWidgets.QPushButton(text)
             btn.setStyleSheet(nav_button_style)
@@ -303,7 +354,7 @@ class Ui_main_window_Dialog(object):
 
         self.gridLayout_2.addWidget(self.nav_frame, 2, 0, 1, 1)
 
-        # ========== ОСНОВНОЙ КОНТЕНТ ==========
+        # ========== ОСНОВНОЙ КОНТЕНТ (ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ) ==========
         self.scrollArea = QtWidgets.QScrollArea(main_window_Dialog)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setStyleSheet("""
@@ -330,13 +381,14 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
+        # Виджет содержимого прокручиваемой области
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setStyleSheet("background-color: transparent;")
         self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout.setContentsMargins(20, 20, 20, 20)
         self.gridLayout.setSpacing(30)
 
-        # ========== НАШИ УСЛУГИ ==========
+        # ========== ЗАГОЛОВОК "НАШИ УСЛУГИ" ==========
         self.Our_services = QtWidgets.QLabel("Наши услуги")
         self.Our_services.setStyleSheet("""
             QLabel {
@@ -416,6 +468,7 @@ class Ui_main_window_Dialog(object):
 
         about_layout = QtWidgets.QVBoxLayout(about_frame)
 
+        # Заголовок раздела "О нас"
         about_title = QtWidgets.QLabel("Ремонт техники любых видов")
         about_title.setStyleSheet("""
             QLabel {
@@ -425,6 +478,7 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
+        # Текст описания компании
         about_text = QtWidgets.QLabel(
             "Жизнь современного человека невозможно представить без электроники, "
             "и ее выход из строя очень часто чреват не только личными неудобствами, "
@@ -446,7 +500,7 @@ class Ui_main_window_Dialog(object):
 
         self.gridLayout.addWidget(about_frame, 2, 0)
 
-        # ========== НАШИ ПРЕИМУЩЕСТВА ==========
+        # ========== ЗАГОЛОВОК "НАШИ ПРЕИМУЩЕСТВА" ==========
         advantages_title = QtWidgets.QLabel("Наши преимущества")
         advantages_title.setStyleSheet("""
             QLabel {
@@ -458,9 +512,11 @@ class Ui_main_window_Dialog(object):
         """)
         self.gridLayout.addWidget(advantages_title, 3, 0)
 
+        # Сетка для карточек преимуществ
         advantages_grid = QtWidgets.QGridLayout()
         advantages_grid.setSpacing(20)
 
+        # Список преимуществ: (заголовок, описание, имя атрибута)
         advantages = [
             ("👨‍🔧 Профессионализм",
              "Опытные мастера с многолетним стажем",
@@ -482,19 +538,142 @@ class Ui_main_window_Dialog(object):
              "pushButton_34")
         ]
 
+        # Создаем карточки преимуществ
         for i, (title, desc, attr) in enumerate(advantages):
-            row, col = divmod(i, 3)
+            row, col = divmod(i, 3)  # 3 колонки в сетке
             adv_card = self.create_advantage_card(title, desc)
             setattr(self, attr, adv_card.findChild(QtWidgets.QPushButton))
             advantages_grid.addWidget(adv_card, row, col)
 
         self.gridLayout.addLayout(advantages_grid, 4, 0)
 
+        # ========== РАЗДЕЛ С ОТЗЫВАМИ ИЗ 2GIS ==========
+        self.reviews_section = ReviewsSectionWidget()
+
+        # Устанавливаем минимальную высоту для виджета отзывов
+        self.reviews_section.setMinimumHeight(600)  # Увеличиваем минимальную высоту
+
+        # Добавляем с растяжением по вертикали (последний параметр - фактор растяжения)
+        self.gridLayout.addWidget(self.reviews_section, 5, 0, 1, 1)
+        # Устанавливаем фактор растяжения для строки с отзывами
+        self.gridLayout.setRowStretch(5, 2)  # 2 - фактор растяжения (больше = больше места)
+
+        # ========== РАЗДЕЛ С КАРТОЙ ==========
+        map_title = QtWidgets.QLabel("🗺️ Мы на карте")
+        map_title.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                padding: 20px 0 10px 0;
+            }
+        """)
+        self.gridLayout.addWidget(map_title, 6, 0)
+
+        # Создаем контейнер для карты с красивым оформлением
+        self.map_container = QtWidgets.QFrame()
+        self.map_container.setStyleSheet("""
+            QFrame {
+                background-color: #2d2d2d;
+                border-radius: 20px;
+                padding: 10px;
+            }
+        """)
+
+        # Тень для контейнера карты
+        map_shadow = QGraphicsDropShadowEffect()
+        map_shadow.setBlurRadius(25)
+        map_shadow.setColor(QColor(0, 0, 0, 120))
+        map_shadow.setOffset(0, 6)
+        self.map_container.setGraphicsEffect(map_shadow)
+
+        map_layout = QtWidgets.QVBoxLayout(self.map_container)
+        map_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Добавляем виджет карты
+        try:
+            self.map_widget = MapWidget()
+            self.map_widget.setMinimumHeight(450)  # Устанавливаем минимальную высоту
+            map_layout.addWidget(self.map_widget)
+        except Exception as e:
+            print(f"Ошибка при создании виджета карты: {e}")
+            # В случае ошибки показываем информационную метку
+            error_label = QtWidgets.QLabel(
+                "🗺️ Карта временно недоступна\n\n"
+                "Пожалуйста, откройте карту в браузере:\n"
+                "https://2gis.ru/krasnoyarsk/firm/70000001087708026"
+            )
+            error_label.setStyleSheet("""
+                QLabel {
+                    color: #b0b0b0;
+                    font-size: 14px;
+                    padding: 50px;
+                    background-color: #363636;
+                    border-radius: 10px;
+                    qproperty-alignment: AlignCenter;
+                }
+            """)
+            error_label.setWordWrap(True)
+            error_label.setMinimumHeight(450)
+            map_layout.addWidget(error_label)
+
+        # Добавляем информационную панель под картой
+        map_info_frame = QtWidgets.QFrame()
+        map_info_frame.setStyleSheet("""
+            QFrame {
+                background-color: #363636;
+                border-radius: 10px;
+                padding: 15px;
+                margin-top: 10px;
+            }
+        """)
+
+        map_info_layout = QtWidgets.QHBoxLayout(map_info_frame)
+
+        # Информация о местоположении
+        location_info = QtWidgets.QLabel(
+            "📍 Красноярск, Улица Микуцкого, 12\n"
+            "📞 +7 (999) 123-45-67"
+        )
+        location_info.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 14px;
+                padding: 5px;
+            }
+        """)
+
+        # Кнопка открыть в браузере
+        open_browser_btn = QtWidgets.QPushButton("🌐 Открыть в браузере")
+        open_browser_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        open_browser_btn.clicked.connect(self.open_2gis_map)
+
+        map_info_layout.addWidget(location_info)
+        map_info_layout.addStretch()
+        map_info_layout.addWidget(open_browser_btn)
+
+        map_layout.addWidget(map_info_frame)
+
+        self.gridLayout.addWidget(self.map_container, 7, 0)
+
+        # Устанавливаем виджет содержимого для прокручиваемой области
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout_2.addWidget(self.scrollArea, 3, 0, 1, 1)
 
-        # Подключаем сигналы
-        self.Enter_PushButton.clicked.connect(self.open_auth_window)
+        # Подключаем обработчики для кнопок услуг (если они существуют)
         if hasattr(self, 'Laptop_pushButton'):
             self.Laptop_pushButton.clicked.connect(self.open_remont_laptop)
         if hasattr(self, 'Smartphone_pushButton'):
@@ -503,13 +682,25 @@ class Ui_main_window_Dialog(object):
         # Настраиваем поиск
         self.setup_search()
 
-        QtCore.QMetaObject.connectSlotsByName(main_window_Dialog)
-
+        # Настраиваем кнопки навигации
         self.setup_navigation_buttons()
+
+        # Настраиваем кнопки преимуществ
         self.setup_advantages_buttons()
 
+        QtCore.QMetaObject.connectSlotsByName(main_window_Dialog)
+
     def create_service_category(self, title, buttons_data):
-        """Создает карточку категории услуг"""
+        """
+        Создает карточку категории услуг с кнопками
+
+        Args:
+            title (str): Заголовок категории
+            buttons_data (list): Список кортежей (текст кнопки, имя атрибута, callback)
+
+        Returns:
+            QFrame: Готовый фрейм с категорией услуг
+        """
         frame = QtWidgets.QFrame()
         frame.setStyleSheet("""
             QFrame {
@@ -532,7 +723,7 @@ class Ui_main_window_Dialog(object):
 
         layout = QtWidgets.QVBoxLayout(frame)
 
-        # Заголовок
+        # Заголовок категории
         title_label = QtWidgets.QLabel(title)
         title_label.setStyleSheet("""
             QLabel {
@@ -544,12 +735,13 @@ class Ui_main_window_Dialog(object):
         """)
         layout.addWidget(title_label)
 
-        # Сетка кнопок
+        # Сетка кнопок внутри категории
         buttons_layout = QtWidgets.QGridLayout()
         buttons_layout.setSpacing(10)
 
+        # Создаем кнопки для каждой услуги
         for i, (text, attr_name, callback) in enumerate(buttons_data):
-            row, col = divmod(i, 4)
+            row, col = divmod(i, 4)  # 4 колонки в сетке
             btn = QtWidgets.QPushButton(text)
             btn.setStyleSheet("""
                 QPushButton {
@@ -581,7 +773,16 @@ class Ui_main_window_Dialog(object):
         return frame
 
     def create_advantage_card(self, title, description):
-        """Создает карточку преимущества"""
+        """
+        Создает карточку преимущества
+
+        Args:
+            title (str): Заголовок преимущества
+            description (str): Описание преимущества
+
+        Returns:
+            QFrame: Готовая карточка преимущества
+        """
         card = QtWidgets.QFrame()
         card.setMinimumSize(250, 150)
         card.setStyleSheet("""
@@ -607,6 +808,7 @@ class Ui_main_window_Dialog(object):
 
         layout = QtWidgets.QVBoxLayout(card)
 
+        # Кнопка преимущества (заголовок)
         btn = QtWidgets.QPushButton(title)
         btn.setStyleSheet("""
             QPushButton {
@@ -623,6 +825,7 @@ class Ui_main_window_Dialog(object):
             }
         """)
 
+        # Метка с описанием
         desc_label = QtWidgets.QLabel(description)
         desc_label.setWordWrap(True)
         desc_label.setStyleSheet("""
@@ -640,7 +843,9 @@ class Ui_main_window_Dialog(object):
         return card
 
     def update_login_button(self):
-        """Обновляет отображение кнопки входа/профиля"""
+        """
+        Обновляет отображение кнопки входа/профиля в зависимости от статуса авторизации
+        """
         if session.is_authenticated():
             # Пользователь авторизован - показываем кнопку профиля
             self.Enter_PushButton.hide()
@@ -667,12 +872,12 @@ class Ui_main_window_Dialog(object):
         self.Dialog.show()
 
     def check_auth_result(self, result):
-        """Проверяет результат авторизации"""
+        """Проверяет результат авторизации при закрытии окна"""
         if session.is_authenticated():
             self.update_login_button()
 
     def open_profile_window(self):
-        """Открывает окно профиля"""
+        """Открывает окно профиля пользователя"""
         if session.is_authenticated():
             self.Dialog = QtWidgets.QDialog()
             self.ui = Ui_profil(session.get_user_id(), session.get_user_name())
@@ -684,25 +889,28 @@ class Ui_main_window_Dialog(object):
             self.Dialog.show()
 
     def open_remont_telefonov(self):
+        """Открывает окно ремонта телефонов"""
         self.Dialog = QtWidgets.QDialog()
         self.ui = Ui_Ui_Remont_Telefonov_Dialog()
         self.ui.setupUi(self.Dialog)
         self.Dialog.show()
 
     def open_remont_laptop(self):
+        """Открывает окно ремонта ноутбуков"""
         self.Dialog = QtWidgets.QDialog()
         self.ui = Ui_Ui_Remont_Laptop_Dialog()
         self.ui.setupUi(self.Dialog)
         self.Dialog.show()
 
     def open_shop_window(self):
+        """Открывает окно магазина"""
         self.shop_dialog = QtWidgets.QDialog()
         self.shop_ui = ShopWindow()
         self.shop_ui.setupUi(self.shop_dialog)
         self.shop_dialog.exec_()
 
     def open_cart_window(self):
-        """Открывает окно корзины"""
+        """Открывает окно корзины с проверкой авторизации"""
         if not session.is_authenticated():
             # Если пользователь не авторизован, показываем сообщение
             msg_box = QMessageBox()
@@ -749,7 +957,7 @@ class Ui_main_window_Dialog(object):
             )
 
     def setup_search(self):
-        """Настраивает функционал поиска"""
+        """Настраивает функционал поиска (debounce, отображение результатов)"""
         # Создаем виджет результатов поиска
         self.search_results = SearchResultsWidget(self.header_frame)
         self.search_results.hide()
@@ -761,10 +969,10 @@ class Ui_main_window_Dialog(object):
         # Устанавливаем атрибуты для правильного отображения
         self.search_results.setAttribute(Qt.WA_ShowWithoutActivating)
 
-        # Таймер для debounce
+        # Таймер для debounce (задержка перед поиском)
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
-        self.search_timer.setInterval(500)
+        self.search_timer.setInterval(500)  # 500 мс задержка
         self.search_timer.timeout.connect(self.perform_search)
 
         # Подключаем сигналы
@@ -772,14 +980,14 @@ class Ui_main_window_Dialog(object):
         self.Search.returnPressed.connect(self.perform_search)
 
     def on_search_text_changed(self, text):
-        """Обработчик изменения текста поиска"""
+        """Обработчик изменения текста в поле поиска"""
         if len(text) >= 2:  # Начинаем поиск при 2+ символах
             self.search_timer.start()
         else:
             self.search_results.hide()
 
     def perform_search(self):
-        """Выполняет поиск"""
+        """Выполняет поиск в отдельном потоке"""
         search_text = self.Search.text().strip()
 
         if len(search_text) < 2:
@@ -790,18 +998,17 @@ class Ui_main_window_Dialog(object):
         self.update_search_results_position()
         self.search_results.show()
 
-        # Выполняем поиск в БД
-        import threading
+        # Выполняем поиск в отдельном потоке
         def search_thread():
             try:
-                # Используем db.search_products_and_services
+                # Поиск в БД
                 results = db.search_products_and_services(search_text)
 
-                # Сохраняем запрос если авторизован
+                # Сохраняем запрос если пользователь авторизован
                 if session.is_authenticated():
                     db.save_search_query(search_text, session.get_user_id())
 
-                # Используем сигнал вместо invokeMethod
+                # Отправляем результаты в основной поток
                 self.search_results.show_results_signal.emit(results)
 
             except Exception as e:
@@ -810,11 +1017,11 @@ class Ui_main_window_Dialog(object):
                 self.search_results.show_results_signal.emit({'services': [], 'parts': [], 'categories': []})
 
         thread = threading.Thread(target=search_thread)
-        thread.daemon = True
+        thread.daemon = True  # Поток завершится при закрытии приложения
         thread.start()
 
     def update_search_results_position(self):
-        """Обновляет позицию виджета результатов"""
+        """Обновляет позицию виджета результатов поиска под полем поиска"""
         if not hasattr(self, 'search_results'):
             return
 
@@ -828,35 +1035,19 @@ class Ui_main_window_Dialog(object):
         # Устанавливаем геометрию виджета
         self.search_results.setGeometry(
             local_pos.x(),
-            self.Search.height() + 5,
+            self.Search.height() + 5,  # 5 пикселей отступа снизу
             self.Search.width(),
             0
         )
 
-        # Поднимаем на передний план при каждом обновлении позиции
+        # Поднимаем на передний план
         self.search_results.raise_()
-        self.search_results.show()  # Убеждаемся, что виджет показан
-
-    def on_search_focus_out(self, event):
-        """Обработчик потери фокуса полем поиска"""
-        # Вызываем оригинальный обработчик
-        if hasattr(self, 'original_focus_out') and self.original_focus_out:
-            self.original_focus_out(event)
-
-        # Проверяем, не кликнули ли по результатам поиска
-        if hasattr(self, 'search_results') and self.search_results.isVisible():
-            # Проверяем, находится ли мышь над результатами
-            if not self.search_results.underMouse():
-                # Задержка перед скрытием
-                QTimer.singleShot(200, self.search_results.hide)
+        self.search_results.show()
 
     def on_search_result_clicked(self, result):
         """Обработчик клика по результату поиска"""
         # Скрываем результаты
         self.search_results.hide()
-
-        # Очищаем поле поиска (опционально)
-        # self.Search.clear()
 
         result_type = result.get('type')
 
@@ -871,15 +1062,14 @@ class Ui_main_window_Dialog(object):
             self.show_category_results(result.get('name'))
 
     def open_service_window(self, service_data):
-        """Открывает окно услуги"""
-        # Здесь можно открыть окно с деталями услуги
-        # Например, окно ремонта телефона с предзаполненными данными
+        """Открывает окно с деталями услуги"""
+        # Определяем тип услуги и открываем соответствующее окно
         if "телефон" in service_data.get('name', '').lower():
             self.open_remont_telefonov()
         elif "ноутбук" in service_data.get('name', '').lower():
             self.open_remont_laptop()
         else:
-            # Для других услуг можно показать сообщение
+            # Для других услуг показываем информационное сообщение
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
                 None,
@@ -889,8 +1079,9 @@ class Ui_main_window_Dialog(object):
             )
 
     def open_part_window(self, part_data):
-        """Открывает окно товара"""
+        """Открывает окно товара (запчасти) с возможностью добавления в корзину"""
         if session.is_authenticated():
+            # Предлагаем добавить товар в корзину
             from PyQt5.QtWidgets import QMessageBox
             reply = QMessageBox.question(
                 None,
@@ -900,7 +1091,7 @@ class Ui_main_window_Dialog(object):
             )
 
             if reply == QMessageBox.Yes:
-                # Добавляем в корзину
+                # Формируем данные для корзины
                 cart_item = {
                     'device_type': part_data.get('category', 'Запчасть'),
                     'device_brand': part_data.get('brand', ''),
@@ -909,7 +1100,7 @@ class Ui_main_window_Dialog(object):
                     'price': float(part_data.get('price', 0))
                 }
 
-                # Используем db_crm для корзины (это специфично для CRM)
+                # Добавляем в корзину через CRM
                 from Server import db_crm
                 if db_crm.add_to_cart_db(session.get_user_id(), cart_item):
                     QMessageBox.information(None, "Успех", "✅ Товар добавлен в корзину")
@@ -929,7 +1120,7 @@ class Ui_main_window_Dialog(object):
                 self.open_auth_window()
 
     def open_favorites_window(self):
-        """Открывает окно избранного"""
+        """Открывает окно избранного с проверкой авторизации"""
         if not session.is_authenticated():
             # Если пользователь не авторизован, показываем сообщение
             msg_box = QMessageBox()
@@ -984,8 +1175,7 @@ class Ui_main_window_Dialog(object):
             )
 
     def show_category_results(self, category_name):
-        """Показывает все услуги категории"""
-        # Здесь можно открыть окно со всеми услугами категории
+        """Показывает все услуги выбранной категории"""
         from PyQt5.QtWidgets import QMessageBox
         QMessageBox.information(
             None,
@@ -995,51 +1185,45 @@ class Ui_main_window_Dialog(object):
         )
 
     def enable_search_field(self):
-        """Разблокирует поле поиска"""
+        """Разблокирует поле поиска (используется после загрузки)"""
         self.Search.setEnabled(True)
         self.Search.setPlaceholderText("🔍 Поиск услуг, товаров...")
 
     def setup_navigation_buttons(self):
-        """Настраивает кнопки навигации для прокрутки к разделам"""
+        """Настраивает кнопки навигации и их обработчики"""
 
-        # Словарь с соответствием кнопок и виджетов разделов
+        # Словарь с соответствием кнопок и виджетов разделов для прокрутки
         self.navigation_sections = {
             'Service_pushButton': self.Our_services,  # Раздел "Наши услуги"
-            'About_pushButton': self.get_about_section(),  # Раздел "О нас" (текстовый блок)
-            'Reviews_pushButton': None,  # Пока нет раздела отзывов
-            'Contacts_pushButton': None,  # Пока нет раздела контактов
+            'Map_pushButton': self.map_container,  # Раздел с картой
+            'About_pushButton': self.get_about_section(),  # Раздел "О нас"
+            'Reviews_pushButton': self.reviews_section,  # Раздел с отзывами
         }
 
-        # Подключаем обработчики для кнопок навигации
-        if hasattr(self, 'Service_pushButton'):
-            self.Service_pushButton.clicked.connect(
-                lambda: self.scroll_to_section('Service_pushButton')
-            )
+        # Подключаем обработчики прокрутки для доступных разделов
+        for btn_name, section in self.navigation_sections.items():
+            if hasattr(self, btn_name) and section is not None:
+                btn = getattr(self, btn_name)
+                btn.clicked.connect(
+                    lambda checked, name=btn_name: self.scroll_to_section(name)
+                )
 
-        if hasattr(self, 'About_pushButton'):
-            self.About_pushButton.clicked.connect(
-                lambda: self.scroll_to_section('About_pushButton')
-            )
-
-        if hasattr(self, 'Reviews_pushButton'):
-            self.Reviews_pushButton.clicked.connect(
-                lambda: self.scroll_to_section('Reviews_pushButton')
-            )
-
-        if hasattr(self, 'Contacts_pushButton'):
-            self.Contacts_pushButton.clicked.connect(
-                lambda: self.scroll_to_section('Contacts_pushButton')
-            )
+    def show_section_unavailable(self, section_name):
+        """Показывает сообщение о недоступности раздела"""
+        QtWidgets.QMessageBox.information(
+            self.scrollArea,
+            "Информация",
+            f"Раздел '{section_name}' находится в разработке"
+        )
 
     def get_about_section(self):
-        """Возвращает виджет раздела 'О нас'"""
-        # Ищем виджет с текстом о компании
-        # В вашем коде это about_frame, который содержит about_title и about_text
+        """Возвращает виджет раздела 'О нас' для прокрутки"""
+        # Ищем виджет about_frame в gridLayout
         for i in range(self.gridLayout.count()):
             item = self.gridLayout.itemAt(i)
             if item and item.widget():
                 widget = item.widget()
-                # Проверяем, содержит ли виджет текст о компании
+                # Проверяем, является ли виджет фреймом с текстом о компании
                 if hasattr(widget, 'findChild'):
                     # Ищем QLabel с текстом о компании
                     labels = widget.findChildren(QtWidgets.QLabel)
@@ -1049,26 +1233,20 @@ class Ui_main_window_Dialog(object):
         return None
 
     def scroll_to_section(self, button_name):
-        """Прокручивает к указанному разделу"""
+        """Плавная прокрутка к указанному разделу"""
         target_widget = self.navigation_sections.get(button_name)
 
         if not target_widget:
-            # Если раздел еще не создан, показываем сообщение
-            QtWidgets.QMessageBox.information(
-                self.scrollArea,
-                "Информация",
-                f"Раздел '{button_name.replace('_pushButton', '')} находится в разработке'"
-            )
             return
 
         # Получаем позицию целевого виджета
         target_pos = target_widget.mapTo(self.scrollAreaWidgetContents, QtCore.QPoint(0, 0))
 
-        # Создаем анимацию прокрутки
+        # Анимированная прокрутка
         self.animate_scroll(target_pos.y())
 
     def animate_scroll(self, target_y):
-        """Анимированная прокрутка к целевой позиции"""
+        """Анимированная прокрутка к целевой позиции Y"""
         current_scrollbar = self.scrollArea.verticalScrollBar()
         current_value = current_scrollbar.value()
 
@@ -1091,7 +1269,6 @@ class Ui_main_window_Dialog(object):
         self.scroll_delta = delta
 
         def scroll_step_func():
-            nonlocal current_value
             self.scroll_step += 1
 
             # Используем easing function для плавности
@@ -1110,9 +1287,8 @@ class Ui_main_window_Dialog(object):
         self.scroll_timer.timeout.connect(scroll_step_func)
         self.scroll_timer.start(step_time)
 
-    # Добавьте этот метод для обработки кликов по кнопкам преимуществ
     def setup_advantages_buttons(self):
-        """Настраивает кнопки в разделе преимуществ"""
+        """Настраивает обработчики для кнопок преимуществ"""
         advantage_buttons = [
             ('Professional_pushButton', "👨‍🔧 Профессионализм",
              "Наши мастера имеют сертификаты и многолетний опыт работы"),
@@ -1138,7 +1314,7 @@ class Ui_main_window_Dialog(object):
                 )
 
     def show_advantage_details(self, title, description):
-        """Показывает подробную информацию о преимуществе"""
+        """Показывает подробную информацию о преимуществе в диалоговом окне"""
         msg_box = QtWidgets.QMessageBox()
         msg_box.setWindowTitle(title)
         msg_box.setText(description)
@@ -1170,3 +1346,10 @@ class Ui_main_window_Dialog(object):
             )
 
         msg_box.exec_()
+
+    def open_2gis_map(self):
+        """Открывает карту 2GIS в браузере по умолчанию"""
+        import webbrowser
+        # Ссылка на организацию в 2GIS
+        url = "https://2gis.ru/krasnoyarsk/firm/70000001087708026"
+        webbrowser.open(url)

@@ -4,14 +4,11 @@ from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtSignal
 from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QPainter, QPen, QPainterPath
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QFrame, \
     QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QScrollArea, QWidget, QSpacerItem, QSizePolicy
-
-from Settig_profils.Setting_Date import Ui_Setting_Date
-from Settig_profils.Setting_Email import Ui_Setting_Email
-from Settig_profils.Setting_Login import Ui_Setting_Login
-from Settig_profils.Setting_Nomber import Ui_Setting_Nomber
-from Settig_profils.Setting_Passwork import Ui_Setting_Password
-from Settig_profils.Setting_Name_Surnamel import Ui_Setting_Name_Surnamel
-from Server.db import update_name_surname_in_db, update_birthdate_in_db
+import os
+from Settig_profils.Setting_Email import ModernEmailDialog
+from Settig_profils.Setting_Nomber import ModernPhoneDialog
+from Settig_profils.Setting_Passwork import ModernPasswordDialog
+from Server.db import get_user_info, update_name_surname_in_db, update_birthdate_in_db, get_avatar_path_by_user_id
 
 
 class ModernSettingButton(QPushButton):
@@ -189,12 +186,16 @@ class SettingDateDialog(QDialog):
 
         layout.addLayout(header_layout)
 
+        # Получаем текущую дату пользователя
+        user_info = get_user_info(self.current_user_id)
+        current_date = user_info.get('Birthdate', '') if user_info else ''
+
         # Текущая дата
         current_date_label = QLabel("Текущая дата рождения:")
         current_date_label.setStyleSheet("color: #808080; font-size: 13px;")
         layout.addWidget(current_date_label)
 
-        self.current_date = QLabel("—")
+        self.current_date = QLabel(current_date if current_date else "—")
         self.current_date.setStyleSheet("""
             QLabel {
                 color: #4CAF50;
@@ -386,13 +387,38 @@ class SettingNameSurnameDialog(QDialog):
 
         layout.addLayout(header_layout)
 
+        # Получаем текущие данные пользователя
+        user_info = get_user_info(self.user_id)
+        current_name = user_info.get('FirstName', '') if user_info else ''
+        current_surname = user_info.get('LastName', '') if user_info else ''
+
+        # Текущие данные
+        current_label = QLabel("Текущие данные:")
+        current_label.setStyleSheet("color: #808080; font-size: 12px;")
+        layout.addWidget(current_label)
+
+        current_data = QLabel(f"{current_name} {current_surname}".strip() or "—")
+        current_data.setStyleSheet("""
+            QLabel {
+                color: #4CAF50;
+                font-size: 14px;
+                font-weight: 600;
+                padding: 10px;
+                background-color: #2d2d2d;
+                border-radius: 10px;
+                border: 1px solid #3a3a3a;
+            }
+        """)
+        layout.addWidget(current_data)
+
         # Поле имени
-        name_label = QLabel("Имя:")
-        name_label.setStyleSheet("color: #808080; font-size: 13px;")
+        name_label = QLabel("Новое имя:")
+        name_label.setStyleSheet("color: #808080; font-size: 13px; margin-top: 10px;")
         layout.addWidget(name_label)
 
         self.name_input = QtWidgets.QLineEdit()
         self.name_input.setPlaceholderText("Введите новое имя")
+        self.name_input.setText(current_name)
         self.name_input.setMinimumHeight(45)
         self.name_input.setStyleSheet("""
             QLineEdit {
@@ -410,12 +436,13 @@ class SettingNameSurnameDialog(QDialog):
         layout.addWidget(self.name_input)
 
         # Поле фамилии
-        surname_label = QLabel("Фамилия:")
+        surname_label = QLabel("Новая фамилия:")
         surname_label.setStyleSheet("color: #808080; font-size: 13px; margin-top: 10px;")
         layout.addWidget(surname_label)
 
         self.surname_input = QtWidgets.QLineEdit()
         self.surname_input.setPlaceholderText("Введите новую фамилию")
+        self.surname_input.setText(current_surname)
         self.surname_input.setMinimumHeight(45)
         self.surname_input.setStyleSheet("""
             QLineEdit {
@@ -595,7 +622,27 @@ class Ui_Setting_Profil(object):
                 qproperty-alignment: AlignCenter;
             }
         """)
-        self.avatar_preview.setText("👤")
+
+        # Загружаем аватар пользователя
+        avatar_path = get_avatar_path_by_user_id(self.user_id)
+        if avatar_path and os.path.exists(avatar_path):
+            pixmap = QPixmap(avatar_path)
+            if not pixmap.isNull():
+                # Создаем круглую маску для аватара
+                rounded = QPixmap(pixmap.size())
+                rounded.fill(Qt.transparent)
+                painter = QPainter(rounded)
+                painter.setRenderHint(QPainter.Antialiasing)
+                path = QPainterPath()
+                path.addRoundedRect(0, 0, pixmap.width(), pixmap.height(), 15, 15)
+                painter.setClipPath(path)
+                painter.drawPixmap(0, 0, pixmap)
+                painter.end()
+                self.avatar_preview.setPixmap(rounded.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            else:
+                self.avatar_preview.setText("👤")
+        else:
+            self.avatar_preview.setText("👤")
 
         header_layout.addWidget(self.btn_close)
         header_layout.addWidget(title_label)
@@ -656,15 +703,6 @@ class Ui_Setting_Profil(object):
         )
         self.btn_name_surname.clicked.connect(self.open_name_surname)
         content_layout.addWidget(self.btn_name_surname)
-
-        # Кнопка "Логин"
-        self.btn_login = ModernSettingButton(
-            "Логин",
-            "🔑",
-            "Изменить имя пользователя"
-        )
-        self.btn_login.clicked.connect(self.open_login)
-        content_layout.addWidget(self.btn_login)
 
         # Кнопка "Дата рождения"
         self.btn_date = ModernSettingButton(
@@ -763,31 +801,44 @@ class Ui_Setting_Profil(object):
 
     def open_name_surname(self):
         dialog = SettingNameSurnameDialog(self.user_id, self.dialog)
-        dialog.exec_()
-
-    def open_login(self):
-        # Здесь будет открытие диалога смены логина
-        QMessageBox.information(self.dialog, "Информация", "Функция будет доступна в следующем обновлении")
+        if dialog.exec_() == QDialog.Accepted:
+            # Обновляем информацию в главном окне если нужно
+            QMessageBox.information(self.dialog, "Успех", "Данные успешно обновлены!")
 
     def open_date(self):
         dialog = SettingDateDialog(self.user_id, self.dialog)
         dialog.exec_()
 
-    def open_password(self):
-        # Здесь будет открытие диалога смены пароля
-        QMessageBox.information(self.dialog, "Информация", "Функция будет доступна в следующем обновлении")
+    def open_email(self):
+        """Открытие диалога изменения email"""
+        # Получаем текущий email пользователя
+        user_info = get_user_info(self.user_id)
+        current_email = user_info.get('Email', '') if user_info else ''
+
+        dialog = ModernEmailDialog(self.user_id, current_email, self.dialog)
+        if dialog.exec_() == QDialog.Accepted:
+            QMessageBox.information(self.dialog, "Успех", "Email успешно обновлен!")
 
     def open_phone(self):
-        # Здесь будет открытие диалога смены телефона
-        QMessageBox.information(self.dialog, "Информация", "Функция будет доступна в следующем обновлении")
+        """Открытие диалога изменения телефона"""
+        # Получаем текущий телефон пользователя
+        user_info = get_user_info(self.user_id)
+        current_phone = user_info.get('PhoneNumber', '') if user_info else ''
 
-    def open_email(self):
-        # Здесь будет открытие диалога смены email
-        QMessageBox.information(self.dialog, "Информация", "Функция будет доступна в следующем обновлении")
+        dialog = ModernPhoneDialog(self.user_id, current_phone, self.dialog)
+        if dialog.exec_() == QDialog.Accepted:
+            QMessageBox.information(self.dialog, "Успех", "Номер телефона успешно обновлен!")
+
+    def open_password(self):
+        """Открытие диалога изменения пароля"""
+        dialog = ModernPasswordDialog(self.user_id, self.dialog)
+        if dialog.exec_() == QDialog.Accepted:
+            QMessageBox.information(self.dialog, "Успех", "Пароль успешно изменен!")
 
 
 if __name__ == "__main__":
     import sys
+    import os
 
     QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)

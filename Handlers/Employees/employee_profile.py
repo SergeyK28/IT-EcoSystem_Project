@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QTimer, QPoint, QRect
-from PyQt5.QtGui import QFont, QColor, QPalette, QLinearGradient, QBrush, QPixmap, QPainter, QPainterPath, QCursor
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox, \
     QGraphicsDropShadowEffect, QSizeGrip
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from Handlers.employee_session import employee_session
+from Handlers.Employees.employee_session import employee_session
 from Server import db_crm
 
 
@@ -416,7 +415,7 @@ class EmployeeProfileDialog(QDialog):
             self.close()
 
             # Открытие окна входа
-            from Handlers.employee_login import EmployeeLoginDialog
+            from Handlers.Employees.employee_login import EmployeeLoginDialog
             login_dialog = EmployeeLoginDialog()
             if login_dialog.exec_() == QDialog.Accepted:
                 from Handlers.main_CRM import MainCRMWindow

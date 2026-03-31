@@ -567,9 +567,6 @@ class Ui_profil(object):
         self.btn_favorites = ModernButton("❤️ Избранное", False)
         layout.addWidget(self.btn_favorites)
 
-        self.btn_history = ModernButton("📜 История заказов", False)
-        layout.addWidget(self.btn_history)
-
         # ===== КОНТАКТНАЯ ИНФОРМАЦИЯ =====
         contact_frame = QFrame()
         contact_frame.setStyleSheet("""

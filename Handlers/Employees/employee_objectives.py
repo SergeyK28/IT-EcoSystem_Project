@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QTimer, QDate, QDateTime
-from PyQt5.QtGui import QFont, QColor, QPalette, QBrush, QPainter, QPen
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt, QDateTime
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox,
                              QGraphicsDropShadowEffect, QScrollArea, QWidget, QTextEdit, QDateEdit, QComboBox,
-                             QCheckBox, QListWidget, QListWidgetItem, QAbstractItemView, QMenu, QAction,
-                             QLineEdit, QSpinBox, QGridLayout)  # Добавлен QGridLayout
+                             QCheckBox, QLineEdit, QGridLayout)  # Добавлен QGridLayout
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from Handlers.employee_session import employee_session
+from Handlers.Employees.employee_session import employee_session
 from Server import db_crm, db_objectives
 
 

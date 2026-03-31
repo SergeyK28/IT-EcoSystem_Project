@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QUrl, QPropertyAnimation, QEasingCurve, QPoint, QTimer
-from PyQt5.QtGui import QDesktopServices, QColor, QPalette, QLinearGradient, QBrush, QFont, QPainter, QPen
+from PyQt5.QtCore import Qt, QUrl, QPropertyAnimation, QTimer
+from PyQt5.QtGui import QDesktopServices, QColor, QFont
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox,
                              QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView,
                              QLineEdit, QTextEdit, QComboBox, QWidget, QGraphicsOpacityEffect, QStackedWidget,
-                             QListWidget, QListWidgetItem, QAbstractItemView, QMenu, QAction, QSplitter,
-                             QScrollArea, QGridLayout, QSizePolicy)
+                             QScrollArea, QGridLayout)
 import sys
 import os
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-import math
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Server import db_crm
-from Handlers.employee_session import employee_session
+from Handlers.Employees.employee_session import employee_session
 
 
 class ModernButton(QPushButton):

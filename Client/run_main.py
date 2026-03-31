@@ -123,6 +123,10 @@ class MainWindow(QDialog, Ui_main_window_Dialog):
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
+    # Устанавливаем атрибут OpenGL для WebEngine
+    if not QtCore.QCoreApplication.testAttribute(Qt.AA_ShareOpenGLContexts):
+        QtCore.QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts, True)
+
     # Создаем и показываем загрузочный экран
     splash = SplashScreen()
     splash.show()

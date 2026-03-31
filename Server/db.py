@@ -851,3 +851,74 @@ def get_user_bonus_points(user_id):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+def update_email_in_db(user_id, new_email):
+    """Обновление email пользователя"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Проверяем, не занят ли email другим пользователем
+        cursor.execute("SELECT ID FROM Client WHERE Email = %s AND ID != %s", (new_email, user_id))
+        if cursor.fetchone():
+            return False
+
+        cursor.execute("UPDATE Client SET Email = %s WHERE ID = %s", (new_email, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except mysql.connector.Error as err:
+        print(f"Ошибка обновления email: {err}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def update_phone_in_db(user_id, new_phone):
+    """Обновление номера телефона пользователя"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE Client SET PhoneNumber = %s WHERE ID = %s", (new_phone, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except mysql.connector.Error as err:
+        print(f"Ошибка обновления телефона: {err}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def update_password_in_db(user_id, current_password, new_password):
+    """Обновление пароля пользователя"""
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Получаем текущий хеш пароля
+        cursor.execute("SELECT PasswordHash FROM Client WHERE ID = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            return False
+
+        # Проверяем текущий пароль
+        if not check_password(user['PasswordHash'], current_password):
+            return False
+
+        # Хешируем новый пароль
+        new_hash = hash_password(new_password)
+
+        # Обновляем пароль
+        cursor.execute("UPDATE Client SET PasswordHash = %s WHERE ID = %s", (new_hash, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except mysql.connector.Error as err:
+        print(f"Ошибка обновления пароля: {err}")
+        return False
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()

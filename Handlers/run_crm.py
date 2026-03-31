@@ -9,10 +9,10 @@ from PyQt5.QtWidgets import QDialog
 # Добавляем путь к корневой директории
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Handlers.employee_login import EmployeeLoginDialog
+from Handlers.Employees.employee_login import EmployeeLoginDialog
 from Handlers.main_CRM import MainCRMWindow
-from Handlers.employee_session import employee_session
-from Handlers.splash_screen_CRM import SplashScreen  # Импортируем загрузочное окно
+from Handlers.Employees.employee_session import employee_session
+from Handlers.splash_screen_CRM import SplashScreen
 
 
 def main():
@@ -43,11 +43,15 @@ def main():
     palette.setColor(QPalette.Highlight, QColor(76, 175, 80))
     app.setPalette(palette)
 
+    # Создаем главное окно (но не показываем его сразу)
+    main_window = None
+
     # Показываем загрузочное окно
     splash = SplashScreen()
 
     # Функция для продолжения загрузки после сплэша
     def continue_loading():
+        nonlocal main_window
         # Сначала показываем окно входа
         login_dialog = EmployeeLoginDialog()
 
@@ -58,14 +62,12 @@ def main():
                 # Выполняем вход в сессию
                 employee_session.login(employee_data)
 
-                # Показываем главное окно CRM
-                window = MainCRMWindow()
-                window.show()
-
-                sys.exit(app.exec_())
+                # Создаем и показываем главное окно CRM
+                main_window = MainCRMWindow()
+                main_window.show()
         else:
             # Если пользователь закрыл окно входа, завершаем программу
-            sys.exit(0)
+            app.quit()
 
     # Подключаем сигнал завершения загрузки
     splash.finished.connect(continue_loading)
@@ -73,6 +75,7 @@ def main():
     # Запускаем загрузку
     splash.start_loading()
 
+    # Запускаем event loop
     sys.exit(app.exec_())
 
 
