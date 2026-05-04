@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QScrollArea
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QDate, QTimer
 from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, \
@@ -495,6 +496,8 @@ class IdenDialog(QDialog):
             }
         """)
 
+        agreement_link.setCursor(Qt.PointingHandCursor)
+        agreement_link.clicked.connect(self.open_agreement)
         agreement_layout.addWidget(self.User_agreement)
         agreement_layout.addWidget(agreement_text)
         agreement_layout.addWidget(agreement_link)
@@ -734,13 +737,260 @@ class IdenDialog(QDialog):
 
         msg.exec_()
 
+    def show_registration_dialog(parent=None):
+        """Показать диалог регистрации"""
+        dialog = IdenDialog(parent)
+        result = dialog.exec_()
+        return result
 
-def show_registration_dialog(parent=None):
-    """Показать диалог регистрации"""
-    dialog = IdenDialog(parent)
-    result = dialog.exec_()
-    return result
+    def open_agreement(self):
+        """Открывает окно с пользовательским соглашением"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Пользовательское соглашение - IT-EcoSystem")
+        dialog.setMinimumSize(700, 600)
+        dialog.resize(800, 700)
 
+        # Стиль для окна соглашения
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #1a1a1a;
+            }
+            QLabel {
+                color: #ffffff;
+            }
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 25px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QScrollArea {
+                border: 1px solid #4a4a4a;
+                border-radius: 8px;
+                background-color: #2a2a2a;
+            }
+            QScrollArea QWidget {
+                background-color: #2a2a2a;
+            }
+            QScrollBar:vertical {
+                background-color: #2d2d2d;
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #4CAF50;
+                border-radius: 5px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #45a049;
+            }
+        """)
+
+        # Основной layout
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
+
+        # Заголовок
+        header_layout = QHBoxLayout()
+
+        title_label = QLabel("📜 Пользовательское соглашение")
+        title_label.setStyleSheet("""
+            font-size: 22px;
+            font-weight: bold;
+            color: #4CAF50;
+        """)
+        header_layout.addWidget(title_label)
+
+        header_layout.addStretch()
+
+        close_btn = QPushButton("✕ Закрыть")
+        close_btn.setFixedSize(100, 35)
+        close_btn.clicked.connect(dialog.close)
+        header_layout.addWidget(close_btn)
+
+        main_layout.addLayout(header_layout)
+
+        # Разделитель
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setStyleSheet("background-color: #3a3a3a; max-height: 1px;")
+        main_layout.addWidget(separator)
+
+        # Область прокрутки с текстом соглашения
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(15, 15, 15, 15)
+
+        # Текст пользовательского соглашения
+        agreement_text = QLabel()
+        agreement_text.setWordWrap(True)
+        agreement_text.setOpenExternalLinks(True)
+        agreement_text.setTextFormat(Qt.RichText)
+        agreement_text.setStyleSheet("""
+            QLabel {
+                color: #d0d0d0;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+            QLabel a {
+                color: #4CAF50;
+                text-decoration: none;
+            }
+            QLabel a:hover {
+                text-decoration: underline;
+            }
+        """)
+
+        # Текст соглашения (полный текст из User Agreement.txt)
+        agreement_html = """
+        <div style='font-family: "Segoe UI", Arial, sans-serif;'>
+            <h1 style='color: #4CAF50; margin-bottom: 20px;'>📜 ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ</h1>
+            <p style='color: #b0b0b0; margin-bottom: 30px;'>Сервисный центр «IT-EcoSystem» (далее – «Исполнитель»)</p>
+
+            <p>Настоящее Пользовательское соглашение (далее – «Соглашение») является публичной офертой и регулирует отношения между Исполнителем и любым физическим или юридическим лицом (далее – «Пользователь», «Клиент»), использующим Сервисы, Программное обеспечение и Сайт/Приложение IT-EcoSystem.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>1. ТЕРМИНЫ И ОПРЕДЕЛЕНИЯ</h2>
+
+            <p><b>1.1. IT-EcoSystem</b> – комплекс услуг по ремонту, диагностике и обслуживанию электронной, цифровой и бытовой техники, а также программное обеспечение (включая CRM-систему, личный кабинет, мобильное приложение) и сайт.</p>
+
+            <p><b>1.2. Пользователь</b> – дееспособное лицо, принявшее условия настоящего Соглашения и осуществляющее регистрацию в IT-EcoSystem, либо использующее Сервисы без регистрации.</p>
+
+            <p><b>1.3. Заказ</b> – оформленная Пользователем заявка на оказание услуг по ремонту, диагностике, продаже запасных частей или иных действий.</p>
+
+            <p><b>1.4. Личный кабинет</b> – защищенный раздел, доступный Пользователю после авторизации, содержащий персональные данные, историю заказов, избранное, корзину, уведомления и настройки профиля.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>2. ПРЕДМЕТ СОГЛАШЕНИЯ</h2>
+
+            <p><b>2.1.</b> Исполнитель предоставляет Пользователю возможность:</p>
+            <ul style='margin-left: 20px;'>
+                <li>Ознакомления с перечнем услуг, их стоимостью и сроками выполнения;</li>
+                <li>Самостоятельного расчёта стоимости ремонта через подбор параметров (тип устройства, бренд, причина обращения);</li>
+                <li>Оформления заказа на ремонт, диагностику или покупку запчастей;</li>
+                <li>Добавления товаров/услуг в корзину и последующего оформления заказа;</li>
+                <li>Просмотра истории заказов, статусов, платежей, уведомлений;</li>
+                <li>Сохранения избранных услуг и товаров;</li>
+                <li>Управления профилем (изменение имени, телефона, e-mail, пароля, аватара).</li>
+            </ul>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>3. РЕГИСТРАЦИЯ И АВТОРИЗАЦИЯ</h2>
+
+            <p><b>3.1.</b> Регистрация Пользователя осуществляется через форму, содержащую следующие обязательные поля:</p>
+            <ul style='margin-left: 20px;'>
+                <li>Фамилия и Имя;</li>
+                <li>Логин;</li>
+                <li>Пароль (с подтверждением);</li>
+                <li>Номер телефона в формате +7XXXXXXXXXX;</li>
+                <li>Адрес электронной почты;</li>
+                <li>Дата рождения (опционально).</li>
+            </ul>
+
+            <p><b>3.2.</b> При регистрации Пользователь обязуется предоставить достоверные и актуальные данные.</p>
+
+            <p><b>3.3.</b> Пароль хранится в зашифрованном виде (bcrypt). Исполнитель не имеет доступа к открытому паролю Пользователя.</p>
+
+            <p><b>3.4.</b> Авторизация возможна также по e-mail. В случае утраты пароля Пользователь может восстановить доступ через форму восстановления, используя код подтверждения, направляемый на зарегистрированный e-mail. Код действует 15 минут.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>4. ПРАВА И ОБЯЗАННОСТИ ПОЛЬЗОВАТЕЛЯ</h2>
+
+            <p><b>4.1.</b> Пользователь обязуется:</p>
+            <ul style='margin-left: 20px;'>
+                <li>Использовать Сервисы только в законных целях;</li>
+                <li>Не передавать свои учётные данные (логин и пароль) третьим лицам;</li>
+                <li>Своевременно обновлять контактную информацию в личном кабинете;</li>
+                <li>Ознакомиться со стоимостью услуг и сроками выполнения до момента оформления заказа;</li>
+                <li>Оплатить услуги Исполнителя в порядке и на условиях, указанных при оформлении заказа.</li>
+            </ul>
+
+            <p><b>4.2.</b> Пользователь вправе:</p>
+            <ul style='margin-left: 20px;'>
+                <li>В любой момент отказаться от заказа до момента начала оказания услуги без штрафных санкций, но с учётом фактически понесённых расходов;</li>
+                <li>Получить информацию о статусе заказа через личный кабинет;</li>
+                <li>Удалить свою учётную запись (путём обращения в службу поддержки).</li>
+            </ul>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>5. ПРАВА И ОБЯЗАННОСТИ ИСПОЛНИТЕЛЯ</h2>
+
+            <p><b>5.1.</b> Исполнитель обязуется:</p>
+            <ul style='margin-left: 20px;'>
+                <li>Оказывать услуги в соответствии с заказом и действующими ценами;</li>
+                <li>Обеспечить конфиденциальность персональных данных Пользователя в соответствии с Федеральным законом №152-ФЗ «О персональных данных»;</li>
+                <li>Предоставлять Пользователю возможность просмотра истории заказов, платежей и уведомлений через личный кабинет.</li>
+            </ul>
+
+            <p><b>5.2.</b> Исполнитель вправе:</p>
+            <ul style='margin-left: 20px;'>
+                <li>Изменять цены на услуги и товары, предварительно уведомив Пользователей через сайт или рассылку не менее чем за 2 дня;</li>
+                <li>Приостановить оказание услуг в случае неоплаты или возникновения технических неполадок;</li>
+                <li>Отказать в обслуживании Пользователю, который предоставил заведомо ложные сведения или нарушает условия Соглашения.</li>
+            </ul>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>6. ПОРЯДОК ОФОРМЛЕНИЯ И ИСПОЛНЕНИЯ ЗАКАЗОВ</h2>
+
+            <p><b>6.1.</b> Выбор услуги может осуществляться через прямой выбор из каталога услуг или через форму подбора услуги.</p>
+
+            <p><b>6.2.</b> После выбора услуги/товара и добавления в корзину Пользователь оформляет заказ, указывая предпочтительную дату и время визита в сервисный центр.</p>
+
+            <p><b>6.3.</b> Оплата производится: безналичным расчётом через платёжные системы, наличными или картой в сервисном центре, онлайн-переводом по реквизитам.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>7. УВЕДОМЛЕНИЯ</h2>
+
+            <p><b>7.1.</b> Исполнитель направляет Пользователю уведомления следующих типов: информационные, предупреждения, акционные, подтверждения.</p>
+
+            <p><b>7.2.</b> Уведомления отображаются в личном кабинете и могут дублироваться на e-mail Пользователя.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>8. ОТВЕТСТВЕННОСТЬ И ЛИМИТЫ</h2>
+
+            <p><b>8.1.</b> Исполнитель не несёт ответственности за любые убытки Пользователя, возникшие в результате неправильного использования Сайта/Приложения, утери пароля, задержки, вызванные обстоятельствами непреодолимой силы.</p>
+
+            <p><b>8.2.</b> Пользователь несёт ответственность за достоверность предоставленных данных.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>9. ПЕРСОНАЛЬНЫЕ ДАННЫЕ</h2>
+
+            <p><b>9.1.</b> Исполнитель обрабатывает персональные данные Пользователя в соответствии с Политикой конфиденциальности и требованиями ФЗ-152.</p>
+
+            <p><b>9.2.</b> Перечень обрабатываемых данных: Фамилия, имя, номер телефона, адрес электронной почты, дата рождения (по желанию), пароль (в зашифрованном виде), фотография аватара, история заказов и платежей.</p>
+
+            <p><b>9.3.</b> Пользователь вправе отозвать согласие на обработку персональных данных. В этом случае доступ к личному кабинету будет прекращён, а учётная запись удалена в течение 30 календарных дней.</p>
+
+            <h2 style='color: #4CAF50; margin-top: 25px; margin-bottom: 15px; font-size: 18px;'>10. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ</h2>
+
+            <p><b>10.1.</b> Настоящее Соглашение может быть изменено Исполнителем в одностороннем порядке. Новая версия вступает в силу с момента её публикации на Сайте.</p>
+
+            <p><b>10.2.</b> Все споры и разногласия подлежат разрешению в претензионном порядке. При недостижении согласия спор передаётся в суд по месту регистрации Исполнителя.</p>
+
+            <div style='margin-top: 30px; padding: 20px; background-color: #2a2a2a; border-radius: 10px; border-left: 4px solid #4CAF50;'>
+                <h3 style='color: #4CAF50; margin-bottom: 10px;'>📞 РЕКВИЗИТЫ ИСПОЛНИТЕЛЯ</h3>
+                <p style='margin: 5px 0;'><b>Сервисный центр «IT-EcoSystem»</b></p>
+                <p style='margin: 5px 0;'>📍 Адрес: Красноярск, Улица Микуцкого, 12</p>
+                <p style='margin: 5px 0;'>📞 Телефон: +7 (929) 356-23-78</p>
+                <p style='margin: 5px 0;'>✉️ Электронная почта: info@it-ecosystem.ru</p>
+                <p style='margin: 5px 0;'>🌐 Сайт: it-ecosystem.ru</p>
+            </div>
+
+            <p style='margin-top: 20px; color: #808080; text-align: center;'>Дата публикации: 1 апреля 2026 г.<br>Дата вступления в силу: 1 апреля 2026 г.</p>
+        </div>
+        """
+
+        agreement_text.setText(agreement_html)
+
+        content_layout.addWidget(agreement_text)
+        scroll_area.setWidget(content_widget)
+        main_layout.addWidget(scroll_area)
+
+        # Запускаем диалог
+        dialog.exec_()
 
 if __name__ == "__main__":
     import sys

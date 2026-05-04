@@ -30,7 +30,7 @@ class CustomersDialog(QDialog):
         # Основной стиль
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -66,7 +66,7 @@ class CustomersDialog(QDialog):
             }
             QPushButton#editBtn {
                 background-color: rgb(255, 193, 7);
-                color: black;
+                color: #2F2F2F;
             }
             QPushButton#editBtn:hover {
                 background-color: rgb(255, 213, 27);
@@ -141,7 +141,7 @@ class CustomersDialog(QDialog):
         main_container.setGeometry(0, 0, 1200, 800)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }
@@ -872,7 +872,7 @@ class AddCustomerDialog(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -907,7 +907,7 @@ class AddCustomerDialog(QDialog):
         main_container.setGeometry(0, 0, 500, 600)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }
@@ -1110,7 +1110,7 @@ class EditCustomerDialog(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -1145,7 +1145,7 @@ class EditCustomerDialog(QDialog):
         main_container.setGeometry(0, 0, 500, 600)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }

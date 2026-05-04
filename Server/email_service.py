@@ -170,7 +170,7 @@ class EmailService:
                     <div class="footer">
                         С уважением, команда IT-EcoSystem<br>
                         📍 Красноярск, Улица Микуцкого, 12<br>
-                        📞 +7 (XXX) XXX-XX-XX
+                        📞 +7 (929) 356-23-78
                     </div>
                 </div>
             </body>

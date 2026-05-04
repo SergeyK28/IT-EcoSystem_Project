@@ -31,7 +31,7 @@ class ObjectivesDialog(QDialog):
         # Основной стиль
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -131,7 +131,7 @@ class ObjectivesDialog(QDialog):
         main_container.setGeometry(0, 0, 1000, 700)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }
@@ -535,7 +535,7 @@ class TaskNotesDialog(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -580,7 +580,7 @@ class TaskNotesDialog(QDialog):
         main_container.setGeometry(0, 0, 600, 700)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }
@@ -842,7 +842,7 @@ class AddObjectiveDialog(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
             }
             QLabel {
                 color: rgb(255, 255, 255);
@@ -877,7 +877,7 @@ class AddObjectiveDialog(QDialog):
         main_container.setGeometry(0, 0, 500, 600)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: rgb(23, 23, 23);
+                background-color: rgb(47, 47, 47);
                 border-radius: 15px;
                 border: 2px solid rgb(103, 155, 118);
             }

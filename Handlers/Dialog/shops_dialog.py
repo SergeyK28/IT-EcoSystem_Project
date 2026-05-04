@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QUrl, QPropertyAnimation, QTimer
 from PyQt5.QtGui import QDesktopServices, QColor, QFont
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox,
                              QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QLineEdit, QTextEdit, QComboBox, QWidget, QGraphicsOpacityEffect, QStackedWidget,
+                             QLineEdit, QTextEdit, QComboBox, QWidget, QGraphicsOpacityEffect,
                              QScrollArea, QGridLayout)
 import sys
 import os
@@ -163,12 +163,11 @@ class ModernComboBox(QComboBox):
 
 
 class ShopsDialog(QDialog):
-    """Окно управления ссылками на магазины (улучшенный дизайн)"""
+    """Окно управления ссылками на магазины (карточки)"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.shops_data = []
-        self.view_mode = 'table'  # 'table' или 'cards'
         self.setup_ui()
         self.load_shops_from_db()
 
@@ -187,7 +186,7 @@ class ShopsDialog(QDialog):
         # Основной стиль
         self.setStyleSheet("""
             QDialog {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
             }
             QLabel {
                 color: #ffffff;
@@ -211,30 +210,6 @@ class ShopsDialog(QDialog):
             }
             QPushButton#closeBtn:hover {
                 background-color: #c82333;
-            }
-            QTableWidget {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                gridline-color: #404040;
-                alternate-background-color: #333333;
-                selection-background-color: #4CAF50;
-                border-radius: 12px;
-                border: 1px solid #404040;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #404040;
-            }
-            QTableWidget::item:selected {
-                background-color: #4CAF50;
-            }
-            QHeaderView::section {
-                background-color: #1e1e1e;
-                color: #4CAF50;
-                padding: 12px 8px;
-                font-weight: bold;
-                border: none;
-                border-bottom: 2px solid #4CAF50;
             }
             QScrollBar:vertical {
                 background-color: #2d2d2d;
@@ -270,7 +245,7 @@ class ShopsDialog(QDialog):
         main_container.setGeometry(0, 0, 1200, 800)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
                 border-radius: 20px;
                 border: 1px solid #333333;
             }
@@ -305,7 +280,7 @@ class ShopsDialog(QDialog):
             font-size: 28px;
             font-weight: bold;
             color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                  stop: 0 #4CAF50, stop: 1 #8BC34A);
+                                  stop: 0 #4CAF50, stop: 1 #679B76);
             background: transparent;
             letter-spacing: 1px;
         """)
@@ -313,11 +288,6 @@ class ShopsDialog(QDialog):
 
         header_layout.addWidget(title_container)
         header_layout.addStretch()
-
-        # Переключатель вида
-        self.view_toggle_btn = ModernButton("📱 Карточки")
-        self.view_toggle_btn.clicked.connect(self.toggle_view)
-        header_layout.addWidget(self.view_toggle_btn)
 
         # Кнопка добавления магазина
         self.add_btn = ModernButton("➕ Добавить магазин", primary=True)
@@ -412,58 +382,16 @@ class ShopsDialog(QDialog):
 
         layout.addWidget(stats_frame)
 
-        # Стек для переключения между таблицей и карточками
-        self.stacked_widget = QStackedWidget()
-
-        # Таблица
-        self.table_widget = QWidget()
-        self.setup_table_view()
-        self.stacked_widget.addWidget(self.table_widget)
-
         # Карточки
-        self.cards_widget = QWidget()
         self.setup_cards_view()
-        self.stacked_widget.addWidget(self.cards_widget)
-
-        layout.addWidget(self.stacked_widget, 1)
-
-    def setup_table_view(self):
-        """Настраивает табличное представление"""
-        layout = QVBoxLayout(self.table_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.shops_table = QTableWidget()
-        self.shops_table.setColumnCount(6)
-        self.shops_table.setHorizontalHeaderLabels(["ID", "Название", "Категория", "Ссылка", "Описание", "Действия"])
-        self.shops_table.setColumnHidden(0, True)  # Скрываем ID столбец
-        self.shops_table.setAlternatingRowColors(True)
-        self.shops_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.shops_table.setEditTriggers(QTableWidget.NoEditTriggers)
-
-        # Настройка растяжения
-        header = self.shops_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # ID
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Название
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Категория
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Ссылка
-        header.setSectionResizeMode(4, QHeaderView.Stretch)  # Описание
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Действия
-
-        self.shops_table.verticalHeader().setVisible(False)
-        self.shops_table.verticalHeader().setDefaultSectionSize(45)
-
-        layout.addWidget(self.shops_table)
+        layout.addWidget(self.cards_scroll_area, 1)
 
     def setup_cards_view(self):
         """Настраивает отображение карточками"""
-        layout = QVBoxLayout(self.cards_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Область прокрутки для карточек
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setFrameShape(QFrame.NoFrame)
-        scroll_area.setStyleSheet("""
+        self.cards_scroll_area = QScrollArea()
+        self.cards_scroll_area.setWidgetResizable(True)
+        self.cards_scroll_area.setFrameShape(QFrame.NoFrame)
+        self.cards_scroll_area.setStyleSheet("""
             QScrollArea {
                 background-color: transparent;
                 border: none;
@@ -475,21 +403,7 @@ class ShopsDialog(QDialog):
         self.cards_layout.setSpacing(15)
         self.cards_layout.setAlignment(Qt.AlignTop)
 
-        scroll_area.setWidget(self.cards_container)
-        layout.addWidget(scroll_area)
-
-    def toggle_view(self):
-        """Переключает между таблицей и карточками"""
-        if self.view_mode == 'table':
-            self.view_mode = 'cards'
-            self.view_toggle_btn.setText("📋 Таблица")
-            self.stacked_widget.setCurrentIndex(1)
-        else:
-            self.view_mode = 'table'
-            self.view_toggle_btn.setText("📱 Карточки")
-            self.stacked_widget.setCurrentIndex(0)
-
-        self.update_shops_table()
+        self.cards_scroll_area.setWidget(self.cards_container)
 
     def load_shops_from_db(self):
         """Загружает данные магазинов из БД"""
@@ -498,13 +412,13 @@ class ShopsDialog(QDialog):
             print(f"Загружено {len(self.shops_data)} магазинов из БД")
 
             self.update_categories()
-            self.update_shops_table()
+            self.update_shops_display()
             self.update_statistics()
 
         except Exception as e:
             print(f"Ошибка загрузки магазинов из БД: {e}")
             self.shops_data = []
-            self.update_shops_table()
+            self.update_shops_display()
 
     def update_categories(self):
         """Обновляет список категорий"""
@@ -548,142 +462,15 @@ class ShopsDialog(QDialog):
         else:
             return "й"
 
-    def update_shops_table(self):
-        """Обновляет отображение магазинов"""
+    def update_shops_display(self):
+        """Обновляет отображение магазинов (только карточки)"""
         try:
             filtered_data = self.get_filtered_data()
-
-            if self.view_mode == 'table':
-                self.update_table_view(filtered_data)
-            else:
-                self.update_cards_view(filtered_data)
-
+            self.update_cards_view(filtered_data)
             self.update_statistics()
 
         except Exception as e:
             print(f"Ошибка обновления: {e}")
-
-    def update_table_view(self, filtered_data):
-        """Обновляет табличное представление с текстовыми кнопками"""
-        self.shops_table.setRowCount(len(filtered_data))
-
-        # Убеждаемся, что у таблицы правильное количество столбцов
-        if self.shops_table.columnCount() != 6:
-            self.shops_table.setColumnCount(6)
-            self.shops_table.setHorizontalHeaderLabels(
-                ["ID", "Название", "Категория", "Ссылка", "Описание", "Действия"])
-            self.shops_table.setColumnHidden(0, True)  # Скрываем ID
-
-        for row, shop in enumerate(filtered_data):
-            # ID (скрытый)
-            id_item = QTableWidgetItem(str(shop.get('id', '')))
-            self.shops_table.setItem(row, 0, id_item)
-
-            # Название
-            name_item = QTableWidgetItem(shop.get('name', ''))
-            name_item.setFont(QFont("Segoe UI", 10, QFont.Bold))
-            self.shops_table.setItem(row, 1, name_item)
-
-            # Категория
-            category_item = QTableWidgetItem(shop.get('category', ''))
-            category_item.setTextAlignment(Qt.AlignCenter)
-            category_item.setBackground(QColor(60, 60, 60))
-            self.shops_table.setItem(row, 2, category_item)
-
-            # Ссылка
-            url_item = QTableWidgetItem(shop.get('url', ''))
-            url_item.setForeground(QColor(76, 175, 80))
-            self.shops_table.setItem(row, 3, url_item)
-
-            # Описание
-            desc_item = QTableWidgetItem(shop.get('description', ''))
-            self.shops_table.setItem(row, 4, desc_item)
-
-            # Действия - создаем виджет с кнопками
-            actions_widget = QWidget()
-            actions_layout = QHBoxLayout(actions_widget)
-            actions_layout.setContentsMargins(2, 2, 2, 2)
-            actions_layout.setSpacing(4)
-
-            # Кнопка открыть
-            open_btn = QPushButton("🔗 Открыть")
-            open_btn.setToolTip("Открыть ссылку в браузере")
-            open_btn.setFixedSize(80, 28)
-            open_btn.setCursor(Qt.PointingHandCursor)
-            open_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #17a2b8;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    padding: 4px 8px;
-                }
-                QPushButton:hover {
-                    background-color: #138496;
-                }
-            """)
-            open_btn.clicked.connect(lambda checked, url=shop.get('url', ''): self.open_url(url))
-            actions_layout.addWidget(open_btn)
-
-            # Кнопка редактировать
-            edit_btn = QPushButton("✏️ Ред.")
-            edit_btn.setToolTip("Редактировать магазин")
-            edit_btn.setFixedSize(70, 28)
-            edit_btn.setCursor(Qt.PointingHandCursor)
-            edit_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #ffc107;
-                    color: black;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    padding: 4px 8px;
-                }
-                QPushButton:hover {
-                    background-color: #e0a800;
-                }
-            """)
-            edit_btn.clicked.connect(lambda checked, s=shop: self.edit_shop(s))
-            actions_layout.addWidget(edit_btn)
-
-            # Кнопка удалить
-            delete_btn = QPushButton("🗑️ Удал.")
-            delete_btn.setToolTip("Удалить магазин")
-            delete_btn.setFixedSize(70, 28)
-            delete_btn.setCursor(Qt.PointingHandCursor)
-            delete_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #dc3545;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    padding: 4px 8px;
-                }
-                QPushButton:hover {
-                    background-color: #c82333;
-                }
-            """)
-            delete_btn.clicked.connect(lambda checked, s=shop: self.delete_shop(s))
-            actions_layout.addWidget(delete_btn)
-
-            actions_layout.addStretch()
-            self.shops_table.setCellWidget(row, 5, actions_widget)
-
-        # Настраиваем ширину столбцов
-        self.shops_table.setColumnWidth(0, 50)  # ID (скрыт)
-        self.shops_table.setColumnWidth(1, 200)  # Название
-        self.shops_table.setColumnWidth(2, 120)  # Категория
-        self.shops_table.setColumnWidth(3, 250)  # Ссылка
-        self.shops_table.setColumnWidth(4, 300)  # Описание
-        self.shops_table.setColumnWidth(5, 240)  # Действия
-
-        # Альтернативный вариант - автоматическая подгонка
-        # self.shops_table.resizeColumnsToContents()
 
     def update_cards_view(self, filtered_data):
         """Обновляет отображение карточками"""
@@ -890,7 +677,7 @@ class ShopsDialog(QDialog):
 
     def filter_shops(self):
         """Фильтрует магазины"""
-        self.update_shops_table()
+        self.update_shops_display()
 
     def reset_filters(self):
         """Сбрасывает фильтры"""
@@ -948,7 +735,7 @@ class ShopsDialog(QDialog):
 
         msg.setStyleSheet("""
             QMessageBox {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
                 color: white;
             }
             QLabel {
@@ -1058,7 +845,7 @@ class AddEditShopDialog(QDialog):
 
         self.setStyleSheet("""
             QDialog {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
             }
             QLabel {
                 color: #ffffff;
@@ -1075,7 +862,7 @@ class AddEditShopDialog(QDialog):
         main_container.setGeometry(0, 0, 550, 600)
         main_container.setStyleSheet("""
             QFrame {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
                 border-radius: 25px;
                 border: 1px solid #333333;
             }
@@ -1101,7 +888,7 @@ class AddEditShopDialog(QDialog):
             font-size: 20px;
             font-weight: bold;
             color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                  stop: 0 #4CAF50, stop: 1 #8BC34A);
+                                  stop: 0 #4CAF50, stop: 1 #679B76);
             background: transparent;
         """)
         header_layout.addWidget(title_label)
@@ -1312,7 +1099,7 @@ class AddEditShopDialog(QDialog):
         msg.setIcon(QMessageBox.Warning)
         msg.setStyleSheet("""
             QMessageBox {
-                background-color: #1a1a1a;
+                background-color: #2A2A2A;
                 color: white;
             }
             QPushButton {
