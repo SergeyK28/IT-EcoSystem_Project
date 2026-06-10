@@ -141,7 +141,7 @@ class PuzzleSlot(QLabel):
 
 
 class CaptchaPuzzle(QFrame):
-    """Виджет капчи-пазла (2x2) из четырёх отдельных изображений"""
+    """Виджет капчи-пазла (2x2) с поддержкой нескольких наборов изображений"""
 
     puzzle_completed = QtCore.pyqtSignal(bool)
     puzzle_failed = QtCore.pyqtSignal()
@@ -152,8 +152,17 @@ class CaptchaPuzzle(QFrame):
         self.slots = []
         self.slot_pieces = {}
         self.completed = False
+
+        # Список доступных наборов (пути к папкам assets_0, assets_1, assets_2)
+        self.available_sets = []
+        self.current_set = None
+
         self.setup_ui()
-        self.load_puzzle_images()
+        self.scan_available_sets()
+        self.load_random_set()
+
+        # При неудачной сборке меняем набор и перемешиваем
+        self.puzzle_failed.connect(self.change_asset_set)
 
     def setup_ui(self):
         self.setStyleSheet("""
@@ -263,63 +272,88 @@ class CaptchaPuzzle(QFrame):
         self.status_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.status_label)
 
-    def load_puzzle_images(self):
-        """
-        Загружает 4 отдельных изображения из папки assets:
-        img0.png, img1.png, img2.png, img3.png
-        """
+    def scan_available_sets(self):
+        """Сканирует папку Client/assets на наличие подпапок assets_0, assets_1, assets_2"""
+        self.available_sets = []
+
         # Определяем возможные пути к папке assets
-        possible_paths = [
-            os.path.join(os.path.dirname(__file__), '..', 'assets'),
-            os.path.join(os.path.dirname(__file__), 'assets'),
-            "assets"
+        possible_assets_paths = [
+            os.path.join(os.path.dirname(__file__), 'assets'),        # Client/assets
+            os.path.join(os.path.dirname(__file__), '..', 'assets'), # если assets в корне проекта (на всякий случай)
         ]
 
-        assets_dir = None
-        for path in possible_paths:
-            if os.path.exists(path) and os.path.isdir(path):
-                assets_dir = path
+        assets_root = None
+        for path in possible_assets_paths:
+            if os.path.isdir(path):
+                assets_root = path
                 break
 
+        if assets_root is None:
+            # Если папки assets нет, не будет ни одного набора
+            self.available_sets = []
+            return
+
+        # Ищем подпапки assets_0, assets_1, assets_2
+        for i in range(3):
+            set_dir = os.path.join(assets_root, f"assets_{i}")
+            if not os.path.isdir(set_dir):
+                continue
+            # Проверяем наличие всех 4 изображений
+            all_exist = True
+            for j in range(4):
+                img_path = os.path.join(set_dir, f"img{j}.png")
+                if not os.path.exists(img_path):
+                    all_exist = False
+                    break
+            if all_exist:
+                self.available_sets.append(set_dir)
+
+        # Если нет ни одного набора, оставляем пустой список – будем генерировать заглушки
+        if not self.available_sets:
+            print("Не найдено ни одного полного набора изображений для капчи. Будут использованы сгенерированные картинки.")
+
+    def load_random_set(self):
+        """Выбирает случайный набор из доступных и загружает изображения"""
+        if not self.available_sets:
+            # Нет реальных наборов – будем генерировать в load_puzzle_images_from_set
+            self.current_set = None
+            self.load_puzzle_images_from_set(None)
+            return
+
+        # Выбираем новый набор, отличный от текущего (если возможно)
+        new_set = self.current_set
+        if len(self.available_sets) > 1:
+            while new_set == self.current_set:
+                new_set = random.choice(self.available_sets)
+        else:
+            new_set = self.available_sets[0]
+
+        self.current_set = new_set
+        self.load_puzzle_images_from_set(self.current_set)
+
+    def change_asset_set(self):
+        """Меняет набор изображений и сбрасывает пазл (вызывается при неудачной сборке)"""
+        self.load_random_set()
+        self.shuffle_pieces()
+        self.status_label.setText("Набор изображений изменён! Соберите пазл заново.")
+        self.status_label.setStyleSheet("color: #ffaa44; font-size: 11px; padding: 5px;")
+
+    def load_puzzle_images_from_set(self, set_path):
+        """
+        Загружает 4 изображения из указанной папки (img0.png ... img3.png).
+        Если set_path == None, генерирует замещающие картинки.
+        """
         images = []
-        missing_indices = []
-
-        # Пытаемся загрузить img0.png ... img3.png
-        for i in range(4):
-            img_path = None
-            if assets_dir:
-                img_path = os.path.join(assets_dir, f"img{i}.png")
-            else:
-                # Альтернативно ищем в текущей директории
-                if os.path.exists(f"assets/img{i}.png"):
-                    img_path = f"assets/img{i}.png"
-
-            if img_path and os.path.exists(img_path):
-                pixmap = QPixmap(img_path)
-                if not pixmap.isNull():
-                    pixmap = pixmap.scaled(120, 110, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                    images.append(pixmap)
-                    continue
-
-            missing_indices.append(i)
-
-        # Если не хватает изображений — генерируем замещающие картинки с номерами
-        if len(images) < 4:
+        if set_path is None:
+            # Генерация замещающих картинок с градиентом и номером
             for i in range(4):
-                if i not in missing_indices:
-                    continue
                 pixmap = QPixmap(120, 110)
                 pixmap.fill(Qt.transparent)
                 painter = QPainter(pixmap)
                 painter.setRenderHint(QPainter.Antialiasing)
 
                 gradient = QLinearGradient(0, 0, 120, 110)
-                colors = [
-                    (76, 175, 80),   # зелёный
-                    (33, 150, 243),  # синий
-                    (156, 39, 176),  # фиолетовый
-                    (255, 152, 0)    # оранжевый
-                ]
+                colors = [(76, 175, 80), (33, 150, 243), (156, 39, 176), (255, 152, 0)]
                 r, g, b = colors[i]
                 gradient.setColorAt(0, QColor(r, g, b, 200))
                 gradient.setColorAt(1, QColor(r // 2, g // 2, b // 2, 200))
@@ -330,8 +364,25 @@ class CaptchaPuzzle(QFrame):
                 painter.drawText(pixmap.rect(), Qt.AlignCenter, str(i))
                 painter.end()
                 images.append(pixmap)
+        else:
+            # Загрузка из реальной папки
+            for i in range(4):
+                img_path = os.path.join(set_path, f"img{i}.png")
+                pixmap = QPixmap(img_path)
+                if pixmap.isNull():
+                    # Если какой-то файл повреждён или отсутствует, создаём заглушку
+                    pixmap = QPixmap(120, 110)
+                    pixmap.fill(QColor(50, 50, 50))
+                    painter = QPainter(pixmap)
+                    painter.setPen(QPen(QColor(255, 255, 255), 2))
+                    painter.setFont(QFont("Arial", 32, QFont.Bold))
+                    painter.drawText(pixmap.rect(), Qt.AlignCenter, str(i))
+                    painter.end()
+                else:
+                    pixmap = pixmap.scaled(120, 110, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                images.append(pixmap)
 
-        # Формируем данные фрагментов (каждый фрагмент — одно изображение)
+        # Создаём данные фрагментов
         pieces_data = []
         for idx, pix in enumerate(images):
             correct_row = idx // 2
