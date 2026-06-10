@@ -39,7 +39,7 @@ class Config:
     DB_HOST = os.environ.get('DB_HOST', 'localhost')  # Хост БД (по умолчанию localhost)
     DB_USER = os.environ.get('DB_USER')  # Имя пользователя БД
     DB_PASSWORD = os.environ.get('DB_PASSWORD')  # Пароль пользователя
-    DB_NAME = os.environ.get('DB_NAME', 'SQL_IT_EcoSyttem_BD')  # Имя базы данных
+    DB_NAME = os.environ.get('DB_NAME', 'sql_it_ecosyttem_bd')  # Имя базы данных
     DB_PORT = int(os.environ.get('DB_PORT', 3306))  # Порт подключения
 
     @classmethod

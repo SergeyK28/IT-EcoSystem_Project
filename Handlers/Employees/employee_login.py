@@ -108,7 +108,7 @@ class EmployeeLoginDialog(QDialog):
             font-size: 18pt;
             font-weight: bold;
             color: rgb(103, 155, 118);
-            padding: 10px;
+            padding: 8px;
             border-bottom: 2px solid rgb(103, 155, 118);
         """)
         main_layout.addWidget(title_label)
@@ -119,7 +119,7 @@ class EmployeeLoginDialog(QDialog):
         icon_label.setStyleSheet("""
             font-size: 40px;
             color: rgb(103, 155, 118);
-            padding: 8px;
+            padding: 6px;
         """)
         main_layout.addWidget(icon_label)
 

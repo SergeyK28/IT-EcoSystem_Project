@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, QTimer, pyqtSlot, QDate
-from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QIcon, QDrag, QPainter, QPen, \
-    QPainterPath
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, \
-    QPushButton, QCheckBox, QFrame, QMessageBox, QDialog, QGridLayout, QApplication
+from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QIcon, QDrag, QPainter, QPen, QPainterPath
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QFrame, QMessageBox, QDialog, QGridLayout, QApplication
 
 from identification_window import IdenDialog
 from profil_window import Ui_profil
@@ -143,7 +141,7 @@ class PuzzleSlot(QLabel):
 
 
 class CaptchaPuzzle(QFrame):
-    """Виджет капчи-пазла (2x2)"""
+    """Виджет капчи-пазла (2x2) из четырёх отдельных изображений"""
 
     puzzle_completed = QtCore.pyqtSignal(bool)
     puzzle_failed = QtCore.pyqtSignal()
@@ -155,7 +153,7 @@ class CaptchaPuzzle(QFrame):
         self.slot_pieces = {}
         self.completed = False
         self.setup_ui()
-        self.load_puzzle_image()
+        self.load_puzzle_images()
 
     def setup_ui(self):
         self.setStyleSheet("""
@@ -265,81 +263,100 @@ class CaptchaPuzzle(QFrame):
         self.status_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.status_label)
 
-    def load_puzzle_image(self):
+    def load_puzzle_images(self):
+        """
+        Загружает 4 отдельных изображения из папки assets:
+        img0.png, img1.png, img2.png, img3.png
+        """
+        # Определяем возможные пути к папке assets
         possible_paths = [
-            os.path.join(os.path.dirname(__file__), '..', 'Pictures', '3459G.jpg'),
-            os.path.join(os.path.dirname(__file__), 'Pictures', '3459G.jpg'),
-            "Pictures/3459G.jpg",
-            "3459G.jpg"
+            os.path.join(os.path.dirname(__file__), '..', 'assets'),
+            os.path.join(os.path.dirname(__file__), 'assets'),
+            "assets"
         ]
 
-        image_path = None
+        assets_dir = None
         for path in possible_paths:
-            if os.path.exists(path):
-                image_path = path
+            if os.path.exists(path) and os.path.isdir(path):
+                assets_dir = path
                 break
 
-        if image_path and os.path.exists(image_path):
-            full_image = QPixmap(image_path)
-            full_image = full_image.scaled(240, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        images = []
+        missing_indices = []
 
-            if full_image.width() != 240 or full_image.height() != 220:
-                x = (full_image.width() - 240) // 2
-                y = (full_image.height() - 220) // 2
-                full_image = full_image.copy(x, y, 240, 220)
-        else:
-            full_image = QPixmap(240, 220)
-            full_image.fill(Qt.transparent)
-            painter = QPainter(full_image)
-            painter.setRenderHint(QPainter.Antialiasing)
+        # Пытаемся загрузить img0.png ... img3.png
+        for i in range(4):
+            img_path = None
+            if assets_dir:
+                img_path = os.path.join(assets_dir, f"img{i}.png")
+            else:
+                # Альтернативно ищем в текущей директории
+                if os.path.exists(f"assets/img{i}.png"):
+                    img_path = f"assets/img{i}.png"
 
-            gradient = QLinearGradient(0, 0, 240, 220)
-            gradient.setColorAt(0, QColor(76, 175, 80))
-            gradient.setColorAt(0.5, QColor(33, 150, 243))
-            gradient.setColorAt(1, QColor(156, 39, 176))
-            painter.fillRect(0, 0, 240, 220, gradient)
+            if img_path and os.path.exists(img_path):
+                pixmap = QPixmap(img_path)
+                if not pixmap.isNull():
+                    pixmap = pixmap.scaled(120, 110, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    images.append(pixmap)
+                    continue
 
-            painter.setPen(QPen(QColor(255, 255, 255, 200), 3))
-            painter.drawEllipse(50, 40, 140, 140)
+            missing_indices.append(i)
 
-            painter.setPen(QPen(QColor(76, 175, 80), 4))
-            painter.drawLine(95, 110, 115, 130)
-            painter.drawLine(115, 130, 155, 95)
+        # Если не хватает изображений — генерируем замещающие картинки с номерами
+        if len(images) < 4:
+            for i in range(4):
+                if i not in missing_indices:
+                    continue
+                pixmap = QPixmap(120, 110)
+                pixmap.fill(Qt.transparent)
+                painter = QPainter(pixmap)
+                painter.setRenderHint(QPainter.Antialiasing)
 
-            painter.setPen(QPen(QColor(255, 255, 255), 1))
-            font = QFont("Arial", 24, QFont.Bold)
-            painter.setFont(font)
-            painter.drawText(full_image.rect(), Qt.AlignCenter, "IT")
-            painter.end()
+                gradient = QLinearGradient(0, 0, 120, 110)
+                colors = [
+                    (76, 175, 80),   # зелёный
+                    (33, 150, 243),  # синий
+                    (156, 39, 176),  # фиолетовый
+                    (255, 152, 0)    # оранжевый
+                ]
+                r, g, b = colors[i]
+                gradient.setColorAt(0, QColor(r, g, b, 200))
+                gradient.setColorAt(1, QColor(r // 2, g // 2, b // 2, 200))
+                painter.fillRect(0, 0, 120, 110, gradient)
 
-        piece_width = 120
-        piece_height = 110
+                painter.setPen(QPen(QColor(255, 255, 255), 2))
+                painter.setFont(QFont("Arial", 32, QFont.Bold))
+                painter.drawText(pixmap.rect(), Qt.AlignCenter, str(i))
+                painter.end()
+                images.append(pixmap)
 
+        # Формируем данные фрагментов (каждый фрагмент — одно изображение)
         pieces_data = []
+        for idx, pix in enumerate(images):
+            correct_row = idx // 2
+            correct_col = idx % 2
+            pieces_data.append({
+                'id': idx,
+                'correct_row': correct_row,
+                'correct_col': correct_col,
+                'pixmap': pix
+            })
 
-        for row in range(2):
-            for col in range(2):
-                x = col * piece_width
-                y = row * piece_height
-                piece_pixmap = full_image.copy(x, y, piece_width, piece_height)
-                piece_id = row * 2 + col
-                pieces_data.append({
-                    'id': piece_id,
-                    'correct_row': row,
-                    'correct_col': col,
-                    'pixmap': piece_pixmap
-                })
-
+        # Перемешиваем фрагменты
         random.shuffle(pieces_data)
 
+        # Очищаем старые виджеты
         self.pieces = {}
         self.slot_pieces = {}
 
+        # Очищаем контейнер фрагментов
         for i in reversed(range(self.pieces_layout.count())):
             widget = self.pieces_layout.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
 
+        # Добавляем фрагменты в левую область
         for i, data in enumerate(pieces_data):
             piece = PuzzlePiece(data['id'], (data['correct_row'], data['correct_col']), data['pixmap'])
             row = i // 2
@@ -347,6 +364,7 @@ class CaptchaPuzzle(QFrame):
             self.pieces_layout.addWidget(piece, row, col)
             self.pieces[data['id']] = piece
 
+        # Очищаем слоты
         for slot in self.slots:
             slot.clear_piece()
             self.slot_pieces[(slot.row, slot.col)] = None
