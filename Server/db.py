@@ -1115,3 +1115,26 @@ def delete_notification(notification_id: int, user_id: int) -> bool:
             cursor.close()
         if conn.is_connected():
             conn.close()
+
+def get_user_active_status(login_or_email):
+    """
+    Проверяет, активен ли пользователь (IsActive = 1).
+    Возвращает:
+        True  – если пользователь активен
+        False – если пользователь существует, но заблокирован
+        None  – если пользователь не найден
+    """
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT IsActive FROM Client WHERE Login = %s OR Email = %s",
+            (login_or_email, login_or_email)
+        )
+        user = cursor.fetchone()
+        if user:
+            return user['IsActive'] == 1
+        return None
+    finally:
+        cursor.close()
+        conn.close()

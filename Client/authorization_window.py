@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, QTimer, p
 from PyQt5.QtGui import QFont, QColor, QLinearGradient, QBrush, QPalette, QPixmap, QIcon, QDrag, QPainter, QPen, QPainterPath
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox, QFrame, QMessageBox, QDialog, QGridLayout, QApplication
 
+from Server.db import check_user, get_user_data_by_login, get_user_active_status
 from identification_window import IdenDialog
 from profil_window import Ui_profil
 from Server.db import check_user, get_user_data_by_login, hash_password, get_connection
@@ -1512,12 +1513,12 @@ class AuthDialog(QDialog):
         self.registration_dialog.show()
 
     def open_profil_window(self):
-        # Проверяем, не заблокирован ли пользователь
+        # Проверяем, не заблокирован ли пользователь локально (по попыткам входа/пазла)
         if self.blocked_until and datetime.now() < self.blocked_until:
             self.show_block_message()
             return
 
-        # Проверка пазла
+        # Проверка сборки пазла (капча)
         if not self.captcha_puzzle.is_completed():
             self.puzzle_failed_attempts += 1
 
@@ -1525,16 +1526,22 @@ class AuthDialog(QDialog):
                 self.blocked_until = datetime.now() + timedelta(hours=self.BLOCK_DURATION_HOURS)
                 self.save_blocked_state()
                 self.apply_block()
-                self.show_custom_message("Доступ заблокирован",
-                                         f"❌ Три неудачные попытки подряд!\n"
-                                         f"Доступ заблокирован до {self.blocked_until.strftime('%H:%M:%S')}\n"
-                                         "Обратитесь к администратору.", "error")
+                self.show_custom_message(
+                    "Доступ заблокирован",
+                    f"❌ Три неудачные попытки подряд!\n"
+                    f"Доступ заблокирован до {self.blocked_until.strftime('%H:%M:%S')}\n"
+                    "Обратитесь к администратору.",
+                    "error"
+                )
                 return
 
             remaining = self.MAX_ATTEMPTS - self.puzzle_failed_attempts
-            self.show_custom_message("Проверка безопасности",
-                                     f"🧩 Пожалуйста, соберите пазл, чтобы подтвердить, что вы не робот!\n\n"
-                                     f"⚠️ Осталось попыток: {remaining} из {self.MAX_ATTEMPTS}", "warning")
+            self.show_custom_message(
+                "Проверка безопасности",
+                f"🧩 Пожалуйста, соберите пазл, чтобы подтвердить, что вы не робот!\n\n"
+                f"⚠️ Осталось попыток: {remaining} из {self.MAX_ATTEMPTS}",
+                "warning"
+            )
             self.captcha_puzzle.shuffle_pieces()
             return
 
@@ -1546,42 +1553,75 @@ class AuthDialog(QDialog):
         remember_me = True
 
         if login and password:
+            # ----- НОВАЯ ПРОВЕРКА: активен ли аккаунт в БД -----
+            active_status = get_user_active_status(login)
+            if active_status is False:
+                self.show_custom_message(
+                    "Доступ заблокирован",
+                    "❌ Ваш аккаунт заблокирован. Обратитесь к администратору.",
+                    "error"
+                )
+                return
+            elif active_status is None:
+                self.show_custom_message(
+                    "Ошибка",
+                    "❌ Пользователь не найден",
+                    "error"
+                )
+                return
+            # ------------------------------------------------
+
             if check_user(login, password):
-                # Успешный вход - сбрасываем все счетчики
+                # Успешный вход – сбрасываем все локальные счетчики блокировки
                 self.failed_attempts = 0
                 self.puzzle_failed_attempts = 0
                 self.clear_block()
 
                 user_data = get_user_data_by_login(login)
-                session.login(user_data["ID"], user_data["FirstName"] + " " + user_data["LastName"], remember_me)
+                session.login(
+                    user_data["ID"],
+                    user_data["FirstName"] + " " + user_data["LastName"],
+                    remember_me
+                )
                 self.close()
 
                 self.profile_dialog = QDialog()
-                self.profile_ui = Ui_profil(user_data["ID"], user_data["FirstName"] + " " + user_data["LastName"])
+                self.profile_ui = Ui_profil(
+                    user_data["ID"],
+                    user_data["FirstName"] + " " + user_data["LastName"]
+                )
                 self.profile_ui.setupUi(self.profile_dialog)
 
                 if hasattr(session, '_main_window') and session._main_window:
-                    self.profile_dialog.finished.connect(lambda: session._main_window.update_login_button())
+                    self.profile_dialog.finished.connect(
+                        lambda: session._main_window.update_login_button()
+                    )
 
                 self.profile_dialog.show()
             else:
-                # Неудачная попытка входа
+                # Неудачная попытка входа (неверный логин/пароль)
                 self.failed_attempts += 1
 
                 if self.failed_attempts >= self.MAX_ATTEMPTS:
                     self.blocked_until = datetime.now() + timedelta(hours=self.BLOCK_DURATION_HOURS)
                     self.save_blocked_state()
                     self.apply_block()
-                    self.show_custom_message("Доступ заблокирован",
-                                             f"❌ Три неудачные попытки входа подряд!\n"
-                                             f"Доступ заблокирован до {self.blocked_until.strftime('%H:%M:%S')}\n"
-                                             "Обратитесь к администратору.", "error")
+                    self.show_custom_message(
+                        "Доступ заблокирован",
+                        f"❌ Три неудачные попытки входа подряд!\n"
+                        f"Доступ заблокирован до {self.blocked_until.strftime('%H:%M:%S')}\n"
+                        "Обратитесь к администратору.",
+                        "error"
+                    )
                     return
 
                 remaining = self.MAX_ATTEMPTS - self.failed_attempts
-                self.show_custom_message("Ошибка",
-                                         f"❌ Неверный логин или пароль!\n\n"
-                                         f"⚠️ Осталось попыток: {remaining} из {self.MAX_ATTEMPTS}", "error")
+                self.show_custom_message(
+                    "Ошибка",
+                    f"❌ Неверный логин или пароль!\n\n"
+                    f"⚠️ Осталось попыток: {remaining} из {self.MAX_ATTEMPTS}",
+                    "error"
+                )
                 self.captcha_puzzle.shuffle_pieces()
         else:
             self.show_custom_message("Ошибка", "❌ Заполните все поля!", "error")

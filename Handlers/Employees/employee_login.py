@@ -7,6 +7,7 @@ import sys
 import os
 import bcrypt
 from datetime import datetime, timedelta
+from Server.db_crm import get_employee_active_status
 
 # Добавляем путь к модулям
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -205,7 +206,6 @@ class EmployeeLoginDialog(QDialog):
             self.show_password_btn.setText("👁️")
 
     def attempt_login(self):
-        """Попытка входа"""
         email = self.email_input.text().strip()
         password = self.password_input.text()
 
@@ -213,22 +213,30 @@ class EmployeeLoginDialog(QDialog):
             QMessageBox.warning(self, "Ошибка", "Заполните все поля!")
             return
 
-        # Проверяем блокировку
+        # Проверяем локальную блокировку (по неудачным попыткам)
         if self.check_if_locked(email):
             QMessageBox.critical(self, "Аккаунт заблокирован",
                                  "Слишком много неудачных попыток. Аккаунт заблокирован на 30 минут.")
             return
 
-        # Проверяем учетные данные
+        # Проверка активности сотрудника в БД
+        active_status = get_employee_active_status(email)
+        if active_status is False:
+            QMessageBox.critical(self, "Доступ запрещён",
+                                 "❌ Ваш аккаунт сотрудника заблокирован. Обратитесь к администратору.")
+            return
+        elif active_status is None:
+            QMessageBox.critical(self, "Ошибка", "Сотрудник с таким email не найден.")
+            return
+
+        # Проверка пароля
         employee = self.verify_employee(email, password)
 
         if employee:
-            # Успешный вход
             self.employee_data = employee
             self.update_last_login(employee['EmployeeID'])
             self.accept()
         else:
-            # Неудачная попытка
             self.handle_failed_attempt(email)
 
     def verify_employee(self, email, password):

@@ -3879,3 +3879,33 @@ def create_system_notifications_for_low_stock() -> int:
             cursor.close()
         if connection.is_connected():
             connection.close()
+
+def get_employee_active_status(email: str) -> Optional[bool]:
+    """
+    Проверяет, активен ли сотрудник (IsActive = 1).
+    Возвращает:
+        True  – если сотрудник активен
+        False – если сотрудник существует, но заблокирован
+        None  – если сотрудник не найден
+    """
+    connection = get_crm_connection()
+    if connection is None:
+        return None
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "SELECT IsActive FROM ListEmployee WHERE Email = %s",
+            (email,)
+        )
+        result = cursor.fetchone()
+        if result:
+            return result[0] == 1
+        return None
+    except Error as e:
+        print(f"Ошибка проверки активности сотрудника: {e}")
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection.is_connected():
+            connection.close()
