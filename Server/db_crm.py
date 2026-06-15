@@ -3909,3 +3909,38 @@ def get_employee_active_status(email: str) -> Optional[bool]:
             cursor.close()
         if connection.is_connected():
             connection.close()
+
+
+# ==================== РАБОТА С СОТРУДНИКАМИ ====================
+
+def update_employee_password(employee_id: int, current_password: str, new_password: str):
+    """
+    Обновляет пароль сотрудника.
+    Возвращает (success, message)
+    """
+    import bcrypt
+    connection = get_crm_connection()
+    if connection is None:
+        return False, "Нет подключения к базе данных"
+
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT PasswordHash FROM ListEmployee WHERE EmployeeID = %s", (employee_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False, "Сотрудник не найден"
+        stored = row['PasswordHash']
+        if not stored:
+            return False, "Учётная запись не имеет пароля"
+        if not bcrypt.checkpw(current_password.encode('utf-8'), stored.encode('utf-8')):
+            return False, "Неверный текущий пароль"
+        new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor.execute("UPDATE ListEmployee SET PasswordHash = %s WHERE EmployeeID = %s", (new_hash, employee_id))
+        connection.commit()
+        return True, "Пароль успешно изменён"
+    except Exception as e:
+        connection.rollback()
+        return False, f"Ошибка: {e}"
+    finally:
+        cursor.close()
+        connection.close()

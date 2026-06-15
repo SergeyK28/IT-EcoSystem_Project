@@ -1,2 +1,2 @@
-admin@itecosystem.ru - 6/2
+admin@itecosystem.ru -
 pipi_kaka00@mail.ru
