@@ -1,0 +1,214 @@
+# === СЕКРЕТЫ И КОНФИДЕНЦИАЛЬНЫЕ ДАННЫЕ ===
+# Файлы с паролями и ключами
+.env
+.env.*
+*.env
+.env.local
+.env.production
+.env.development
+*.key
+*.pem
+*.crt
+secrets.*
+
+# === Python ===
+# Кэш и байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+venv.bak/
+env.bak/
+.venv/
+virtualenv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Дистрибутивы / пакеты
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info/
+*.eggs/
+.installed.cfg
+*.egg-info/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# PyCharm/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-*
+
+# === БАЗЫ ДАННЫХ ===
+# SQLite файлы (если используются)
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+
+# Дампы БД
+*.sql
+*.sql.gz
+*.sql.zip
+db_dumps/
+
+# Логи БД
+mysql.log
+postgresql.log
+
+# === ЛОГИ ===
+*.log
+security.log
+app.log
+error.log
+access.log
+logs/
+*.log.*
+
+# === ИЗОБРАЖЕНИЯ И МЕДИА (личные данные) ===
+# Папки с пользовательскими аватарами
+/Client/FotoPNG/
+/Client/Avatars/
+uploads/
+media/
+avatars/
+profile_pics/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.ico
+*.svg
+!placeholder.png  # Исключение для заглушек
+!default-avatar.png
+
+# === ДОКУМЕНТЫ И ВРЕМЕННЫЕ ФАЙЛЫ ===
+# PDF и документы (если генерируются)
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# Временные файлы
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.part
+*.cache
+
+# Системные файлы
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# === IDE И РЕДАКТОРЫ ===
+# VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# === ТЕСТЫ И ПОКРЫТИЕ ===
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+*.cover
+.hypothesis/
+
+# === ДОКУМЕНТАЦИЯ ===
+docs/_build/
+site/
+
+# === ЗАВИСИМОСТИ (если используете) ===
+# Poetry
+poetry.lock
+# Pipenv
+Pipfile.lock
+# requirements (кроме самого файла)
+!requirements.txt
+
+# === DOCKER ===
+.docker/
+docker-compose.override.yml
+*.pid
+Dockerfile.test
+
+# === РАЗВЕРТЫВАНИЕ ===
+.cache/
+target/
+*.war
+*.ear
+*.jar
+*.nar
+
+# === ПРОЧЕЕ ===
+# Файлы с тестовыми данными
+test_data/
+sample_data/
+
+# Бэкапы баз данных
+backups/
+db_backup/
+
+# Файлы конфигурации приложения (кроме .env, который выше)
+config.local.yaml
+config.local.yml
+settings.local.py
+local_settings.py
+
+# Отчеты и метрики
+reports/
+metrics/
+profiling/
