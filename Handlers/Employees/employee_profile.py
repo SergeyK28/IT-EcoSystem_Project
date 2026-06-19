@@ -1,18 +1,29 @@
 # -*- coding: utf-8 -*-
+"""
+Модуль окна профиля сотрудника CRM (исправленная версия).
+Использует методы employee_session напрямую, без вызова несуществующих методов.
+"""
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox, \
-    QGraphicsDropShadowEffect, QSizeGrip
+from PyQt5.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QFrame, QMessageBox, QGraphicsDropShadowEffect, QSizeGrip
+)
 import sys
 import os
 
+# Добавляем путь к корневой директории для импорта модулей
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from Handlers.Employees.employee_session import employee_session
 from Server import db_crm
 
 
 class EmployeeProfileDialog(QDialog):
-    """Упрощенное окно профиля сотрудника"""
+    """
+    Упрощенное окно профиля сотрудника с корректной загрузкой данных.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,12 +37,13 @@ class EmployeeProfileDialog(QDialog):
         self.load_employee_data()
 
     def setup_ui(self):
+        """Настройка интерфейса окна профиля."""
         self.setObjectName("EmployeeProfileDialog")
         self.setWindowTitle("Профиль сотрудника")
         self.setMinimumSize(450, 550)
         self.resize(500, 600)
 
-        # Основной стиль - более минималистичный
+        # Основной стиль
         self.setStyleSheet("""
             QDialog {
                 background-color: transparent;
@@ -90,7 +102,7 @@ class EmployeeProfileDialog(QDialog):
             }
         """)
 
-        # Настройки окна
+        # Настройки окна (без рамок, с возможностью перетаскивания)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
@@ -99,7 +111,7 @@ class EmployeeProfileDialog(QDialog):
         self.main_container.setObjectName("mainContainer")
         self.main_container.setGeometry(0, 0, self.width(), self.height())
 
-        # Легкая тень
+        # Тень
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
         shadow.setColor(QColor(0, 0, 0, 100))
@@ -237,7 +249,7 @@ class EmployeeProfileDialog(QDialog):
 
         layout.addWidget(info_frame)
 
-        # Статистика - компактная
+        # Статистика
         stats_title = QLabel("СТАТИСТИКА")
         stats_title.setAlignment(Qt.AlignCenter)
         stats_title.setStyleSheet("""
@@ -270,20 +282,20 @@ class EmployeeProfileDialog(QDialog):
         self.logout_btn.setObjectName("logoutBtn")
         self.logout_btn.setMinimumHeight(35)
         self.logout_btn.setCursor(Qt.PointingHandCursor)
-        layout.addWidget(self.logout_btn)
         self.logout_btn.clicked.connect(self.logout)
+        layout.addWidget(self.logout_btn)
 
         # Позиционируем SizeGrip
         self.size_grip.move(self.main_container.width() - 25, self.main_container.height() - 25)
 
     def resizeEvent(self, event):
-        """Обновление позиции SizeGrip при изменении размера"""
+        """Обновление позиции SizeGrip при изменении размера."""
         super().resizeEvent(event)
         self.main_container.resize(self.width(), self.height())
         self.size_grip.move(self.main_container.width() - 25, self.main_container.height() - 25)
 
     def create_stat_card(self, icon, value):
-        """Упрощенная карточка статистики"""
+        """Создает упрощенную карточку статистики."""
         card = QFrame()
         card.setObjectName("statCard")
         card.setMinimumSize(100, 60)
@@ -312,43 +324,61 @@ class EmployeeProfileDialog(QDialog):
         return card
 
     def load_employee_data(self):
-        """Загрузка данных сотрудника"""
+        """
+        Загружает данные сотрудника из сессии.
+        Использует только существующие методы employee_session.
+        """
         if not employee_session.is_authenticated():
             return
 
-        name = employee_session.get_employee_name()
-        email = employee_session.get_employee_email()
-        position = employee_session.get_employee_position()
-        role = employee_session.get_employee_role()
-        employee_id = employee_session.get_employee_id()
+        # Получаем все данные сотрудника одним вызовом
+        data = employee_session.get_employee_data()
+        if not data:
+            return
 
-        self.name_label.setText(name if name else "Сотрудник")
+        # Извлекаем необходимые поля
+        first_name = data.get('FirstName', '')
+        last_name = data.get('LastName', '')
+        full_name = f"{first_name} {last_name}".strip()
+        email = data.get('Email', '')
+        position = data.get('Position', 'Сотрудник')
+        role = data.get('Role', 'technician')
+        employee_id = data.get('EmployeeID')
+
+        # Заполняем виджеты
+        self.name_label.setText(full_name if full_name else "Сотрудник")
         self.email_label.setText(email if email else "Email не указан")
-        self.position_label.setText(position if position else "Сотрудник")
+        self.position_label.setText(position)
 
-        # Упрощенное отображение роли
+        # Отображаем роль в понятном виде
         role_text = {
-            'admin': 'Админ',
+            'admin': 'Администратор',
             'manager': 'Менеджер',
-            'tech': 'Техник'
+            'technician': 'Техник',
+            'consultant': 'Консультант'
         }.get(role, 'Сотрудник')
-
         self.role_label.setText(f"Роль: {role_text}")
         self.id_label.setText(f"ID: {employee_id}")
 
         # Инициалы для аватара
-        if name:
-            parts = name.split()
-            initials = parts[0][0] + (parts[1][0] if len(parts) > 1 else '')
+        if full_name:
+            parts = full_name.split()
+            if len(parts) >= 2:
+                initials = parts[0][0] + parts[1][0]
+            else:
+                initials = parts[0][0]
             self.avatar_label.setText(initials.upper())
         else:
             self.avatar_label.setText("👤")
 
-        # Загрузка статистики
-        self.load_employee_statistics(employee_id)
+        # Загружаем статистику, если есть ID
+        if employee_id:
+            self.load_employee_statistics(employee_id)
 
     def load_employee_statistics(self, employee_id):
-        """Загрузка статистики сотрудника"""
+        """
+        Загружает статистику сотрудника из базы данных.
+        """
         try:
             connection = db_crm.get_crm_connection()
             if not connection:
@@ -392,7 +422,7 @@ class EmployeeProfileDialog(QDialog):
             print(f"Ошибка загрузки статистики: {e}")
 
     def update_stat_cards(self, total, active, completed):
-        """Обновление карточек статистики"""
+        """Обновление карточек статистики."""
         if hasattr(self.orders_card, 'stat_label'):
             self.orders_card.stat_label.setText(str(total))
         if hasattr(self.active_card, 'stat_label'):
@@ -401,7 +431,7 @@ class EmployeeProfileDialog(QDialog):
             self.completed_card.stat_label.setText(str(completed))
 
     def logout(self):
-        """Выход из аккаунта"""
+        """Выход из аккаунта с подтверждением."""
         reply = QMessageBox.question(
             self,
             "Подтверждение",
@@ -422,7 +452,8 @@ class EmployeeProfileDialog(QDialog):
                 crm_window = MainCRMWindow()
                 crm_window.show()
 
-    # Методы для перетаскивания и изменения размера
+    # ==================== МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ И ИЗМЕНЕНИЯ РАЗМЕРА ====================
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             pos = event.pos()
@@ -522,3 +553,49 @@ class EmployeeProfileDialog(QDialog):
             cursor = Qt.ArrowCursor
 
         self.setCursor(cursor)
+
+
+# ==================== ТОЧКА ВХОДА ДЛЯ ТЕСТИРОВАНИЯ ====================
+if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtCore import QTimer
+
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+
+    # Создаем тестовые данные сессии
+    class DummySession:
+        def is_authenticated(self):
+            return True
+
+        def get_employee_data(self):
+            return {
+                'EmployeeID': 1,
+                'FirstName': 'Александр',
+                'LastName': 'Петров',
+                'Email': 'admin@itecosystem.ru',
+                'Position': 'Администратор',
+                'Role': 'admin'
+            }
+
+    # Временно подменяем сессию для теста
+    original_session = employee_session
+    try:
+        # Для теста используем фиктивную сессию
+        import types
+        dummy = DummySession()
+        # Просто покажем окно с фиктивными данными, не изменяя глобальную сессию
+        dialog = EmployeeProfileDialog()
+        # Вручную установим данные для теста
+        dialog.name_label.setText("Александр Петров")
+        dialog.email_label.setText("admin@itecosystem.ru")
+        dialog.position_label.setText("Администратор")
+        dialog.role_label.setText("Роль: Администратор")
+        dialog.id_label.setText("ID: 1")
+        dialog.avatar_label.setText("АП")
+        # Обновим статистику через заглушку
+        dialog.update_stat_cards(15, 4, 11)
+        dialog.show()
+        sys.exit(app.exec_())
+    except Exception as e:
+        print(f"Ошибка теста: {e}")
