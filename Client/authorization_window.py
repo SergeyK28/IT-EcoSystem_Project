@@ -1224,6 +1224,7 @@ class AuthDialog(QDialog):
     def setupUi(self, Dialog):
         Dialog.setObjectName("AuthDialog")
         Dialog.resize(550, 750)
+        Dialog.setFixedSize(550, 750)
 
         self.dialog = Dialog
 
