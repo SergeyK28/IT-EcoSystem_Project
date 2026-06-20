@@ -73,15 +73,15 @@ class TrendsDialog(QDialog):
         """Настройка интерфейса"""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(20)
 
         # ========== ВЕРХНЯЯ ПАНЕЛЬ ==========
         top_frame = QFrame()
-        top_frame.setFixedHeight(80)
+        top_frame.setFixedHeight(100)
         top_frame.setStyleSheet("background-color: #2a2a2a; border-radius: 15px;")
 
         top_layout = QHBoxLayout(top_frame)
-        top_layout.setContentsMargins(20, 15, 20, 15)
+        top_layout.setContentsMargins(10, 5, 10, 5)
 
         # Заголовок
         title_label = QLabel("📊 Тренды и аналитика")
