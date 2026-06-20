@@ -1226,6 +1226,7 @@ class AuthDialog(QDialog):
         Dialog.setObjectName("AuthDialog")
         Dialog.resize(550, 750)
         Dialog.setFixedSize(550, 750)
+        Dialog.setWindowTitle("Авторизация")
 
         self.dialog = Dialog
 
@@ -1284,31 +1285,12 @@ class AuthDialog(QDialog):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(15)
 
-        self.btn_close = QPushButton("✕")
-        self.btn_close.setFixedSize(40, 40)
-        self.btn_close.setStyleSheet("""
-            QPushButton {
-                background-color: #3a3a3a;
-                color: #b0b0b0;
-                border: none;
-                border-radius: 12px;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #ff4444;
-                color: white;
-            }
-        """)
-        self.btn_close.clicked.connect(self.close)
-
         title_label = QLabel("🔑 Вход в IT-EcoSystem")
         title_label.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
 
         logo_label = QLabel("🚀")
         logo_label.setStyleSheet("color: #4CAF50; font-size: 32px;")
 
-        header_layout.addWidget(self.btn_close)
         header_layout.addStretch()
         header_layout.addWidget(title_label)
         header_layout.addStretch()

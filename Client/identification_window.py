@@ -215,13 +215,15 @@ class ModernDateInputWidget(QWidget):
 class IdenDialog(QDialog):
     def __init__(self, parent=None):
         super(IdenDialog, self).__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
+        self.setWindowFlags(Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setupUi(self)
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("IdenDialog")
-        Dialog.resize(550, 850)  # Уменьшил высоту после удаления слайдера
+        Dialog.resize(550, 850)
+        Dialog.setFixedSize(550, 850)
+        Dialog.setWindowTitle("Регистрация")
 
         # Главный контейнер с тенью и фоном
         main_container = QFrame(Dialog)
@@ -280,28 +282,6 @@ class IdenDialog(QDialog):
         header_layout = QHBoxLayout()
         header_layout.setSpacing(15)
 
-        # Кнопка закрытия
-        self.btn_close = QPushButton("✕")
-        self.btn_close.setFixedSize(40, 40)
-        self.btn_close.setStyleSheet("""
-            QPushButton {
-                background-color: #3a3a3a;
-                color: #b0b0b0;
-                border: none;
-                border-radius: 12px;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #ff4444;
-                color: white;
-            }
-            QPushButton:pressed {
-                background-color: #cc0000;
-            }
-        """)
-        self.btn_close.clicked.connect(self.close)
-
         # Заголовок
         title_label = QLabel("📝 Регистрация")
         title_label.setStyleSheet("""
@@ -321,7 +301,6 @@ class IdenDialog(QDialog):
             }
         """)
 
-        header_layout.addWidget(self.btn_close)
         header_layout.addStretch()
         header_layout.addWidget(title_label)
         header_layout.addStretch()
