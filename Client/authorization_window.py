@@ -145,7 +145,6 @@ class PuzzleSlot(QLabel):
 class CaptchaPuzzle(QFrame):
     """
     Виджет капчи-пазла (2x2) с максимально плотной стыковкой картинок.
-    Картинки располагаются вплотную, без зазоров и фонов, образуя единое изображение.
     """
 
     puzzle_completed = QtCore.pyqtSignal(bool)
@@ -186,7 +185,7 @@ class CaptchaPuzzle(QFrame):
 
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(10)
-        main_layout.setContentsMargins(10, 10, 10, 10)  # отступы только вокруг всего блока
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
         # Заголовок
         title_layout = QHBoxLayout()
@@ -276,21 +275,25 @@ class CaptchaPuzzle(QFrame):
                 break
         if assets_root is None:
             return
-        for i in range(3):
-            set_dir = os.path.join(assets_root, f"assets_{i}")
-            if not os.path.isdir(set_dir):
-                continue
-            all_exist = True
-            for j in range(4):
-                if not os.path.exists(os.path.join(set_dir, f"img{j}.png")):
-                    all_exist = False
-                    break
-            if all_exist:
-                self.available_sets.append(set_dir)
+
+        # Ищем все подпапки, начинающиеся с "assets_"
+        for item in os.listdir(assets_root):
+            set_dir = os.path.join(assets_root, item)
+            if os.path.isdir(set_dir) and item.startswith("assets_"):
+                # Проверяем наличие img0..img3
+                all_exist = True
+                for j in range(4):
+                    if not os.path.exists(os.path.join(set_dir, f"img{j}.png")):
+                        all_exist = False
+                        break
+                if all_exist:
+                    self.available_sets.append(set_dir)
+
         if not self.available_sets:
             print("Не найдено наборов картинок. Будут использованы сгенерированные.")
 
     def load_random_set(self):
+        """Выбирает случайный набор из доступных (старается не повторять текущий)."""
         if not self.available_sets:
             self.current_set = None
             self.load_images_from_set(None)
@@ -305,13 +308,14 @@ class CaptchaPuzzle(QFrame):
         self.load_images_from_set(self.current_set)
 
     def change_asset_set(self):
+        """Меняет набор изображений (вызывается при неудачной проверке пазла)."""
         self.load_random_set()
         self.shuffle_pieces()
         self.status_label.setText("Набор изображений изменён! Соберите пазл заново.")
         self.status_label.setStyleSheet("color: #ffaa44; font-size: 11px; padding: 5px;")
 
     def load_images_from_set(self, set_path):
-        """Загружает 4 изображения, сохраняет эталонные pixmap'ы и перемешивает порядок"""
+        """Загружает 4 изображения, сохраняет эталонные pixmap'ы и перемешивает порядок."""
         self.original_pixmaps = []
         for i in range(4):
             if set_path is None:
@@ -344,8 +348,7 @@ class CaptchaPuzzle(QFrame):
                     painter.drawText(pixmap.rect(), Qt.AlignCenter, str(i))
                     painter.end()
                 else:
-                    # Растягиваем картинку на всю ячейку без сохранения пропорций,
-                    # чтобы гарантировать отсутствие зазоров и пустых областей.
+                    # Растягиваем картинку на всю ячейку без сохранения пропорций
                     pixmap = pixmap.scaled(120, 110, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
                 self.original_pixmaps.append(pixmap)
 
@@ -358,7 +361,7 @@ class CaptchaPuzzle(QFrame):
         self.puzzle_completed.emit(False)
 
     def update_display(self):
-        """Обновляет отображение согласно текущему порядку current_order"""
+        """Обновляет отображение согласно текущему порядку current_order."""
         for idx, label in enumerate(self.image_labels):
             original_idx = self.current_order[idx]
             label.setPixmap(self.original_pixmaps[original_idx])
