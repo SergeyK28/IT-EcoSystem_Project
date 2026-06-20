@@ -199,9 +199,12 @@ class CaptchaPuzzle(QFrame):
         title_layout.addStretch()
         main_layout.addLayout(title_layout)
 
-        # Контейнер для сетки – без отступов, без фона
+        # Контейнер для сетки – без отступов, без фона, фиксированной высоты
         grid_container = QWidget()
         grid_container.setStyleSheet("background: transparent;")
+        grid_container.setFixedHeight(220)   # 2 строки по 110 пикселей
+        grid_container.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
         grid_layout = QVBoxLayout(grid_container)
         grid_layout.setContentsMargins(0, 0, 0, 0)
         grid_layout.setSpacing(0)
@@ -210,10 +213,16 @@ class CaptchaPuzzle(QFrame):
         self.grid.setSpacing(0)            # убираем зазоры между ячейками
         self.grid.setContentsMargins(0, 0, 0, 0)
 
+        # Фиксируем высоту строк и запрещаем их растяжение
+        self.grid.setRowMinimumHeight(0, 110)
+        self.grid.setRowMinimumHeight(1, 110)
+        self.grid.setRowStretch(0, 0)
+        self.grid.setRowStretch(1, 0)
+
         for i in range(4):
             label = QLabel()
             label.setFixedSize(120, 110)
-            label.setStyleSheet("border: none; background: transparent;")  # прозрачный фон
+            label.setStyleSheet("border: none; background: transparent; padding: 0px; margin: 0px;")
             label.setAlignment(Qt.AlignCenter)
             label.mousePressEvent = lambda event, idx=i: self.on_image_click(idx)
             self.image_labels.append(label)
@@ -353,7 +362,7 @@ class CaptchaPuzzle(QFrame):
         for idx, label in enumerate(self.image_labels):
             original_idx = self.current_order[idx]
             label.setPixmap(self.original_pixmaps[original_idx])
-            label.setStyleSheet("border: none; background: transparent;")
+            label.setStyleSheet("border: none; background: transparent; padding: 0px; margin: 0px;")
 
     # ---------- Логика обмена ----------
     def on_image_click(self, clicked_idx):
@@ -362,11 +371,11 @@ class CaptchaPuzzle(QFrame):
         if self.first_selected is None:
             self.first_selected = clicked_idx
             self.image_labels[clicked_idx].setStyleSheet(
-                "border: 2px solid #4CAF50; background-color: rgba(76,175,80,0.2);"
+                "border: 2px solid #4CAF50; background-color: rgba(76,175,80,0.2); padding: 0px; margin: 0px;"
             )
         else:
             self.swap_images(self.first_selected, clicked_idx)
-            self.image_labels[self.first_selected].setStyleSheet("border: none; background: transparent;")
+            self.image_labels[self.first_selected].setStyleSheet("border: none; background: transparent; padding: 0px; margin: 0px;")
             self.first_selected = None
             if self.completed:
                 self.completed = False
@@ -392,7 +401,7 @@ class CaptchaPuzzle(QFrame):
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px; font-weight: bold; padding: 5px;")
             self.puzzle_completed.emit(True)
             for label in self.image_labels:
-                label.setStyleSheet("border: 2px solid #4CAF50; background-color: rgba(76,175,80,0.1);")
+                label.setStyleSheet("border: 2px solid #4CAF50; background-color: rgba(76,175,80,0.1); padding: 0px; margin: 0px;")
         else:
             self.completed = False
             self.status_label.setText("❌ Пазл собран неправильно. Попробуйте ещё раз.")
