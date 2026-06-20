@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Модуль для управления платежами (аналог интерфейса на фотографиях)
+Модуль для управления платежами (упрощённый дизайн)
 """
 
 from PyQt5.QtCore import Qt, QDate
@@ -21,7 +21,7 @@ from Handlers.Employees.employee_session import employee_session
 
 
 class PaymentsDialog(QDialog):
-    """Диалог управления платежами"""
+    """Диалог управления платежами (упрощённый дизайн)"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,158 +31,154 @@ class PaymentsDialog(QDialog):
         self.load_data()
 
     def setup_ui(self):
-        """Настройка интерфейса"""
-        # Главный layout
+        """Настройка интерфейса (упрощённый)"""
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(10)
 
-        # Стиль
+        # Простой тёмный стиль (без градиентов и сложных декораций)
         self.setStyleSheet("""
             QDialog {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #1a1a1a, stop:0.5 #232323, stop:1 #1a1a1a);
+                background-color: #2e2e2e;
             }
             QFrame {
-                background-color: #2a2a2a;
-                border-radius: 15px;
-                padding: 15px;
+                background-color: #3a3a3a;
+                border-radius: 3px;
+                padding: 10px;
             }
             QLabel {
-                color: #d0d0d0;
+                color: #f0f0f0;
             }
             QLabel[heading="true"] {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: bold;
-                color: #4CAF50;
-                padding-bottom: 10px;
+                color: #2d7d3a;
+                padding-bottom: 5px;
             }
             QLabel[value="true"] {
-                font-size: 24px;
+                font-size: 22px;
                 font-weight: bold;
-                color: white;
+                color: #f0f0f0;
             }
             QLabel[income="true"] {
-                color: #4CAF50;
+                color: #2d7d3a;
             }
             QLabel[expense="true"] {
-                color: #f44336;
+                color: #dc3545;
             }
             QLineEdit, QComboBox, QDateEdit {
                 background-color: #3a3a3a;
-                color: white;
-                border: 1px solid #4a4a4a;
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-size: 13px;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                border-radius: 2px;
+                padding: 4px 8px;
+                font-size: 12px;
             }
             QLineEdit:focus, QComboBox:focus, QDateEdit:focus {
-                border: 1px solid #4CAF50;
+                border: 1px solid #2d7d3a;
             }
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4CAF50, stop:1 #45a049);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-                font-size: 13px;
+                background-color: #4a4a4a;
+                color: #f0f0f0;
+                border: 1px solid #5a5a5a;
+                border-radius: 2px;
+                padding: 6px 12px;
+                font-size: 12px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #45a049, stop:1 #3d8b40);
+                background-color: #5a5a5a;
             }
             QPushButton[secondary="true"] {
-                background: #3a3a3a;
+                background-color: #4a4a4a;
+                border: 1px solid #5a5a5a;
             }
             QPushButton[secondary="true"]:hover {
-                background: #4a4a4a;
+                background-color: #5a5a5a;
+            }
+            QPushButton#addBtn {
+                background-color: #2d7d3a;
+                border: none;
+                color: white;
+            }
+            QPushButton#addBtn:hover {
+                background-color: #3a9a4a;
             }
             QTableWidget {
-                background-color: #2a2a2a;
-                alternate-background-color: #323232;
-                gridline-color: #3a3a3a;
+                background-color: #3a3a3a;
+                alternate-background-color: #404040;
+                gridline-color: #555;
                 border: none;
-                border-radius: 10px;
+                border-radius: 2px;
             }
             QTableWidget::item {
-                padding: 8px;
-                color: white;
+                padding: 4px;
+                color: #f0f0f0;
             }
             QHeaderView::section {
-                background-color: #4CAF50;
+                background-color: #2d7d3a;
                 color: white;
-                padding: 10px;
+                padding: 6px;
                 border: none;
                 font-weight: bold;
             }
         """)
 
-        # ========== ВЕРХНЯЯ ПАНЕЛЬ С БАЛАНСОМ ==========
+        # ===== Верхняя панель с балансом =====
         balance_frame = QFrame()
-        balance_frame.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #2a2a2a, stop:1 #323232);
-            }
-        """)
+        balance_frame.setStyleSheet("background-color: #3a3a3a; border-radius: 3px;")
         balance_layout = QHBoxLayout(balance_frame)
 
-        # Баланс
         balance_widget = QFrame()
-        balance_widget.setStyleSheet("QFrame { background: transparent; }")
+        balance_widget.setStyleSheet("background: transparent;")
         balance_vlayout = QVBoxLayout(balance_widget)
 
         balance_label = QLabel("Баланс")
         balance_label.setProperty("heading", True)
         self.balance_value = QLabel("0 ₽")
         self.balance_value.setProperty("value", True)
-        self.balance_value.setStyleSheet("font-size: 32px; color: #4CAF50;")
+        self.balance_value.setStyleSheet("font-size: 28px; color: #2d7d3a;")
 
         balance_vlayout.addWidget(balance_label)
         balance_vlayout.addWidget(self.balance_value)
 
-        # Приход
         income_widget = QFrame()
-        income_widget.setStyleSheet("QFrame { background: transparent; }")
+        income_widget.setStyleSheet("background: transparent;")
         income_vlayout = QVBoxLayout(income_widget)
 
         income_label = QLabel("Приход (30 дн)")
         income_label.setProperty("heading", True)
-        income_label.setStyleSheet("font-size: 14px;")
+        income_label.setStyleSheet("font-size: 13px;")
         self.income_value = QLabel("0 ₽")
         self.income_value.setProperty("value", True)
         self.income_value.setProperty("income", True)
-        self.income_value.setStyleSheet("color: #4CAF50;")
+        self.income_value.setStyleSheet("color: #2d7d3a;")
 
         income_vlayout.addWidget(income_label)
         income_vlayout.addWidget(self.income_value)
 
-        # Расход
         expense_widget = QFrame()
-        expense_widget.setStyleSheet("QFrame { background: transparent; }")
+        expense_widget.setStyleSheet("background: transparent;")
         expense_vlayout = QVBoxLayout(expense_widget)
 
         expense_label = QLabel("Расход (30 дн)")
         expense_label.setProperty("heading", True)
-        expense_label.setStyleSheet("font-size: 14px;")
+        expense_label.setStyleSheet("font-size: 13px;")
         self.expense_value = QLabel("0 ₽")
         self.expense_value.setProperty("value", True)
         self.expense_value.setProperty("expense", True)
-        self.expense_value.setStyleSheet("color: #f44336;")
+        self.expense_value.setStyleSheet("color: #dc3545;")
 
         expense_vlayout.addWidget(expense_label)
         expense_vlayout.addWidget(self.expense_value)
 
-        # Итого
         total_widget = QFrame()
-        total_widget.setStyleSheet("QFrame { background: transparent; }")
+        total_widget.setStyleSheet("background: transparent;")
         total_vlayout = QVBoxLayout(total_widget)
 
         total_label = QLabel("Итого (30 дн)")
         total_label.setProperty("heading", True)
-        total_label.setStyleSheet("font-size: 14px;")
+        total_label.setStyleSheet("font-size: 13px;")
         self.total_value = QLabel("0 ₽")
         self.total_value.setProperty("value", True)
 
@@ -199,12 +195,12 @@ class PaymentsDialog(QDialog):
 
         main_layout.addWidget(balance_frame)
 
-        # ========== ПАНЕЛЬ ФИЛЬТРОВ ==========
+        # ===== Панель фильтров =====
         filter_frame = QFrame()
+        filter_frame.setStyleSheet("background-color: #3a3a3a; border-radius: 3px;")
         filter_layout = QHBoxLayout(filter_frame)
-        filter_layout.setSpacing(10)
+        filter_layout.setSpacing(8)
 
-        # Дата с
         self.date_from = QDateEdit()
         self.date_from.setCalendarPopup(True)
         self.date_from.setDate(QDate.currentDate().addDays(-30))
@@ -212,7 +208,6 @@ class PaymentsDialog(QDialog):
         filter_layout.addWidget(QLabel("Дата с:"))
         filter_layout.addWidget(self.date_from)
 
-        # Дата по
         self.date_to = QDateEdit()
         self.date_to.setCalendarPopup(True)
         self.date_to.setDate(QDate.currentDate())
@@ -220,7 +215,6 @@ class PaymentsDialog(QDialog):
         filter_layout.addWidget(QLabel("по:"))
         filter_layout.addWidget(self.date_to)
 
-        # Тип платежа
         filter_layout.addWidget(QLabel("Тип:"))
         self.payment_type_filter = QComboBox()
         self.payment_type_filter.addItem("Все", "")
@@ -229,7 +223,6 @@ class PaymentsDialog(QDialog):
         self.payment_type_filter.addItem("Возврат", "Возврат")
         filter_layout.addWidget(self.payment_type_filter)
 
-        # Метод оплаты
         filter_layout.addWidget(QLabel("Метод:"))
         self.payment_method_filter = QComboBox()
         self.payment_method_filter.addItem("Все", "")
@@ -239,18 +232,15 @@ class PaymentsDialog(QDialog):
         self.payment_method_filter.addItem("Онлайн", "Онлайн")
         filter_layout.addWidget(self.payment_method_filter)
 
-        # Поиск
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Поиск по номеру заказа, клиенту...")
-        self.search_input.setMinimumWidth(250)
+        self.search_input.setMinimumWidth(220)
         filter_layout.addWidget(self.search_input)
 
-        # Кнопка фильтра
         self.filter_btn = QPushButton("Применить")
         self.filter_btn.clicked.connect(self.load_data)
         filter_layout.addWidget(self.filter_btn)
 
-        # Кнопка сброса
         self.reset_btn = QPushButton("Сбросить")
         self.reset_btn.setProperty("secondary", True)
         self.reset_btn.clicked.connect(self.reset_filters)
@@ -258,7 +248,7 @@ class PaymentsDialog(QDialog):
 
         main_layout.addWidget(filter_frame)
 
-        # ========== ТАБЛИЦА ПЛАТЕЖЕЙ ==========
+        # ===== Таблица платежей =====
         self.table = QTableWidget()
         self.table.setAlternatingRowColors(True)
         self.table.setColumnCount(11)
@@ -273,30 +263,26 @@ class PaymentsDialog(QDialog):
             item.setTextAlignment(Qt.AlignCenter)
             self.table.setHorizontalHeaderItem(i, item)
 
-        # Скрываем последний столбец с ID
         self.table.setColumnHidden(10, True)
-
         self.table.horizontalHeader().setStretchLastSection(True)
-        self.table.horizontalHeader().setDefaultSectionSize(100)
+        self.table.horizontalHeader().setDefaultSectionSize(90)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
-
-        # Двойной клик для просмотра деталей
         self.table.cellDoubleClicked.connect(self.open_payment_details)
 
         main_layout.addWidget(self.table)
 
-        # ========== НИЖНЯЯ ПАНЕЛЬ ==========
+        # ===== Нижняя панель =====
         bottom_frame = QFrame()
+        bottom_frame.setStyleSheet("background-color: #3a3a3a; border-radius: 3px;")
         bottom_layout = QHBoxLayout(bottom_frame)
 
         self.stats_label = QLabel("Записей: 0")
         self.stats_label.setStyleSheet("color: #b0b0b0;")
 
-        # Кнопка добавления платежа
         self.add_btn = QPushButton("+ Добавить платеж")
+        self.add_btn.setObjectName("addBtn")
         self.add_btn.clicked.connect(self.add_payment)
 
-        # Кнопка экспорта
         self.export_btn = QPushButton("📊 Экспорт")
         self.export_btn.setProperty("secondary", True)
         self.export_btn.clicked.connect(self.export_data)
@@ -308,11 +294,9 @@ class PaymentsDialog(QDialog):
 
         main_layout.addWidget(bottom_frame)
 
-        # Обновляем сводку
         self.update_financial_summary()
 
     def reset_filters(self):
-        """Сбрасывает все фильтры"""
         self.date_from.setDate(QDate.currentDate().addDays(-30))
         self.date_to.setDate(QDate.currentDate())
         self.payment_type_filter.setCurrentIndex(0)
@@ -321,9 +305,7 @@ class PaymentsDialog(QDialog):
         self.load_data()
 
     def load_data(self):
-        """Загружает данные в таблицу"""
         try:
-            # Получаем даты в формате YYYY-MM-DD
             date_from = self.date_from.date().toString("yyyy-MM-dd")
             date_to = self.date_to.date().toString("yyyy-MM-dd")
             payment_type = self.payment_type_filter.currentData()
@@ -346,11 +328,9 @@ class PaymentsDialog(QDialog):
             QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить платежи: {e}")
 
     def update_table(self, payments):
-        """Обновляет таблицу данными"""
         self.table.setRowCount(len(payments))
 
         for row, payment in enumerate(payments):
-            # Дата
             date_item = QTableWidgetItem()
             if payment.get('PaymentDate'):
                 date_str = payment['PaymentDate'].strftime("%d.%m %H:%M") if hasattr(payment['PaymentDate'],
@@ -360,12 +340,10 @@ class PaymentsDialog(QDialog):
             date_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 0, date_item)
 
-            # Сумма
             amount = float(payment.get('Amount', 0))
             amount_item = QTableWidgetItem(f"{amount:,.2f} ₽".replace(",", " "))
             amount_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-            # Цвет для возвратов
             if payment.get('PaymentType') == 'Возврат':
                 amount_item.setForeground(QColor(244, 67, 54))
             else:
@@ -373,71 +351,57 @@ class PaymentsDialog(QDialog):
 
             self.table.setItem(row, 1, amount_item)
 
-            # Тип
             type_item = QTableWidgetItem(payment.get('PaymentType', ''))
             type_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 2, type_item)
 
-            # Метод
             method_item = QTableWidgetItem(payment.get('PaymentMethod', ''))
             method_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 3, method_item)
 
-            # Заказ
             order_item = QTableWidgetItem(payment.get('OrderNumber', ''))
             order_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 4, order_item)
 
-            # Клиент
             client_item = QTableWidgetItem(payment.get('ClientName', ''))
             self.table.setItem(row, 5, client_item)
 
-            # Устройство
             device = f"{payment.get('DeviceBrand', '')} {payment.get('DeviceModel', '')}".strip()
             if not device:
                 device = payment.get('DeviceType', '')
             device_item = QTableWidgetItem(device)
             self.table.setItem(row, 6, device_item)
 
-            # Чек
             receipt = payment.get('ReceiptNumber', '')
             receipt_item = QTableWidgetItem(receipt if receipt else "Нет")
             receipt_item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(row, 7, receipt_item)
 
-            # Создал
             employee_item = QTableWidgetItem(payment.get('EmployeeName', ''))
             self.table.setItem(row, 8, employee_item)
 
-            # Основание
             notes = payment.get('PaymentNotes', '') or payment.get('OrderType', '')
             notes_item = QTableWidgetItem(notes)
             self.table.setItem(row, 9, notes_item)
 
-            # Скрытый ID
             payment_id_item = QTableWidgetItem(str(payment.get('PaymentID', '')))
             self.table.setItem(row, 10, payment_id_item)
 
         self.table.resizeColumnsToContents()
         self.stats_label.setText(f"Записей: {len(payments)}")
-
-        # Обновляем сводку
         self.update_financial_summary()
 
     def update_financial_summary(self):
-        """Обновляет финансовую сводку"""
         try:
             summary = db_crm.get_financial_summary_with_categories()
 
             self.balance_value.setText(f"{summary.get('total_balance', 0):,.2f} ₽".replace(",", " "))
 
-            # Показываем детализированный приход
             order_income = summary.get('order_income', 0)
             other_income = summary.get('other_income', 0)
             total_income = summary.get('total_income', 0)
 
             self.income_value.setText(f"+{total_income:,.2f} ₽".replace(",", " "))
-            # Добавляем подсказку с деталями
             self.income_value.setToolTip(
                 f"Доходы от заказов: {order_income:,.2f} ₽\nПрочие доходы: {other_income:,.2f} ₽")
 
@@ -445,15 +409,14 @@ class PaymentsDialog(QDialog):
             self.expense_value.setText(f"-{expense:,.2f} ₽".replace(",", " "))
 
             net_profit = summary.get('net_profit', 0)
-            total_color = "#4CAF50" if net_profit >= 0 else "#f44336"
-            self.total_value.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {total_color};")
+            total_color = "#2d7d3a" if net_profit >= 0 else "#dc3545"
+            self.total_value.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {total_color};")
             self.total_value.setText(f"{net_profit:+,.2f} ₽".replace(",", " "))
 
         except Exception as e:
             print(f"Ошибка обновления сводки: {e}")
 
     def open_payment_details(self, row, column):
-        """Открывает детали платежа"""
         payment_id_item = self.table.item(row, 10)
         if payment_id_item:
             QMessageBox.information(self, "Детали платежа",
@@ -461,7 +424,6 @@ class PaymentsDialog(QDialog):
                                     "Подробная информация будет доступна в следующей версии.")
 
     def add_payment(self):
-        """Открывает диалог добавления платежа"""
         try:
             from Handlers.Dialog.add_payment_dialog import AddPaymentDialog
             dialog = AddPaymentDialog(self)
@@ -471,22 +433,51 @@ class PaymentsDialog(QDialog):
                 QMessageBox.information(self, "Успех", "Платеж успешно добавлен")
         except ImportError as e:
             print(f"Ошибка импорта модуля добавления платежа: {e}")
-            # Показываем упрощенную форму если диалог недоступен
             self.show_simple_add_payment_dialog()
         except Exception as e:
             print(f"Ошибка открытия диалога добавления платежа: {e}")
             self.show_simple_add_payment_dialog()
 
     def show_simple_add_payment_dialog(self):
-        """Упрощенный диалог добавления платежа"""
         from PyQt5.QtWidgets import QDialogButtonBox
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Добавить платеж")
         dialog.setMinimumWidth(400)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #2e2e2e;
+            }
+            QLabel {
+                color: #f0f0f0;
+            }
+            QLineEdit, QComboBox {
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                border-radius: 2px;
+                padding: 4px;
+            }
+            QPushButton {
+                background-color: #4a4a4a;
+                color: #f0f0f0;
+                border: 1px solid #5a5a5a;
+                border-radius: 2px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #5a5a5a;
+            }
+            QPushButton[text="OK"] {
+                background-color: #2d7d3a;
+                border: none;
+            }
+            QPushButton[text="OK"]:hover {
+                background-color: #3a9a4a;
+            }
+        """)
         layout = QVBoxLayout(dialog)
 
-        # Поля ввода
         order_input = QLineEdit()
         order_input.setPlaceholderText("Номер заказа (например: ORD-20260323-0001)")
         layout.addWidget(QLabel("Заказ:"))
@@ -507,7 +498,6 @@ class PaymentsDialog(QDialog):
         layout.addWidget(QLabel("Тип платежа:"))
         layout.addWidget(type_combo)
 
-        # Кнопки
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
@@ -521,7 +511,6 @@ class PaymentsDialog(QDialog):
                 QMessageBox.warning(self, "Ошибка", "Введите корректную сумму")
                 return
 
-            # Получаем OrderID по номеру
             order_id = db_crm.get_order_id_by_number(order_number)
             if not order_id:
                 QMessageBox.warning(self, "Ошибка", f"Заказ {order_number} не найден")
@@ -545,7 +534,6 @@ class PaymentsDialog(QDialog):
                 QMessageBox.critical(self, "Ошибка", message)
 
     def export_data(self):
-        """Экспорт данных в CSV"""
         from PyQt5.QtWidgets import QFileDialog
         import csv
 
@@ -558,13 +546,11 @@ class PaymentsDialog(QDialog):
                 with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
                     writer = csv.writer(f)
 
-                    # Заголовки
                     headers = []
                     for i in range(self.table.columnCount() - 1):
                         headers.append(self.table.horizontalHeaderItem(i).text())
                     writer.writerow(headers)
 
-                    # Данные
                     for row in range(self.table.rowCount()):
                         row_data = []
                         for col in range(self.table.columnCount() - 1):

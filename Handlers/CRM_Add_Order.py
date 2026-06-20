@@ -15,61 +15,80 @@ class Ui_AddOrderDialog(object):
         self.dialog = AddOrderDialog
 
         AddOrderDialog.setObjectName("AddOrderDialog")
-        AddOrderDialog.resize(1400, 900)  # Увеличим размер для новых секций
+        AddOrderDialog.resize(1400, 900)
 
-        # Темный стиль
+        # Упрощённый тёмный стиль (без градиентов, с минимальными скруглениями)
         AddOrderDialog.setStyleSheet("""
             QDialog, QWidget {
-                background-color: rgb(23, 23, 23);
-                color: rgb(255, 255, 255);
+                background-color: #2e2e2e;
+                color: #f0f0f0;
             }
             QLabel {
-                color: rgb(255, 255, 255);
+                color: #f0f0f0;
             }
             QLineEdit, QTextEdit, QComboBox, QDateEdit, QSpinBox {
-                background-color: rgb(40, 40, 40);
-                color: rgb(255, 255, 255);
-                border: 1px solid rgb(80, 80, 80);
-                padding: 5px;
-                border-radius: 3px;
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 4px;
+                border-radius: 2px;
             }
             QPushButton {
-                background-color: rgb(60, 60, 60);
-                color: rgb(255, 255, 255);
-                border: none;
-                padding: 8px 15px;
-                border-radius: 3px;
+                background-color: #4a4a4a;
+                color: #f0f0f0;
+                border: 1px solid #5a5a5a;
+                border-radius: 2px;
+                padding: 6px 12px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: rgb(80, 80, 80);
+                background-color: #5a5a5a;
             }
             QPushButton:pressed {
-                background-color: rgb(40, 40, 40);
+                background-color: #3a3a3a;
             }
             QGroupBox {
-                border: 1px solid rgb(103, 155, 118);
-                border-radius: 5px;
-                margin-top: 10px;
+                border: 1px solid #2d7d3a;
+                border-radius: 3px;
+                margin-top: 8px;
                 font-weight: bold;
-                color: rgb(103, 155, 118);
+                color: #2d7d3a;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
-                padding: 0 5px 0 5px;
+                padding: 0 5px;
             }
             QTableWidget {
-                background-color: rgb(40, 40, 40);
-                color: rgb(255, 255, 255);
-                gridline-color: rgb(80, 80, 80);
-                alternate-background-color: rgb(50, 50, 50);
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                gridline-color: #555;
+                alternate-background-color: #404040;
+                border: none;
             }
             QHeaderView::section {
-                background-color: rgb(103, 155, 118);
+                background-color: #2d7d3a;
                 color: white;
-                padding: 5px;
+                padding: 4px;
+                border: 1px solid #555;
                 font-weight: bold;
+            }
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #2a2a2a;
+                width: 10px;
+                border-radius: 2px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #4a4a4a;
+                border-radius: 2px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #2d7d3a;
             }
         """)
 
@@ -77,7 +96,6 @@ class Ui_AddOrderDialog(object):
         self.verticalLayout.setSpacing(10)
         self.verticalLayout.setContentsMargins(15, 15, 15, 15)
 
-        # Создаем ScrollArea для прокрутки
         self.scrollArea = QtWidgets.QScrollArea(AddOrderDialog)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -91,12 +109,12 @@ class Ui_AddOrderDialog(object):
         title_label = QtWidgets.QLabel("ДОБАВЛЕНИЕ НОВОГО ЗАКАЗА")
         title_label.setStyleSheet("""
             QLabel {
-                color: rgb(103, 155, 118);
+                color: #2d7d3a;
                 font-size: 18px;
                 font-weight: bold;
                 text-align: center;
                 padding: 10px;
-                border-bottom: 2px solid rgb(103, 155, 118);
+                border-bottom: 1px solid #444;
             }
         """)
         self.mainLayout.addWidget(title_label)
@@ -125,32 +143,27 @@ class Ui_AddOrderDialog(object):
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.verticalLayout.addWidget(self.scrollArea)
 
-        # Загружаем данные в комбобоксы
         self.load_combobox_data()
 
         self.retranslateUi(AddOrderDialog)
         QtCore.QMetaObject.connectSlotsByName(AddOrderDialog)
 
     def create_client_section(self):
-        """Создает секцию информации о клиенте"""
         client_group = QtWidgets.QGroupBox("ИНФОРМАЦИЯ О КЛИЕНТЕ")
         client_layout = QtWidgets.QVBoxLayout()
 
-        # Кнопка выбора существующего клиента
         search_layout = QtWidgets.QHBoxLayout()
         self.searchClientBtn = QtWidgets.QPushButton("🔍 Найти существующего клиента")
-        self.searchClientBtn.setStyleSheet("background-color: rgb(28, 113, 216);")
+        self.searchClientBtn.setStyleSheet("background-color: #1a6db0; border: none;")
         self.searchClientBtn.clicked.connect(self.search_client)
         search_layout.addWidget(self.searchClientBtn)
         search_layout.addStretch()
         client_layout.addLayout(search_layout)
 
-        # Или создать нового
         new_client_label = QtWidgets.QLabel("Или создайте нового клиента:")
-        new_client_label.setStyleSheet("color: rgb(180, 180, 180); font-size: 12px; margin-top: 10px;")
+        new_client_label.setStyleSheet("color: #b0b0b0; font-size: 12px; margin-top: 10px;")
         client_layout.addWidget(new_client_label)
 
-        # ФИО
         name_layout = QtWidgets.QHBoxLayout()
         first_name_label = QtWidgets.QLabel("Имя:")
         self.firstNameInput = QtWidgets.QLineEdit()
@@ -165,7 +178,6 @@ class Ui_AddOrderDialog(object):
         name_layout.addWidget(self.lastNameInput)
         client_layout.addLayout(name_layout)
 
-        # Контакты
         contacts_layout = QtWidgets.QHBoxLayout()
         phone_label = QtWidgets.QLabel("Телефон:")
         self.phoneInput = QtWidgets.QLineEdit()
@@ -180,7 +192,6 @@ class Ui_AddOrderDialog(object):
         contacts_layout.addWidget(self.emailInput)
         client_layout.addLayout(contacts_layout)
 
-        # Дата рождения
         birth_layout = QtWidgets.QHBoxLayout()
         birth_label = QtWidgets.QLabel("Дата рождения:")
         self.birthdateInput = QDateEdit()
@@ -197,11 +208,9 @@ class Ui_AddOrderDialog(object):
         self.mainLayout.addWidget(client_group)
 
     def create_device_section(self):
-        """Создает секцию информации об устройстве"""
         device_group = QtWidgets.QGroupBox("ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ")
         device_layout = QtWidgets.QVBoxLayout()
 
-        # Тип устройства
         type_layout = QtWidgets.QHBoxLayout()
         type_label = QtWidgets.QLabel("Тип устройства:")
         self.deviceTypeCombo = QComboBox()
@@ -210,7 +219,6 @@ class Ui_AddOrderDialog(object):
         type_layout.addStretch()
         device_layout.addLayout(type_layout)
 
-        # Бренд и модель
         brand_model_layout = QtWidgets.QHBoxLayout()
         brand_label = QtWidgets.QLabel("Бренд:")
         self.brandInput = QtWidgets.QLineEdit()
@@ -225,7 +233,6 @@ class Ui_AddOrderDialog(object):
         brand_model_layout.addWidget(self.modelInput)
         device_layout.addLayout(brand_model_layout)
 
-        # IMEI/SN
         imei_layout = QtWidgets.QHBoxLayout()
         imei_label = QtWidgets.QLabel("IMEI/Серийный номер:")
         self.imeiInput = QtWidgets.QLineEdit()
@@ -234,7 +241,6 @@ class Ui_AddOrderDialog(object):
         imei_layout.addWidget(self.imeiInput)
         device_layout.addLayout(imei_layout)
 
-        # Внешний вид
         appearance_layout = QtWidgets.QVBoxLayout()
         appearance_label = QtWidgets.QLabel("Внешний вид/Состояние:")
         self.appearanceInput = QtWidgets.QTextEdit()
@@ -244,7 +250,6 @@ class Ui_AddOrderDialog(object):
         appearance_layout.addWidget(self.appearanceInput)
         device_layout.addLayout(appearance_layout)
 
-        # Комплектация
         completeness_layout = QtWidgets.QVBoxLayout()
         completeness_label = QtWidgets.QLabel("Комплектация:")
         self.completenessInput = QtWidgets.QTextEdit()
@@ -254,7 +259,6 @@ class Ui_AddOrderDialog(object):
         completeness_layout.addWidget(self.completenessInput)
         device_layout.addLayout(completeness_layout)
 
-        # Причина обращения
         reason_layout = QtWidgets.QHBoxLayout()
         reason_label = QtWidgets.QLabel("Причина обращения:")
         self.reasonCombo = QComboBox()
@@ -263,7 +267,6 @@ class Ui_AddOrderDialog(object):
         reason_layout.addStretch()
         device_layout.addLayout(reason_layout)
 
-        # Описание проблемы
         problem_layout = QtWidgets.QVBoxLayout()
         problem_label = QtWidgets.QLabel("Описание проблемы:")
         self.problemInput = QtWidgets.QTextEdit()
@@ -277,37 +280,31 @@ class Ui_AddOrderDialog(object):
         self.mainLayout.addWidget(device_group)
 
     def create_order_section(self):
-        """Создает секцию информации о заказе"""
         order_group = QtWidgets.QGroupBox("ИНФОРМАЦИЯ О ЗАКАЗЕ")
         order_layout = QtWidgets.QGridLayout()
         order_layout.setHorizontalSpacing(15)
         order_layout.setVerticalSpacing(10)
 
-        # Тип заказа
         type_label = QtWidgets.QLabel("Тип заказа:")
         self.orderTypeCombo = QComboBox()
         order_layout.addWidget(type_label, 0, 0)
         order_layout.addWidget(self.orderTypeCombo, 0, 1)
 
-        # Приоритет
         priority_label = QtWidgets.QLabel("Приоритет:")
         self.priorityCombo = QComboBox()
         order_layout.addWidget(priority_label, 0, 2)
         order_layout.addWidget(self.priorityCombo, 0, 3)
 
-        # Менеджер
         manager_label = QtWidgets.QLabel("Менеджер:")
         self.managerCombo = QComboBox()
         order_layout.addWidget(manager_label, 1, 0)
         order_layout.addWidget(self.managerCombo, 1, 1)
 
-        # Исполнитель
         executor_label = QtWidgets.QLabel("Исполнитель:")
         self.executorCombo = QComboBox()
         order_layout.addWidget(executor_label, 1, 2)
         order_layout.addWidget(self.executorCombo, 1, 3)
 
-        # Срок выполнения
         deadline_label = QtWidgets.QLabel("Срок выполнения:")
         self.deadlineInput = QDateEdit()
         self.deadlineInput.setCalendarPopup(True)
@@ -316,7 +313,6 @@ class Ui_AddOrderDialog(object):
         order_layout.addWidget(deadline_label, 2, 0)
         order_layout.addWidget(self.deadlineInput, 2, 1)
 
-        # Предоплата
         prepayment_label = QtWidgets.QLabel("Предоплата (₽):")
         self.prepaymentInput = QtWidgets.QLineEdit()
         self.prepaymentInput.setText("0")
@@ -327,19 +323,15 @@ class Ui_AddOrderDialog(object):
         self.mainLayout.addWidget(order_group)
 
     def create_services_section(self):
-        """Создает секцию для добавления услуг"""
         services_group = QtWidgets.QGroupBox("УСЛУГИ")
         services_layout = QtWidgets.QVBoxLayout()
 
-        # Верхняя панель для добавления услуги
         add_service_layout = QtWidgets.QHBoxLayout()
 
-        # Выбор услуги
         service_label = QtWidgets.QLabel("Услуга:")
         self.serviceCombo = QComboBox()
         self.serviceCombo.setMinimumWidth(350)
 
-        # Количество
         qty_label = QtWidgets.QLabel("Кол-во:")
         self.serviceQtySpin = QSpinBox()
         self.serviceQtySpin.setMinimum(1)
@@ -347,14 +339,12 @@ class Ui_AddOrderDialog(object):
         self.serviceQtySpin.setValue(1)
         self.serviceQtySpin.setMaximumWidth(70)
 
-        # Цена
         price_label = QtWidgets.QLabel("Цена (₽):")
         self.servicePriceInput = QtWidgets.QLineEdit()
         self.servicePriceInput.setMaximumWidth(100)
 
-        # Кнопка добавления
         self.addServiceBtn = QtWidgets.QPushButton("➕ Добавить услугу")
-        self.addServiceBtn.setStyleSheet("background-color: rgb(40, 167, 69);")
+        self.addServiceBtn.setStyleSheet("background-color: #2d7d3a; border: none;")
         self.addServiceBtn.clicked.connect(self.add_service_to_list)
 
         add_service_layout.addWidget(service_label)
@@ -368,37 +358,32 @@ class Ui_AddOrderDialog(object):
 
         services_layout.addLayout(add_service_layout)
 
-        # Таблица добавленных услуг
         self.servicesTable = QtWidgets.QTableWidget()
         self.servicesTable.setColumnCount(6)
         self.servicesTable.setHorizontalHeaderLabels(["Услуга", "Кол-во", "Цена", "Сумма", "Гарантия", "Действия"])
         self.servicesTable.setMinimumHeight(150)
         self.servicesTable.horizontalHeader().setStretchLastSection(False)
-        self.servicesTable.setColumnWidth(0, 300)  # Услуга
-        self.servicesTable.setColumnWidth(1, 80)  # Кол-во
-        self.servicesTable.setColumnWidth(2, 100)  # Цена
-        self.servicesTable.setColumnWidth(3, 100)  # Сумма
-        self.servicesTable.setColumnWidth(4, 100)  # Гарантия
-        self.servicesTable.setColumnWidth(5, 100)  # Действия
+        self.servicesTable.setColumnWidth(0, 300)
+        self.servicesTable.setColumnWidth(1, 80)
+        self.servicesTable.setColumnWidth(2, 100)
+        self.servicesTable.setColumnWidth(3, 100)
+        self.servicesTable.setColumnWidth(4, 100)
+        self.servicesTable.setColumnWidth(5, 100)
         services_layout.addWidget(self.servicesTable)
 
         services_group.setLayout(services_layout)
         self.mainLayout.addWidget(services_group)
 
     def create_parts_section(self):
-        """Создает секцию для добавления запчастей"""
         parts_group = QtWidgets.QGroupBox("ЗАПЧАСТИ")
         parts_layout = QtWidgets.QVBoxLayout()
 
-        # Верхняя панель для добавления запчасти
         add_part_layout = QtWidgets.QHBoxLayout()
 
-        # Выбор запчасти
         part_label = QtWidgets.QLabel("Запчасть:")
         self.partCombo = QComboBox()
         self.partCombo.setMinimumWidth(350)
 
-        # Количество
         part_qty_label = QtWidgets.QLabel("Кол-во:")
         self.partQtySpin = QSpinBox()
         self.partQtySpin.setMinimum(1)
@@ -406,20 +391,17 @@ class Ui_AddOrderDialog(object):
         self.partQtySpin.setValue(1)
         self.partQtySpin.setMaximumWidth(70)
 
-        # Цена
         part_price_label = QtWidgets.QLabel("Цена (₽):")
         self.partPriceInput = QtWidgets.QLineEdit()
         self.partPriceInput.setMaximumWidth(100)
 
-        # Гарантия (дни)
         warranty_label = QtWidgets.QLabel("Гарантия (дней):")
         self.partWarrantyInput = QtWidgets.QLineEdit()
         self.partWarrantyInput.setText("90")
         self.partWarrantyInput.setMaximumWidth(80)
 
-        # Кнопка добавления
         self.addPartBtn = QtWidgets.QPushButton("➕ Добавить запчасть")
-        self.addPartBtn.setStyleSheet("background-color: rgb(40, 167, 69);")
+        self.addPartBtn.setStyleSheet("background-color: #2d7d3a; border: none;")
         self.addPartBtn.clicked.connect(self.add_part_to_list)
 
         add_part_layout.addWidget(part_label)
@@ -435,37 +417,33 @@ class Ui_AddOrderDialog(object):
 
         parts_layout.addLayout(add_part_layout)
 
-        # Таблица добавленных запчастей
         self.partsTable = QtWidgets.QTableWidget()
         self.partsTable.setColumnCount(6)
         self.partsTable.setHorizontalHeaderLabels(["Запчасть", "Кол-во", "Цена", "Сумма", "Гарантия", "Действия"])
         self.partsTable.setMinimumHeight(150)
         self.partsTable.horizontalHeader().setStretchLastSection(False)
-        self.partsTable.setColumnWidth(0, 300)  # Запчасть
-        self.partsTable.setColumnWidth(1, 80)  # Кол-во
-        self.partsTable.setColumnWidth(2, 100)  # Цена
-        self.partsTable.setColumnWidth(3, 100)  # Сумма
-        self.partsTable.setColumnWidth(4, 100)  # Гарантия
-        self.partsTable.setColumnWidth(5, 100)  # Действия
+        self.partsTable.setColumnWidth(0, 300)
+        self.partsTable.setColumnWidth(1, 80)
+        self.partsTable.setColumnWidth(2, 100)
+        self.partsTable.setColumnWidth(3, 100)
+        self.partsTable.setColumnWidth(4, 100)
+        self.partsTable.setColumnWidth(5, 100)
         parts_layout.addWidget(self.partsTable)
 
         parts_group.setLayout(parts_layout)
         self.mainLayout.addWidget(parts_group)
 
     def create_total_section(self):
-        """Создает секцию с итоговой суммой"""
         total_group = QtWidgets.QGroupBox("ИТОГО")
         total_layout = QtWidgets.QVBoxLayout()
 
-        # Основная информация
         info_layout = QtWidgets.QHBoxLayout()
 
-        # Количество услуг и запчастей
         self.servicesCountLabel = QtWidgets.QLabel("Услуг: 0")
-        self.servicesCountLabel.setStyleSheet("color: rgb(180, 180, 180); font-size: 12px;")
+        self.servicesCountLabel.setStyleSheet("color: #b0b0b0; font-size: 12px;")
 
         self.partsCountLabel = QtWidgets.QLabel("Запчастей: 0")
-        self.partsCountLabel.setStyleSheet("color: rgb(180, 180, 180); font-size: 12px;")
+        self.partsCountLabel.setStyleSheet("color: #b0b0b0; font-size: 12px;")
 
         info_layout.addWidget(self.servicesCountLabel)
         info_layout.addWidget(self.partsCountLabel)
@@ -473,17 +451,16 @@ class Ui_AddOrderDialog(object):
 
         total_layout.addLayout(info_layout)
 
-        # Суммы
         sums_layout = QtWidgets.QHBoxLayout()
 
         self.servicesTotalLabel = QtWidgets.QLabel("Сумма услуг: 0.00 ₽")
-        self.servicesTotalLabel.setStyleSheet("color: rgb(103, 155, 118); font-size: 14px;")
+        self.servicesTotalLabel.setStyleSheet("color: #2d7d3a; font-size: 14px;")
 
         self.partsTotalLabel = QtWidgets.QLabel("Сумма запчастей: 0.00 ₽")
-        self.partsTotalLabel.setStyleSheet("color: rgb(103, 155, 118); font-size: 14px;")
+        self.partsTotalLabel.setStyleSheet("color: #2d7d3a; font-size: 14px;")
 
         self.totalAmountLabel = QtWidgets.QLabel("ИТОГО: 0.00 ₽")
-        self.totalAmountLabel.setStyleSheet("color: rgb(40, 167, 69); font-size: 16px; font-weight: bold;")
+        self.totalAmountLabel.setStyleSheet("color: #2d7d3a; font-size: 16px; font-weight: bold;")
 
         sums_layout.addWidget(self.servicesTotalLabel)
         sums_layout.addWidget(self.partsTotalLabel)
@@ -496,55 +473,54 @@ class Ui_AddOrderDialog(object):
         self.mainLayout.addWidget(total_group)
 
     def create_action_buttons(self):
-        """Создает кнопки действий"""
         buttons_layout = QtWidgets.QHBoxLayout()
         buttons_layout.setSpacing(15)
 
-        # Кнопка создания заказа
         self.createBtn = QtWidgets.QPushButton("✅ Создать заказ")
         self.createBtn.setStyleSheet("""
             QPushButton {
-                background-color: rgb(40, 167, 69);
+                background-color: #2d7d3a;
                 color: white;
                 font-size: 14px;
                 font-weight: bold;
-                padding: 12px 25px;
-                border-radius: 5px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 2px;
             }
             QPushButton:hover {
-                background-color: rgb(50, 187, 79);
-            }
-            QPushButton:pressed {
-                background-color: rgb(30, 147, 59);
+                background-color: #3a9a4a;
             }
         """)
         self.createBtn.clicked.connect(self.create_order)
 
-        # Кнопка отмены
         self.cancelBtn = QtWidgets.QPushButton("❌ Отмена")
         self.cancelBtn.setStyleSheet("""
             QPushButton {
-                background-color: rgb(108, 117, 125);
+                background-color: #6c6c6c;
                 color: white;
                 font-size: 14px;
-                padding: 12px 25px;
-                border-radius: 5px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 2px;
             }
             QPushButton:hover {
-                background-color: rgb(118, 127, 135);
+                background-color: #7c7c7c;
             }
         """)
         self.cancelBtn.clicked.connect(self.dialog.reject)
 
-        # Кнопка очистки
         self.clearBtn = QtWidgets.QPushButton("🗑 Очистить форму")
         self.clearBtn.setStyleSheet("""
             QPushButton {
-                background-color: rgb(220, 53, 69);
+                background-color: #b33c3c;
                 color: white;
                 font-size: 14px;
-                padding: 12px 25px;
-                border-radius: 5px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 2px;
+            }
+            QPushButton:hover {
+                background-color: #cc4c4c;
             }
         """)
         self.clearBtn.clicked.connect(self.clear_form)
@@ -557,16 +533,13 @@ class Ui_AddOrderDialog(object):
         self.mainLayout.addLayout(buttons_layout)
 
     def load_combobox_data(self):
-        """Загружает данные в комбобоксы"""
         try:
-            # Причины обращения
             reasons = db_crm.get_all_appeal_reasons()
             self.reasonCombo.clear()
             self.reasonCombo.addItem("Выберите причину", 0)
             for reason in reasons:
                 self.reasonCombo.addItem(reason['ReasonName'], reason['ReasonID'])
 
-            # Тип устройства
             self.deviceTypeCombo.clear()
             self.deviceTypeCombo.addItem("Выберите тип устройства", 0)
             self.deviceTypeCombo.addItems([
@@ -575,15 +548,12 @@ class Ui_AddOrderDialog(object):
                 "Кофемашина", "Другое"
             ])
 
-            # Тип заказа
             self.orderTypeCombo.clear()
             self.orderTypeCombo.addItems(["Платный", "Гарантийный"])
 
-            # Приоритет
             self.priorityCombo.clear()
             self.priorityCombo.addItems(["Низкий", "Средний", "Высокий", "Критичный"])
 
-            # Сотрудники
             employees = db_crm.get_all_employees()
             self.managerCombo.clear()
             self.executorCombo.clear()
@@ -596,7 +566,6 @@ class Ui_AddOrderDialog(object):
                 self.managerCombo.addItem(name, emp['EmployeeID'])
                 self.executorCombo.addItem(name, emp['EmployeeID'])
 
-            # Загружаем услуги и запчасти
             self.load_services()
             self.load_parts()
 
@@ -605,7 +574,6 @@ class Ui_AddOrderDialog(object):
             QMessageBox.critical(self.dialog, "Ошибка", f"Ошибка загрузки данных: {e}")
 
     def load_services(self):
-        """Загружает услуги в комбобокс"""
         try:
             services = db_crm.get_all_service_types()
             self.serviceCombo.clear()
@@ -619,7 +587,6 @@ class Ui_AddOrderDialog(object):
             print(f"Ошибка загрузки услуг: {e}")
 
     def load_parts(self):
-        """Загружает запчасти в комбобокс"""
         try:
             parts = db_crm.get_all_stock_items()
             self.partCombo.clear()
@@ -633,59 +600,58 @@ class Ui_AddOrderDialog(object):
             print(f"Ошибка загрузки запчастей: {e}")
 
     def search_client(self):
-        """Открывает диалог поиска клиента"""
         dialog = QtWidgets.QDialog(self.dialog)
         dialog.setWindowTitle("Поиск клиента")
         dialog.resize(700, 500)
         dialog.setStyleSheet("""
             QDialog {
-                background-color: rgb(23, 23, 23);
-                color: rgb(255, 255, 255);
+                background-color: #2e2e2e;
+                color: #f0f0f0;
             }
             QLabel {
-                color: rgb(255, 255, 255);
+                color: #f0f0f0;
             }
             QLineEdit {
-                background-color: rgb(40, 40, 40);
-                color: rgb(255, 255, 255);
-                border: 1px solid rgb(80, 80, 80);
-                padding: 5px;
-                border-radius: 3px;
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 4px;
+                border-radius: 2px;
             }
             QPushButton {
-                background-color: rgb(60, 60, 60);
-                color: rgb(255, 255, 255);
-                border: none;
-                padding: 8px 15px;
-                border-radius: 3px;
+                background-color: #4a4a4a;
+                color: #f0f0f0;
+                border: 1px solid #5a5a5a;
+                border-radius: 2px;
+                padding: 6px 12px;
             }
             QPushButton:hover {
-                background-color: rgb(80, 80, 80);
+                background-color: #5a5a5a;
             }
             QTableWidget {
-                background-color: rgb(40, 40, 40);
-                color: rgb(255, 255, 255);
-                gridline-color: rgb(80, 80, 80);
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                gridline-color: #555;
             }
             QHeaderView::section {
-                background-color: rgb(103, 155, 118);
+                background-color: #2d7d3a;
                 color: white;
-                padding: 5px;
+                padding: 4px;
+                border: 1px solid #555;
             }
         """)
 
         layout = QtWidgets.QVBoxLayout(dialog)
 
-        # Поле поиска
         search_layout = QtWidgets.QHBoxLayout()
         search_label = QtWidgets.QLabel("Поиск (ФИО/телефон/email):")
         search_input = QtWidgets.QLineEdit()
         search_input.setPlaceholderText("Введите текст для поиска...")
         search_btn = QtWidgets.QPushButton("🔍 Искать")
-        search_btn.setStyleSheet("background-color: rgb(103, 155, 118);")
+        search_btn.setStyleSheet("background-color: #2d7d3a; border: none;")
 
         show_all_btn = QtWidgets.QPushButton("Показать всех")
-        show_all_btn.setStyleSheet("background-color: rgb(28, 113, 216);")
+        show_all_btn.setStyleSheet("background-color: #1a6db0; border: none;")
 
         search_layout.addWidget(search_label)
         search_layout.addWidget(search_input)
@@ -693,7 +659,6 @@ class Ui_AddOrderDialog(object):
         search_layout.addWidget(show_all_btn)
         layout.addLayout(search_layout)
 
-        # Таблица результатов
         results_table = QtWidgets.QTableWidget()
         results_table.setColumnCount(6)
         results_table.setHorizontalHeaderLabels(["ID", "ФИО", "Телефон", "Email", "Дата рождения", "Дата регистрации"])
@@ -701,12 +666,11 @@ class Ui_AddOrderDialog(object):
         results_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         layout.addWidget(results_table)
 
-        # Кнопки
         buttons_layout = QtWidgets.QHBoxLayout()
         select_btn = QtWidgets.QPushButton("✅ Выбрать")
-        select_btn.setStyleSheet("background-color: rgb(40, 167, 69);")
+        select_btn.setStyleSheet("background-color: #2d7d3a; border: none;")
         cancel_btn = QtWidgets.QPushButton("❌ Отмена")
-        cancel_btn.setStyleSheet("background-color: rgb(108, 117, 125);")
+        cancel_btn.setStyleSheet("background-color: #6c6c6c; border: none;")
 
         buttons_layout.addWidget(select_btn)
         buttons_layout.addStretch()
@@ -714,10 +678,8 @@ class Ui_AddOrderDialog(object):
         layout.addLayout(buttons_layout)
 
         def perform_search(search_text=""):
-            """Выполняет поиск клиента"""
             try:
                 if not search_text:
-                    # Загружаем всех клиентов
                     connection = db_crm.get_crm_connection()
                     if connection:
                         cursor = connection.cursor(dictionary=True)
@@ -734,55 +696,44 @@ class Ui_AddOrderDialog(object):
                     else:
                         results = []
                 else:
-                    # Ищем клиентов
                     results = db_crm.search_clients(search_text)
 
                 results_table.setRowCount(len(results))
 
                 for row, client in enumerate(results):
-                    # ID клиента
                     results_table.setItem(row, 0, QtWidgets.QTableWidgetItem(str(client.get('ID', ''))))
-                    # ФИО
                     full_name = f"{client.get('FirstName', '')} {client.get('LastName', '')}"
                     results_table.setItem(row, 1, QtWidgets.QTableWidgetItem(full_name.strip()))
-                    # Телефон
                     results_table.setItem(row, 2, QtWidgets.QTableWidgetItem(client.get('PhoneNumber', '')))
-                    # Email
                     results_table.setItem(row, 3, QtWidgets.QTableWidgetItem(client.get('Email', '')))
-                    # Дата рождения
                     birthdate = client.get('Birthdate')
                     results_table.setItem(row, 4, QtWidgets.QTableWidgetItem(
                         str(birthdate) if birthdate else ''))
-                    # Дата регистрации
                     reg_date = client.get('RegistrationDate')
                     results_table.setItem(row, 5, QtWidgets.QTableWidgetItem(
                         str(reg_date)[:10] if reg_date else ''))
 
                 results_table.resizeColumnsToContents()
-                results_table.setColumnHidden(0, True)  # Скрываем ID
+                results_table.setColumnHidden(0, True)
 
             except Exception as e:
                 QMessageBox.critical(dialog, "Ошибка", f"Ошибка поиска: {e}")
 
         def on_search():
-            """Обработчик нажатия кнопки поиска"""
             search_text = search_input.text().strip()
             perform_search(search_text)
 
         def on_show_all():
-            """Обработчик кнопки показа всех"""
             search_input.clear()
             perform_search()
 
         def select_client():
-            """Выбирает клиента из таблицы"""
             current_row = results_table.currentRow()
             if current_row < 0:
                 QMessageBox.warning(dialog, "Ошибка", "Выберите клиента из списка")
                 return
 
             try:
-                # Получаем ID клиента
                 client_id_item = results_table.item(current_row, 0)
                 if not client_id_item:
                     QMessageBox.warning(dialog, "Ошибка", "Не удалось получить ID клиента")
@@ -790,7 +741,6 @@ class Ui_AddOrderDialog(object):
 
                 client_id = int(client_id_item.text())
 
-                # Получаем данные клиента
                 full_name_item = results_table.item(current_row, 1)
                 phone_item = results_table.item(current_row, 2)
                 email_item = results_table.item(current_row, 3)
@@ -808,13 +758,11 @@ class Ui_AddOrderDialog(object):
                 phone = phone_item.text() if phone_item else ""
                 email = email_item.text() if email_item else ""
 
-                # Заполняем поля формы
                 self.firstNameInput.setText(first_name)
                 self.lastNameInput.setText(last_name)
                 self.phoneInput.setText(phone)
                 self.emailInput.setText(email)
 
-                # Устанавливаем дату рождения, если есть
                 if birthdate_item and birthdate_item.text().strip():
                     try:
                         birthdate_str = birthdate_item.text().strip()
@@ -825,7 +773,6 @@ class Ui_AddOrderDialog(object):
                     except:
                         pass
 
-                # Сохраняем ID клиента
                 self.client_id = client_id
 
                 dialog.accept()
@@ -834,10 +781,8 @@ class Ui_AddOrderDialog(object):
                 QMessageBox.critical(dialog, "Ошибка", f"Ошибка выбора клиента: {e}")
 
         def on_double_click(row, column):
-            """Обработчик двойного клика по строке таблицы"""
             select_client()
 
-        # Подключаем обработчики
         search_btn.clicked.connect(on_search)
         show_all_btn.clicked.connect(on_show_all)
         search_input.returnPressed.connect(on_search)
@@ -845,13 +790,11 @@ class Ui_AddOrderDialog(object):
         cancel_btn.clicked.connect(dialog.reject)
         results_table.doubleClicked.connect(on_double_click)
 
-        # Загружаем всех клиентов при открытии
         perform_search()
 
         dialog.exec_()
 
     def add_service_to_list(self):
-        """Добавляет услугу в таблицу"""
         try:
             service_id = self.serviceCombo.currentData()
             if service_id == 0:
@@ -862,9 +805,7 @@ class Ui_AddOrderDialog(object):
             qty = self.serviceQtySpin.value()
             price_text = self.servicePriceInput.text().strip()
 
-            # Если цена не указана, берем из названия услуги
             if not price_text:
-                # Пытаемся извлечь цену из текста услуги
                 price_match = re.search(r'(\d+\.?\d*) ₽', service_text)
                 if price_match:
                     price = float(price_match.group(1))
@@ -880,11 +821,9 @@ class Ui_AddOrderDialog(object):
 
             total = qty * price
 
-            # Добавляем строку в таблицу
             row = self.servicesTable.rowCount()
             self.servicesTable.insertRow(row)
 
-            # Услуга
             service_item = QtWidgets.QTableWidgetItem(service_text.split(' - ')[0])
             service_item.setData(QtCore.Qt.UserRole, {
                 'service_id': service_id,
@@ -895,38 +834,34 @@ class Ui_AddOrderDialog(object):
             })
             self.servicesTable.setItem(row, 0, service_item)
 
-            # Количество
             qty_item = QtWidgets.QTableWidgetItem(str(qty))
             qty_item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.servicesTable.setItem(row, 1, qty_item)
 
-            # Цена
             price_item = QtWidgets.QTableWidgetItem(f"{price:.2f}")
             price_item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             self.servicesTable.setItem(row, 2, price_item)
 
-            # Сумма
             total_item = QtWidgets.QTableWidgetItem(f"{total:.2f}")
             total_item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             self.servicesTable.setItem(row, 3, total_item)
 
-            # Гарантия (для услуг обычно нет)
             warranty_item = QtWidgets.QTableWidgetItem("-")
             warranty_item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.servicesTable.setItem(row, 4, warranty_item)
 
-            # Кнопка удаления
             delete_btn = QtWidgets.QPushButton("🗑 Удалить")
             delete_btn.setStyleSheet("""
                 QPushButton {
-                    background-color: rgb(220, 53, 69);
+                    background-color: #b33c3c;
                     color: white;
-                    padding: 5px 10px;
-                    border-radius: 3px;
+                    padding: 4px 8px;
+                    border: none;
+                    border-radius: 2px;
                     font-size: 11px;
                 }
                 QPushButton:hover {
-                    background-color: rgb(230, 63, 79);
+                    background-color: #cc4c4c;
                 }
             """)
             delete_btn.clicked.connect(lambda: self.remove_service_row(row))
@@ -939,10 +874,8 @@ class Ui_AddOrderDialog(object):
 
             self.servicesTable.setCellWidget(row, 5, cell_widget)
 
-            # Обновляем итоги
             self.update_totals()
 
-            # Очищаем поля
             self.serviceQtySpin.setValue(1)
             self.servicePriceInput.clear()
 
@@ -950,7 +883,6 @@ class Ui_AddOrderDialog(object):
             QMessageBox.critical(self.dialog, "Ошибка", f"Ошибка добавления услуги: {e}")
 
     def add_part_to_list(self):
-        """Добавляет запчасть в таблицу"""
         try:
             part_id = self.partCombo.currentData()
             if part_id == 0:
@@ -962,7 +894,6 @@ class Ui_AddOrderDialog(object):
             price_text = self.partPriceInput.text().strip()
             warranty_text = self.partWarrantyInput.text().strip()
 
-            # Проверяем наличие на складе
             stock_match = re.search(r'\((\d+) шт\.\)', part_text)
             stock_qty = 0
             if stock_match:
@@ -975,9 +906,7 @@ class Ui_AddOrderDialog(object):
                     if reply == QMessageBox.No:
                         return
 
-            # Если цена не указана, берем из названия запчасти
             if not price_text:
-                # Пытаемся извлечь цену из текста запчасти
                 price_match = re.search(r'(\d+\.?\d*) ₽', part_text)
                 if price_match:
                     price = float(price_match.group(1))
@@ -991,8 +920,7 @@ class Ui_AddOrderDialog(object):
                     QMessageBox.warning(self.dialog, "Ошибка", "Введите корректную цену")
                     return
 
-            # Гарантия
-            warranty_days = 90  # значение по умолчанию
+            warranty_days = 90
             if warranty_text:
                 try:
                     warranty_days = int(warranty_text)
@@ -1001,12 +929,10 @@ class Ui_AddOrderDialog(object):
 
             total = qty * price
 
-            # Добавляем строку в таблицу
             row = self.partsTable.rowCount()
             self.partsTable.insertRow(row)
 
-            # Запчасть
-            part_item = QtWidgets.QTableWidgetItem(part_text.split(' (')[0])  # Убираем количество из названия
+            part_item = QtWidgets.QTableWidgetItem(part_text.split(' (')[0])
             part_item.setData(QtCore.Qt.UserRole, {
                 'part_id': part_id,
                 'part_name': part_text.split(' (')[0],
@@ -1018,38 +944,34 @@ class Ui_AddOrderDialog(object):
             })
             self.partsTable.setItem(row, 0, part_item)
 
-            # Количество
             qty_item = QtWidgets.QTableWidgetItem(str(qty))
             qty_item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.partsTable.setItem(row, 1, qty_item)
 
-            # Цена
             price_item = QtWidgets.QTableWidgetItem(f"{price:.2f}")
             price_item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             self.partsTable.setItem(row, 2, price_item)
 
-            # Сумма
             total_item = QtWidgets.QTableWidgetItem(f"{total:.2f}")
             total_item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             self.partsTable.setItem(row, 3, total_item)
 
-            # Гарантия
             warranty_item = QtWidgets.QTableWidgetItem(f"{warranty_days} дней")
             warranty_item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.partsTable.setItem(row, 4, warranty_item)
 
-            # Кнопка удаления
             delete_btn = QtWidgets.QPushButton("🗑 Удалить")
             delete_btn.setStyleSheet("""
                 QPushButton {
-                    background-color: rgb(220, 53, 69);
+                    background-color: #b33c3c;
                     color: white;
-                    padding: 5px 10px;
-                    border-radius: 3px;
+                    padding: 4px 8px;
+                    border: none;
+                    border-radius: 2px;
                     font-size: 11px;
                 }
                 QPushButton:hover {
-                    background-color: rgb(230, 63, 79);
+                    background-color: #cc4c4c;
                 }
             """)
             delete_btn.clicked.connect(lambda: self.remove_part_row(row))
@@ -1062,10 +984,8 @@ class Ui_AddOrderDialog(object):
 
             self.partsTable.setCellWidget(row, 5, cell_widget)
 
-            # Обновляем итоги
             self.update_totals()
 
-            # Очищаем поля
             self.partQtySpin.setValue(1)
             self.partPriceInput.clear()
             self.partWarrantyInput.setText("90")
@@ -1074,10 +994,8 @@ class Ui_AddOrderDialog(object):
             QMessageBox.critical(self.dialog, "Ошибка", f"Ошибка добавления запчасти: {e}")
 
     def remove_service_row(self, row):
-        """Удаляет услугу из таблицы"""
         try:
             self.servicesTable.removeRow(row)
-            # Обновляем индексы для оставшихся кнопок удаления
             for i in range(self.servicesTable.rowCount()):
                 widget = self.servicesTable.cellWidget(i, 5)
                 if widget:
@@ -1093,10 +1011,8 @@ class Ui_AddOrderDialog(object):
             print(f"Ошибка удаления строки услуги: {e}")
 
     def remove_part_row(self, row):
-        """Удаляет запчасть из таблицы"""
         try:
             self.partsTable.removeRow(row)
-            # Обновляем индексы для оставшихся кнопок удаления
             for i in range(self.partsTable.rowCount()):
                 widget = self.partsTable.cellWidget(i, 5)
                 if widget:
@@ -1112,7 +1028,6 @@ class Ui_AddOrderDialog(object):
             print(f"Ошибка удаления строки запчасти: {e}")
 
     def update_totals(self):
-        """Обновляет итоговые суммы"""
         try:
             services_total = 0.0
             services_count = 0
@@ -1150,9 +1065,7 @@ class Ui_AddOrderDialog(object):
             print(f"Ошибка обновления итогов: {e}")
 
     def clear_form(self):
-        """Очищает форму"""
         try:
-            # Клиент
             self.firstNameInput.clear()
             self.lastNameInput.clear()
             self.phoneInput.clear()
@@ -1160,7 +1073,6 @@ class Ui_AddOrderDialog(object):
             self.birthdateInput.setDate(QtCore.QDate(1990, 1, 1))
             self.client_id = None
 
-            # Устройство
             self.deviceTypeCombo.setCurrentIndex(0)
             self.brandInput.clear()
             self.modelInput.clear()
@@ -1170,15 +1082,13 @@ class Ui_AddOrderDialog(object):
             self.reasonCombo.setCurrentIndex(0)
             self.problemInput.clear()
 
-            # Заказ
             self.orderTypeCombo.setCurrentIndex(0)
-            self.priorityCombo.setCurrentIndex(1)  # Средний
+            self.priorityCombo.setCurrentIndex(1)
             self.managerCombo.setCurrentIndex(0)
             self.executorCombo.setCurrentIndex(0)
             self.deadlineInput.setDate(QtCore.QDate.currentDate().addDays(3))
             self.prepaymentInput.setText("0")
 
-            # Услуги и запчасти
             self.servicesTable.setRowCount(0)
             self.partsTable.setRowCount(0)
             self.serviceCombo.setCurrentIndex(0)
@@ -1189,7 +1099,6 @@ class Ui_AddOrderDialog(object):
             self.partPriceInput.clear()
             self.partWarrantyInput.setText("90")
 
-            # Итоги
             self.update_totals()
 
             QMessageBox.information(self.dialog, "Успех", "Форма очищена")
@@ -1198,10 +1107,8 @@ class Ui_AddOrderDialog(object):
             QMessageBox.critical(self.dialog, "Ошибка", f"Ошибка очистки формы: {e}")
 
     def validate_form(self):
-        """Проверяет корректность заполнения формы"""
         errors = []
 
-        # Проверка клиента
         if not self.firstNameInput.text().strip():
             errors.append("Введите имя клиента")
         if not self.lastNameInput.text().strip():
@@ -1209,7 +1116,6 @@ class Ui_AddOrderDialog(object):
         if not self.phoneInput.text().strip():
             errors.append("Введите телефон клиента")
 
-        # Проверка устройства
         if self.deviceTypeCombo.currentData() == 0:
             errors.append("Выберите тип устройства")
         if not self.brandInput.text().strip():
@@ -1217,11 +1123,9 @@ class Ui_AddOrderDialog(object):
         if not self.modelInput.text().strip():
             errors.append("Введите модель устройства")
 
-        # Проверка проблемы
         if not self.problemInput.toPlainText().strip():
             errors.append("Опишите проблему")
 
-        # Проверка причины обращения
         if self.reasonCombo.currentData() == 0:
             errors.append("Выберите причину обращения")
 
@@ -1232,12 +1136,10 @@ class Ui_AddOrderDialog(object):
         return True
 
     def create_order(self):
-        """Создает новый заказ"""
         if not self.validate_form():
             return
 
         try:
-            # Проверяем существование клиента перед созданием
             email = self.emailInput.text().strip()
             phone = self.phoneInput.text().strip()
             first_name = self.firstNameInput.text().strip()
@@ -1245,11 +1147,9 @@ class Ui_AddOrderDialog(object):
 
             client_id = None
 
-            # Если клиент уже выбран через поиск, используем его ID
             if self.client_id:
                 client_id = self.client_id
             else:
-                # Проверяем существование клиента по email или телефону
                 connection = db_crm.get_crm_connection()
                 if connection:
                     cursor = connection.cursor(dictionary=True)
@@ -1260,7 +1160,6 @@ class Ui_AddOrderDialog(object):
                         if result:
                             client_id = result['ID']
 
-                    # Если не нашли по email, проверяем по телефону
                     if not client_id and phone:
                         cursor.execute("SELECT ID FROM Client WHERE PhoneNumber = %s", (phone,))
                         result = cursor.fetchone()
@@ -1270,9 +1169,7 @@ class Ui_AddOrderDialog(object):
                     cursor.close()
                     connection.close()
 
-            # Если клиент не найден, создаем нового
             if not client_id:
-                # 1. Создаем клиента
                 client_data = {
                     'first_name': first_name,
                     'last_name': last_name,
@@ -1286,7 +1183,6 @@ class Ui_AddOrderDialog(object):
                     QMessageBox.critical(self.dialog, "Ошибка", "Не удалось создать клиента")
                     return
             else:
-                # Если клиент уже существует, обновляем его данные
                 connection = db_crm.get_crm_connection()
                 if connection:
                     cursor = connection.cursor()
@@ -1312,11 +1208,9 @@ class Ui_AddOrderDialog(object):
                         cursor.close()
                         connection.close()
 
-            # 2. Подготавливаем данные заказа
             deadline_date = self.deadlineInput.date()
             estimated_completion = deadline_date.toString("yyyy-MM-dd") + " 18:00:00"
 
-            # Собираем услуги
             services_list = []
             for row in range(self.servicesTable.rowCount()):
                 service_item = self.servicesTable.item(row, 0)
@@ -1332,7 +1226,6 @@ class Ui_AddOrderDialog(object):
                             'unit_price': float(price_item.text())
                         })
 
-            # Собираем запчасти
             parts_list = []
             for row in range(self.partsTable.rowCount()):
                 part_item = self.partsTable.item(row, 0)
@@ -1343,7 +1236,7 @@ class Ui_AddOrderDialog(object):
                 if part_item and qty_item and price_item:
                     part_data = part_item.data(QtCore.Qt.UserRole)
                     if part_data:
-                        warranty_days = 90  # по умолчанию
+                        warranty_days = 90
                         if warranty_item:
                             warranty_text = warranty_item.text()
                             warranty_match = re.search(r'(\d+)', warranty_text)
@@ -1357,12 +1250,10 @@ class Ui_AddOrderDialog(object):
                             'warranty_days': warranty_days
                         })
 
-            # Рассчитываем итоговые суммы
             services_total = sum(service['quantity'] * service['unit_price'] for service in services_list)
             parts_total = sum(part['quantity'] * part['unit_price'] for part in parts_list)
             total_amount = services_total + parts_total
 
-            # Применяем скидку
             discount = 0.0
             final_amount = total_amount * (1 - discount / 100)
 
@@ -1386,12 +1277,11 @@ class Ui_AddOrderDialog(object):
                 'final_amount': final_amount,
                 'estimated_completion': estimated_completion,
                 'notes': self.completenessInput.toPlainText(),
-                'created_by': 1,  # ID текущего пользователя
+                'created_by': 1,
                 'services_list': services_list,
                 'parts_list': parts_list
             }
 
-            # 3. Создаем заказ в БД
             new_order_id = db_crm.create_new_order_with_services_parts(order_data)
 
             if new_order_id:
@@ -1403,7 +1293,6 @@ class Ui_AddOrderDialog(object):
                                         f"Сумма заказа: {final_amount:.2f} ₽\n"
                                         f"Услуг: {len(services_list)}, Запчастей: {len(parts_list)}")
 
-                # Закрываем диалог с успехом
                 self.dialog.accept()
             else:
                 QMessageBox.critical(self.dialog, "Ошибка", "Не удалось создать заказ")
@@ -1419,7 +1308,6 @@ class Ui_AddOrderDialog(object):
         AddOrderDialog.setWindowTitle(_translate("AddOrderDialog", "Добавление нового заказа"))
 
 
-# Класс для удобного использования
 class AddOrderDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1431,7 +1319,6 @@ class AddOrderDialog(QtWidgets.QDialog):
 
 if __name__ == "__main__":
     import sys
-
     app = QtWidgets.QApplication(sys.argv)
     dialog = AddOrderDialog()
     dialog.show()

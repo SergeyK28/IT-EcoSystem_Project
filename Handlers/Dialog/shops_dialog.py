@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import Qt, QUrl, QPropertyAnimation, QTimer
-from PyQt5.QtGui import QDesktopServices, QColor, QFont
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QMessageBox,
-                             QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QLineEdit, QTextEdit, QComboBox, QWidget, QGraphicsOpacityEffect,
+                             QTableWidget, QTableWidgetItem, QHeaderView,
+                             QLineEdit, QTextEdit, QComboBox, QWidget,
                              QScrollArea, QGridLayout)
 import sys
 import os
@@ -13,157 +13,8 @@ from Server import db_crm
 from Handlers.Employees.employee_session import employee_session
 
 
-class ModernButton(QPushButton):
-    """Современная кнопка с анимацией"""
-
-    def __init__(self, text="", parent=None, icon=None, primary=False):
-        super().__init__(text, parent)
-        self.primary = primary
-        self.setCursor(Qt.PointingHandCursor)
-
-        if icon:
-            self.setIcon(icon)
-
-        # Базовая настройка
-        self.setMinimumHeight(40)
-
-        # Стиль в зависимости от типа
-        if primary:
-            self.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                              stop: 0 #4CAF50, stop: 1 #45a049);
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: bold;
-                    font-size: 13px;
-                    padding: 8px 16px;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                              stop: 0 #45a049, stop: 1 #3d8b40);
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                              stop: 0 #3d8b40, stop: 1 #357a38);
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: #2d2d2d;
-                    color: #e0e0e0;
-                    border: 1px solid #404040;
-                    border-radius: 8px;
-                    font-weight: bold;
-                    font-size: 13px;
-                    padding: 8px 16px;
-                }
-                QPushButton:hover {
-                    background-color: #3d3d3d;
-                    border-color: #4CAF50;
-                    color: white;
-                }
-                QPushButton:pressed {
-                    background-color: #252525;
-                }
-            """)
-
-
-class ModernLineEdit(QLineEdit):
-    """Современное поле ввода с подсветкой"""
-
-    def __init__(self, placeholder="", parent=None):
-        super().__init__(parent)
-        self.setPlaceholderText(placeholder)
-        self.setMinimumHeight(40)
-        self.setStyleSheet("""
-            QLineEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 2px solid #404040;
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-size: 13px;
-                selection-background-color: #4CAF50;
-            }
-            QLineEdit:focus {
-                border-color: #4CAF50;
-                background-color: #333333;
-            }
-            QLineEdit:hover {
-                border-color: #555555;
-            }
-        """)
-
-
-class ModernTextEdit(QTextEdit):
-    """Современное текстовое поле"""
-
-    def __init__(self, placeholder="", parent=None):
-        super().__init__(parent)
-        self.setPlaceholderText(placeholder)
-        self.setStyleSheet("""
-            QTextEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 2px solid #404040;
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-size: 13px;
-                selection-background-color: #4CAF50;
-            }
-            QTextEdit:focus {
-                border-color: #4CAF50;
-                background-color: #333333;
-            }
-            QTextEdit:hover {
-                border-color: #555555;
-            }
-        """)
-
-
-class ModernComboBox(QComboBox):
-    """Современный выпадающий список"""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setMinimumHeight(40)
-        self.setStyleSheet("""
-            QComboBox {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 2px solid #404040;
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-size: 13px;
-            }
-            QComboBox:hover {
-                border-color: #555555;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 30px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid #888888;
-                margin-right: 10px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 2px solid #404040;
-                selection-background-color: #4CAF50;
-            }
-        """)
-
-
 class ShopsDialog(QDialog):
-    """Окно управления ссылками на магазины (карточки)"""
+    """Окно управления ссылками на магазины (упрощённый дизайн)"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -171,172 +22,145 @@ class ShopsDialog(QDialog):
         self.setup_ui()
         self.load_shops_from_db()
 
-        # Анимация появления
-        self.animation = QPropertyAnimation(self, b"windowOpacity")
-        self.animation.setDuration(300)
-        self.animation.setStartValue(0)
-        self.animation.setEndValue(1)
-        self.animation.start()
-
     def setup_ui(self):
         self.setObjectName("ShopsDialog")
         self.setWindowTitle("IT-EcoSystem CRM - Магазины")
-        self.setFixedSize(1200, 800)
+        self.setMinimumSize(1200, 800)
+        self.resize(1200, 800)
 
-        # Основной стиль
+        # Простой тёмный стиль (без градиентов, теней и frameless)
         self.setStyleSheet("""
             QDialog {
-                background-color: #2A2A2A;
+                background-color: #2e2e2e;
             }
             QLabel {
-                color: #ffffff;
+                color: #f0f0f0;
             }
             QPushButton {
-                padding: 8px 16px;
-                border-radius: 8px;
-                font-weight: 500;
-                font-size: 13px;
-            }
-            QPushButton#closeBtn {
-                background-color: #dc3545;
+                padding: 6px 12px;
+                border-radius: 2px;
+                font-weight: bold;
+                font-size: 12px;
+                background-color: #4a4a4a;
                 color: white;
-                min-width: 40px;
-                max-width: 40px;
-                min-height: 40px;
-                max-height: 40px;
-                font-size: 18px;
-                padding: 0px;
-                border-radius: 20px;
+                border: 1px solid #5a5a5a;
             }
-            QPushButton#closeBtn:hover {
-                background-color: #c82333;
+            QPushButton:hover {
+                background-color: #5a5a5a;
+            }
+            QPushButton#addBtn {
+                background-color: #2d7d3a;
+                border: none;
+            }
+            QPushButton#addBtn:hover {
+                background-color: #3a9a4a;
+            }
+            QLineEdit, QTextEdit, QComboBox {
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 4px;
+                border-radius: 2px;
+            }
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+                border-color: #2d7d3a;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 4px solid #808080;
+                margin-right: 4px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                selection-background-color: #2d7d3a;
+            }
+            QFrame#card {
+                background-color: #3a3a3a;
+                border-radius: 2px;
+                border: 1px solid #555;
+            }
+            QFrame#card:hover {
+                border-color: #2d7d3a;
             }
             QScrollBar:vertical {
-                background-color: #2d2d2d;
-                width: 12px;
-                border-radius: 6px;
+                background-color: #2a2a2a;
+                width: 10px;
+                border-radius: 2px;
             }
             QScrollBar::handle:vertical {
-                background-color: #4CAF50;
-                border-radius: 6px;
+                background-color: #4a4a4a;
+                border-radius: 2px;
                 min-height: 20px;
             }
             QScrollBar::handle:vertical:hover {
-                background-color: #45a049;
+                background-color: #2d7d3a;
             }
             QScrollBar:horizontal {
-                background-color: #2d2d2d;
-                height: 12px;
-                border-radius: 6px;
+                background-color: #2a2a2a;
+                height: 10px;
+                border-radius: 2px;
             }
             QScrollBar::handle:horizontal {
-                background-color: #4CAF50;
-                border-radius: 6px;
+                background-color: #4a4a4a;
+                border-radius: 2px;
                 min-width: 20px;
             }
-        """)
-
-        # Убираем стандартные рамки окна
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
-        # Главный контейнер
-        main_container = QFrame(self)
-        main_container.setGeometry(0, 0, 1200, 800)
-        main_container.setStyleSheet("""
-            QFrame {
-                background-color: #2A2A2A;
-                border-radius: 20px;
-                border: 1px solid #333333;
+            QScrollBar::handle:horizontal:hover {
+                background-color: #2d7d3a;
             }
         """)
 
-        # Тень
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor(0, 0, 0, 100))
-        shadow.setOffset(0, 10)
-        main_container.setGraphicsEffect(shadow)
-
         # Основной layout
-        layout = QVBoxLayout(main_container)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         # Верхняя панель
         header_layout = QHBoxLayout()
 
-        # Заголовок с градиентом
-        title_container = QFrame()
-        title_layout = QHBoxLayout(title_container)
-        title_layout.setContentsMargins(0, 0, 0, 0)
+        title_label = QLabel("🛒 МАГАЗИНЫ")
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2d7d3a;")
+        header_layout.addWidget(title_label)
 
-        icon_label = QLabel("🛒")
-        icon_label.setStyleSheet("font-size: 32px; background: transparent;")
-        title_layout.addWidget(icon_label)
-
-        title_label = QLabel("МАГАЗИНЫ")
-        title_label.setStyleSheet("""
-            font-size: 28px;
-            font-weight: bold;
-            color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                  stop: 0 #4CAF50, stop: 1 #679B76);
-            background: transparent;
-            letter-spacing: 1px;
-        """)
-        title_layout.addWidget(title_label)
-
-        header_layout.addWidget(title_container)
         header_layout.addStretch()
 
-        # Кнопка добавления магазина
-        self.add_btn = ModernButton("➕ Добавить магазин", primary=True)
+        self.add_btn = QPushButton("➕ Добавить магазин")
+        self.add_btn.setObjectName("addBtn")
+        self.add_btn.setCursor(Qt.PointingHandCursor)
         self.add_btn.clicked.connect(self.show_add_shop_dialog)
         header_layout.addWidget(self.add_btn)
-
-        # Кнопка закрытия
-        self.close_btn = QPushButton("✕")
-        self.close_btn.setObjectName("closeBtn")
-        self.close_btn.setCursor(Qt.PointingHandCursor)
-        self.close_btn.clicked.connect(self.close)
-        header_layout.addWidget(self.close_btn)
 
         layout.addLayout(header_layout)
 
         # Панель поиска и фильтров
         filters_frame = QFrame()
-        filters_frame.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-radius: 12px;
-                padding: 15px;
-            }
-        """)
-
+        filters_frame.setStyleSheet("background-color: #333; border-radius: 2px; padding: 10px;")
         filters_layout = QHBoxLayout(filters_frame)
-        filters_layout.setSpacing(15)
+        filters_layout.setSpacing(10)
 
-        # Поиск
         search_icon = QLabel("🔍")
-        search_icon.setStyleSheet("font-size: 18px; background: transparent;")
         filters_layout.addWidget(search_icon)
 
-        self.search_input = ModernLineEdit("Название магазина или категория...")
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Название магазина или категория...")
         self.search_input.textChanged.connect(self.filter_shops)
         filters_layout.addWidget(self.search_input, 1)
 
-        # Категории
         category_icon = QLabel("📂")
-        category_icon.setStyleSheet("font-size: 18px; background: transparent;")
         filters_layout.addWidget(category_icon)
 
-        self.category_combo = ModernComboBox()
+        self.category_combo = QComboBox()
         self.category_combo.addItem("Все категории")
         self.category_combo.currentTextChanged.connect(self.filter_shops)
         filters_layout.addWidget(self.category_combo)
 
-        # Кнопка сброса фильтров
-        reset_btn = ModernButton("⟲ Сброс")
+        reset_btn = QPushButton("⟲ Сброс")
         reset_btn.clicked.connect(self.reset_filters)
         filters_layout.addWidget(reset_btn)
 
@@ -344,40 +168,23 @@ class ShopsDialog(QDialog):
 
         # Статистика
         stats_frame = QFrame()
-        stats_frame.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-radius: 10px;
-                padding: 10px 15px;
-            }
-        """)
-
+        stats_frame.setStyleSheet("background-color: #333; border-radius: 2px; padding: 8px 12px;")
         stats_layout = QHBoxLayout(stats_frame)
         stats_layout.setSpacing(20)
 
         self.total_shops_label = QLabel("0 магазинов")
-        self.total_shops_label.setStyleSheet("""
-            color: #4CAF50;
-            font-size: 16px;
-            font-weight: bold;
-            background: transparent;
-        """)
-        stats_layout.addWidget(self.total_shops_label)
+        self.total_shops_label.setStyleSheet("color: #2d7d3a; font-size: 14px; font-weight: bold;")
 
-        # Разделитель
         separator = QFrame()
         separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet("background-color: #404040; max-width: 2px;")
-        stats_layout.addWidget(separator)
+        separator.setStyleSheet("background-color: #555; max-width: 2px;")
 
         self.categories_count_label = QLabel("0 категорий")
-        self.categories_count_label.setStyleSheet("""
-            color: #b0b0b0;
-            font-size: 14px;
-            background: transparent;
-        """)
-        stats_layout.addWidget(self.categories_count_label)
+        self.categories_count_label.setStyleSheet("color: #b0b0b0; font-size: 13px;")
 
+        stats_layout.addWidget(self.total_shops_label)
+        stats_layout.addWidget(separator)
+        stats_layout.addWidget(self.categories_count_label)
         stats_layout.addStretch()
 
         layout.addWidget(stats_frame)
@@ -387,16 +194,10 @@ class ShopsDialog(QDialog):
         layout.addWidget(self.cards_scroll_area, 1)
 
     def setup_cards_view(self):
-        """Настраивает отображение карточками"""
         self.cards_scroll_area = QScrollArea()
         self.cards_scroll_area.setWidgetResizable(True)
         self.cards_scroll_area.setFrameShape(QFrame.NoFrame)
-        self.cards_scroll_area.setStyleSheet("""
-            QScrollArea {
-                background-color: transparent;
-                border: none;
-            }
-        """)
+        self.cards_scroll_area.setStyleSheet("border: none; background-color: transparent;")
 
         self.cards_container = QWidget()
         self.cards_layout = QGridLayout(self.cards_container)
@@ -406,159 +207,114 @@ class ShopsDialog(QDialog):
         self.cards_scroll_area.setWidget(self.cards_container)
 
     def load_shops_from_db(self):
-        """Загружает данные магазинов из БД"""
         try:
             self.shops_data = db_crm.get_all_shops(only_active=True)
             print(f"Загружено {len(self.shops_data)} магазинов из БД")
-
             self.update_categories()
             self.update_shops_display()
             self.update_statistics()
-
         except Exception as e:
             print(f"Ошибка загрузки магазинов из БД: {e}")
             self.shops_data = []
             self.update_shops_display()
 
     def update_categories(self):
-        """Обновляет список категорий"""
         try:
             categories = db_crm.get_shop_categories()
-
             self.category_combo.clear()
             self.category_combo.addItem("Все категории")
-
             if categories:
                 for category in sorted(categories):
                     if category:
                         self.category_combo.addItem(category)
-
         except Exception as e:
             print(f"Ошибка обновления категорий: {e}")
 
     def update_statistics(self):
-        """Обновляет статистику"""
         total = len(self.shops_data)
         categories = len(set(shop.get('category', '') for shop in self.shops_data if shop.get('category')))
+        self.total_shops_label.setText(f"{total} магазин{self._plural(total)}")
+        self.categories_count_label.setText(f"{categories} категори{self._category_plural(categories)}")
 
-        self.total_shops_label.setText(f"{total} магазин{self.get_plural_suffix(total)}")
-        self.categories_count_label.setText(f"{categories} категори{self.get_category_plural_suffix(categories)}")
-
-    def get_plural_suffix(self, count):
-        """Возвращает окончание для слова 'магазин'"""
-        if count % 10 == 1 and count % 100 != 11:
+    def _plural(self, n):
+        if n % 10 == 1 and n % 100 != 11:
             return ""
-        elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
+        elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
             return "а"
-        else:
-            return "ов"
+        return "ов"
 
-    def get_category_plural_suffix(self, count):
-        """Возвращает окончание для слова 'категория'"""
-        if count % 10 == 1 and count % 100 != 11:
+    def _category_plural(self, n):
+        if n % 10 == 1 and n % 100 != 11:
             return "я"
-        elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
+        elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
             return "и"
-        else:
-            return "й"
+        return "й"
 
     def update_shops_display(self):
-        """Обновляет отображение магазинов (только карточки)"""
-        try:
-            filtered_data = self.get_filtered_data()
-            self.update_cards_view(filtered_data)
-            self.update_statistics()
-
-        except Exception as e:
-            print(f"Ошибка обновления: {e}")
+        filtered_data = self.get_filtered_data()
+        self.update_cards_view(filtered_data)
+        self.update_statistics()
 
     def update_cards_view(self, filtered_data):
-        """Обновляет отображение карточками"""
         # Очищаем контейнер
         for i in reversed(range(self.cards_layout.count())):
             widget = self.cards_layout.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
 
-        # Добавляем карточки
-        cols = 3  # Количество карточек в ряду
+        cols = 3
         for i, shop in enumerate(filtered_data):
             card = self.create_shop_card(shop)
             row = i // cols
             col = i % cols
             self.cards_layout.addWidget(card, row, col)
 
-        # Если нет данных
         if not filtered_data:
             no_data_label = QLabel("✨ Магазины не найдены")
-            no_data_label.setStyleSheet("""
-                color: #666666;
-                font-size: 18px;
-                padding: 100px;
-                background: transparent;
-            """)
             no_data_label.setAlignment(Qt.AlignCenter)
+            no_data_label.setStyleSheet("color: #666; font-size: 18px; padding: 50px;")
             self.cards_layout.addWidget(no_data_label, 0, 0, 1, cols)
 
     def create_shop_card(self, shop_data):
-        """Создает карточку магазина"""
         card = QFrame()
-        card.setFixedSize(300, 220)
+        card.setObjectName("card")
+        card.setFixedSize(300, 200)
         card.setStyleSheet("""
-            QFrame {
-                background-color: #2d2d2d;
-                border-radius: 12px;
-                border: 1px solid #404040;
+            QFrame#card {
+                background-color: #3a3a3a;
+                border-radius: 2px;
+                border: 1px solid #555;
             }
-            QFrame:hover {
-                border-color: #4CAF50;
-                background-color: #333333;
+            QFrame#card:hover {
+                border-color: #2d7d3a;
             }
             QLabel {
-                color: #ffffff;
+                color: #f0f0f0;
                 background: transparent;
             }
         """)
 
-        # Тень для карточки
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 60))
-        shadow.setOffset(0, 4)
-        card.setGraphicsEffect(shadow)
-
         layout = QVBoxLayout(card)
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
-        # Заголовок
         header_layout = QHBoxLayout()
-
         icon_label = QLabel(self.get_category_icon(shop_data.get('category', '')))
         icon_label.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(icon_label)
 
         name_label = QLabel(shop_data.get('name', ''))
-        name_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #4CAF50;")
+        name_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2d7d3a;")
         name_label.setWordWrap(True)
         header_layout.addWidget(name_label, 1)
 
         layout.addLayout(header_layout)
 
-        # Категория
         category_label = QLabel(shop_data.get('category', ''))
-        category_label.setStyleSheet("""
-            background-color: #404040;
-            color: #e0e0e0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            max-width: 100px;
-        """)
+        category_label.setStyleSheet("background-color: #555; color: #ddd; padding: 2px 8px; border-radius: 2px; font-size: 11px;")
         category_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(category_label)
 
-        # Описание
         description = shop_data.get('description', '')
         if len(description) > 80:
             description = description[:80] + "..."
@@ -569,61 +325,24 @@ class ShopsDialog(QDialog):
 
         layout.addStretch()
 
-        # Кнопки
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(8)
 
         open_btn = QPushButton("🔗 Открыть")
-        open_btn.setFixedSize(90, 32)
-        open_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #17a2b8;
-                color: white;
-                border: none;
-                border-radius: 16px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #138496;
-            }
-        """)
+        open_btn.setFixedSize(90, 30)
+        open_btn.setStyleSheet("background-color: #1a7a8a; color: white; border: none; border-radius: 2px; font-size: 12px;")
         open_btn.clicked.connect(lambda: self.open_url(shop_data.get('url', '')))
         buttons_layout.addWidget(open_btn)
 
         edit_btn = QPushButton("✏️ Ред.")
-        edit_btn.setFixedSize(70, 32)
-        edit_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #ffc107;
-                color: black;
-                border: none;
-                border-radius: 16px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #e0a800;
-            }
-        """)
+        edit_btn.setFixedSize(70, 30)
+        edit_btn.setStyleSheet("background-color: #e0a800; color: #222; border: none; border-radius: 2px; font-size: 12px;")
         edit_btn.clicked.connect(lambda: self.edit_shop(shop_data))
         buttons_layout.addWidget(edit_btn)
 
         delete_btn = QPushButton("🗑️ Удал.")
-        delete_btn.setFixedSize(70, 32)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 16px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
+        delete_btn.setFixedSize(70, 30)
+        delete_btn.setStyleSheet("background-color: #b33c3c; color: white; border: none; border-radius: 2px; font-size: 12px;")
         delete_btn.clicked.connect(lambda: self.delete_shop(shop_data))
         buttons_layout.addWidget(delete_btn)
 
@@ -632,7 +351,6 @@ class ShopsDialog(QDialog):
         return card
 
     def get_category_icon(self, category):
-        """Возвращает иконку для категории"""
         category_lower = category.lower()
         icons = {
             'электроника': '💻',
@@ -644,14 +362,12 @@ class ShopsDialog(QDialog):
             'авто': '🚗',
             'спорт': '⚽'
         }
-
         for key, icon in icons.items():
             if key in category_lower:
                 return icon
         return '🛒'
 
     def get_filtered_data(self):
-        """Возвращает отфильтрованные данные"""
         try:
             search_text = self.search_input.text().strip().lower()
             category = self.category_combo.currentText()
@@ -660,36 +376,28 @@ class ShopsDialog(QDialog):
             for shop in self.shops_data:
                 if category != "Все категории" and shop.get('category') != category:
                     continue
-
                 if search_text:
                     if (search_text not in shop.get('name', '').lower() and
-                            search_text not in shop.get('category', '').lower() and
-                            search_text not in shop.get('description', '').lower()):
+                        search_text not in shop.get('category', '').lower() and
+                        search_text not in shop.get('description', '').lower()):
                         continue
-
                 filtered.append(shop)
-
             return filtered
-
         except Exception as e:
             print(f"Ошибка фильтрации: {e}")
             return []
 
     def filter_shops(self):
-        """Фильтрует магазины"""
         self.update_shops_display()
 
     def reset_filters(self):
-        """Сбрасывает фильтры"""
         self.search_input.clear()
         self.category_combo.setCurrentIndex(0)
 
     def open_url(self, url):
-        """Открывает ссылку в браузере с анимацией"""
         try:
             if url:
                 QDesktopServices.openUrl(QUrl(url))
-                self.show_notification("✅ Ссылка открыта в браузере")
             else:
                 QMessageBox.warning(self, "Ошибка", "Ссылка не указана")
         except Exception as e:
@@ -697,34 +405,30 @@ class ShopsDialog(QDialog):
             QMessageBox.critical(self, "Ошибка", f"Не удалось открыть ссылку: {e}")
 
     def show_add_shop_dialog(self):
-        """Показывает диалог добавления магазина"""
         dialog = AddEditShopDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             shop_data = dialog.get_shop_data()
             if shop_data:
                 created_by = employee_session.get_employee_id()
                 new_id = db_crm.create_shop(shop_data, created_by)
-
                 if new_id:
                     self.load_shops_from_db()
-                    self.show_notification("✅ Магазин успешно добавлен")
+                    QMessageBox.information(self, "Успех", "✅ Магазин успешно добавлен")
                 else:
                     QMessageBox.critical(self, "Ошибка", "Не удалось добавить магазин")
 
     def edit_shop(self, shop):
-        """Редактирует магазин"""
         dialog = AddEditShopDialog(self, shop)
         if dialog.exec_() == QDialog.Accepted:
             new_data = dialog.get_shop_data()
             if new_data:
                 if db_crm.update_shop(shop['id'], new_data):
                     self.load_shops_from_db()
-                    self.show_notification("✅ Магазин успешно обновлен")
+                    QMessageBox.information(self, "Успех", "✅ Магазин успешно обновлен")
                 else:
                     QMessageBox.critical(self, "Ошибка", "Не удалось обновить магазин")
 
     def delete_shop(self, shop):
-        """Удаляет магазин"""
         msg = QMessageBox(self)
         msg.setWindowTitle("Подтверждение удаления")
         msg.setText(f"Удалить магазин '{shop.get('name')}'?")
@@ -732,329 +436,185 @@ class ShopsDialog(QDialog):
         msg.setIcon(QMessageBox.Question)
         msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         msg.setDefaultButton(QMessageBox.No)
-
         msg.setStyleSheet("""
             QMessageBox {
-                background-color: #2A2A2A;
-                color: white;
-            }
-            QLabel {
-                color: white;
+                background-color: #2e2e2e;
+                color: #f0f0f0;
             }
             QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                min-width: 80px;
+                padding: 6px 12px;
+                border-radius: 2px;
+                background-color: #4a4a4a;
+                color: white;
+                border: 1px solid #5a5a5a;
+            }
+            QPushButton:hover {
+                background-color: #5a5a5a;
             }
             QPushButton[text="&Yes"] {
-                background-color: #dc3545;
-                color: white;
+                background-color: #b33c3c;
+                border: none;
             }
             QPushButton[text="&No"] {
-                background-color: #6c757d;
-                color: white;
+                background-color: #6c6c6c;
+                border: none;
             }
         """)
-
         if msg.exec_() == QMessageBox.Yes:
             try:
                 if db_crm.delete_shop(shop['id'], hard_delete=False):
                     self.load_shops_from_db()
-                    self.show_notification("🗑️ Магазин удален")
+                    QMessageBox.information(self, "Успех", "🗑️ Магазин удален")
                 else:
                     QMessageBox.critical(self, "Ошибка", "Не удалось удалить магазин")
             except Exception as e:
                 print(f"Ошибка удаления: {e}")
                 QMessageBox.critical(self, "Ошибка", f"Не удалось удалить магазин: {e}")
 
-    def show_notification(self, message):
-        """Показывает всплывающее уведомление"""
-        notification = QLabel(message, self)
-        notification.setStyleSheet("""
-            QLabel {
-                background-color: #4CAF50;
-                color: white;
-                padding: 12px 24px;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 14px;
-            }
-        """)
-        notification.adjustSize()
-
-        # Центрируем
-        x = (self.width() - notification.width()) // 2
-        y = 100
-        notification.move(x, y)
-        notification.show()
-
-        # Анимация появления и исчезновения
-        opacity_effect = QGraphicsOpacityEffect()
-        notification.setGraphicsEffect(opacity_effect)
-
-        fade_in = QPropertyAnimation(opacity_effect, b"opacity")
-        fade_in.setDuration(300)
-        fade_in.setStartValue(0)
-        fade_in.setEndValue(1)
-
-        fade_out = QPropertyAnimation(opacity_effect, b"opacity")
-        fade_out.setDuration(300)
-        fade_out.setStartValue(1)
-        fade_out.setEndValue(0)
-
-        fade_in.start()
-        QTimer.singleShot(2000, fade_out.start)
-        QTimer.singleShot(2300, notification.deleteLater)
-
-    def mousePressEvent(self, event):
-        """Для перетаскивания окна"""
-        if event.button() == Qt.LeftButton:
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        """Для перетаскивания окна"""
-        if event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self.drag_position)
-            event.accept()
-
 
 class AddEditShopDialog(QDialog):
-    """Диалог добавления/редактирования магазина (улучшенный)"""
+    """Диалог добавления/редактирования магазина (упрощённый)"""
 
     def __init__(self, parent=None, shop_data=None):
         super().__init__(parent)
         self.shop_data = shop_data
         self.setup_ui()
-
         if shop_data:
             self.setWindowTitle("Редактирование магазина")
             self.fill_data()
         else:
             self.setWindowTitle("Добавление магазина")
 
-        # Анимация появления
-        self.animation = QPropertyAnimation(self, b"windowOpacity")
-        self.animation.setDuration(300)
-        self.animation.setStartValue(0)
-        self.animation.setEndValue(1)
-        self.animation.start()
-
     def setup_ui(self):
-        self.setFixedSize(550, 600)
-
+        self.setFixedSize(500, 550)
         self.setStyleSheet("""
             QDialog {
-                background-color: #2A2A2A;
+                background-color: #2e2e2e;
             }
             QLabel {
-                color: #ffffff;
-                font-size: 13px;
+                color: #f0f0f0;
+                font-size: 12px;
                 font-weight: 500;
             }
-        """)
-
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
-        # Главный контейнер
-        main_container = QFrame(self)
-        main_container.setGeometry(0, 0, 550, 600)
-        main_container.setStyleSheet("""
-            QFrame {
-                background-color: #2A2A2A;
-                border-radius: 25px;
-                border: 1px solid #333333;
+            QPushButton {
+                padding: 6px 12px;
+                border-radius: 2px;
+                font-weight: bold;
+                font-size: 12px;
+                background-color: #4a4a4a;
+                color: white;
+                border: 1px solid #5a5a5a;
+            }
+            QPushButton:hover {
+                background-color: #5a5a5a;
+            }
+            QPushButton#saveBtn {
+                background-color: #2d7d3a;
+                border: none;
+            }
+            QPushButton#saveBtn:hover {
+                background-color: #3a9a4a;
+            }
+            QPushButton#cancelBtn {
+                background-color: #6c6c6c;
+                border: none;
+            }
+            QPushButton#cancelBtn:hover {
+                background-color: #7c7c7c;
+            }
+            QLineEdit, QTextEdit, QComboBox {
+                background-color: #3a3a3a;
+                color: #f0f0f0;
+                border: 1px solid #555;
+                padding: 4px;
+                border-radius: 2px;
+            }
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+                border-color: #2d7d3a;
+            }
+            QFrame#formFrame {
+                background-color: #333;
+                border-radius: 2px;
+                padding: 15px;
             }
         """)
 
-        # Тень
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor(0, 0, 0, 150))
-        shadow.setOffset(0, 10)
-        main_container.setGraphicsEffect(shadow)
-
-        layout = QVBoxLayout(main_container)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         # Заголовок
         header_layout = QHBoxLayout()
-
         title_text = "✏️ РЕДАКТИРОВАНИЕ" if self.shop_data else "➕ ДОБАВЛЕНИЕ МАГАЗИНА"
         title_label = QLabel(title_text)
-        title_label.setStyleSheet("""
-            font-size: 20px;
-            font-weight: bold;
-            color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                  stop: 0 #4CAF50, stop: 1 #679B76);
-            background: transparent;
-        """)
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #2d7d3a;")
         header_layout.addWidget(title_label)
-
         header_layout.addStretch()
-
-        self.close_btn = QPushButton("✕")
-        self.close_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                min-width: 40px;
-                max-width: 40px;
-                min-height: 40px;
-                max-height: 40px;
-                font-size: 18px;
-                border-radius: 20px;
-                border: none;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-        """)
-        self.close_btn.clicked.connect(self.reject)
-        header_layout.addWidget(self.close_btn)
-
         layout.addLayout(header_layout)
 
         # Форма
         form_frame = QFrame()
-        form_frame.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-radius: 15px;
-                padding: 20px;
-            }
-        """)
-
+        form_frame.setObjectName("formFrame")
         form_layout = QVBoxLayout(form_frame)
-        form_layout.setSpacing(15)
+        form_layout.setSpacing(12)
 
-        # Название
         name_label = QLabel("📝 Название магазина")
-        name_label.setStyleSheet("color: #4CAF50; font-size: 13px; margin-top: 5px;")
         form_layout.addWidget(name_label)
-
-        self.name_input = ModernLineEdit("Введите название магазина")
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("Введите название магазина")
         form_layout.addWidget(self.name_input)
 
-        # Категория
         category_label = QLabel("📂 Категория")
-        category_label.setStyleSheet("color: #4CAF50; font-size: 13px; margin-top: 5px;")
         form_layout.addWidget(category_label)
-
-        self.category_input = ModernLineEdit("Например: Электроника, Маркетплейс")
+        self.category_input = QLineEdit()
+        self.category_input.setPlaceholderText("Например: Электроника, Маркетплейс")
         form_layout.addWidget(self.category_input)
 
         # Подсказки категорий
         hints_layout = QHBoxLayout()
-        categories = ["Электроника", "Маркетплейс", "Одежда", "Книги", "Продукты"]
-        for cat in categories:
+        for cat in ["Электроника", "Маркетплейс", "Одежда", "Книги", "Продукты"]:
             hint_btn = QPushButton(cat)
-            hint_btn.setFixedHeight(30)
-            hint_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #333333;
-                    color: #b0b0b0;
-                    border: 1px solid #404040;
-                    border-radius: 15px;
-                    padding: 5px 10px;
-                    font-size: 11px;
-                }
-                QPushButton:hover {
-                    background-color: #404040;
-                    border-color: #4CAF50;
-                    color: white;
-                }
-            """)
+            hint_btn.setFixedHeight(25)
+            hint_btn.setStyleSheet("background-color: #3a3a3a; color: #b0b0b0; border: 1px solid #555; border-radius: 2px; font-size: 10px; padding: 2px 6px;")
             hint_btn.clicked.connect(lambda checked, c=cat: self.category_input.setText(c))
             hints_layout.addWidget(hint_btn)
         hints_layout.addStretch()
         form_layout.addLayout(hints_layout)
 
-        # Ссылка
         url_label = QLabel("🔗 Ссылка на магазин")
-        url_label.setStyleSheet("color: #4CAF50; font-size: 13px; margin-top: 5px;")
         form_layout.addWidget(url_label)
-
-        self.url_input = ModernLineEdit("https://example.com")
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("https://example.com")
         form_layout.addWidget(self.url_input)
 
-        # Описание
         desc_label = QLabel("📝 Описание (необязательно)")
-        desc_label.setStyleSheet("color: #4CAF50; font-size: 13px; margin-top: 5px;")
         form_layout.addWidget(desc_label)
-
-        self.description_input = ModernTextEdit("Краткое описание магазина...")
-        self.description_input.setMaximumHeight(100)
+        self.description_input = QTextEdit()
+        self.description_input.setPlaceholderText("Краткое описание магазина...")
+        self.description_input.setMaximumHeight(80)
         form_layout.addWidget(self.description_input)
 
         layout.addWidget(form_frame)
-
         layout.addStretch()
 
-        # Кнопки
         buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(15)
+        buttons_layout.setSpacing(10)
 
         self.save_btn = QPushButton("💾 Сохранить")
-        self.save_btn.setMinimumHeight(45)
-        self.save_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                          stop: 0 #4CAF50, stop: 1 #45a049);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 14px;
-                padding: 10px 30px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                          stop: 0 #45a049, stop: 1 #3d8b40);
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                                          stop: 0 #3d8b40, stop: 1 #357a38);
-            }
-        """)
+        self.save_btn.setObjectName("saveBtn")
+        self.save_btn.setMinimumHeight(35)
         self.save_btn.clicked.connect(self.accept)
         buttons_layout.addWidget(self.save_btn)
 
         self.cancel_btn = QPushButton("❌ Отмена")
-        self.cancel_btn.setMinimumHeight(45)
-        self.cancel_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6c757d;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 14px;
-                padding: 10px 30px;
-            }
-            QPushButton:hover {
-                background-color: #5a6268;
-            }
-        """)
+        self.cancel_btn.setObjectName("cancelBtn")
+        self.cancel_btn.setMinimumHeight(35)
         self.cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_btn)
 
         layout.addLayout(buttons_layout)
 
-        # Подсказка для перетаскивания
-        hint_label = QLabel("👆 Перетащите окно за заголовок")
-        hint_label.setAlignment(Qt.AlignCenter)
-        hint_label.setStyleSheet("""
-            color: #666666;
-            font-size: 10px;
-            padding: 5px;
-        """)
-        layout.addWidget(hint_label)
-
     def fill_data(self):
-        """Заполняет поля данными"""
         if self.shop_data:
             self.name_input.setText(self.shop_data.get('name', ''))
             self.category_input.setText(self.shop_data.get('category', ''))
@@ -1062,25 +622,21 @@ class AddEditShopDialog(QDialog):
             self.description_input.setText(self.shop_data.get('description', ''))
 
     def get_shop_data(self):
-        """Возвращает данные магазина"""
         name = self.name_input.text().strip()
         category = self.category_input.text().strip()
         url = self.url_input.text().strip()
         description = self.description_input.toPlainText().strip()
 
         if not name:
-            self.show_error("Введите название магазина")
+            QMessageBox.warning(self, "Ошибка", "Введите название магазина")
             return None
-
         if not category:
-            self.show_error("Введите категорию магазина")
+            QMessageBox.warning(self, "Ошибка", "Введите категорию магазина")
             return None
-
         if not url:
-            self.show_error("Введите ссылку на магазин")
+            QMessageBox.warning(self, "Ошибка", "Введите ссылку на магазин")
             return None
 
-        # Добавляем https:// если нет протокола
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
 
@@ -1090,34 +646,3 @@ class AddEditShopDialog(QDialog):
             'url': url,
             'description': description
         }
-
-    def show_error(self, message):
-        """Показывает ошибку"""
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Ошибка")
-        msg.setText(message)
-        msg.setIcon(QMessageBox.Warning)
-        msg.setStyleSheet("""
-            QMessageBox {
-                background-color: #2A2A2A;
-                color: white;
-            }
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 4px;
-                min-width: 80px;
-            }
-        """)
-        msg.exec_()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self.drag_position)
-            event.accept()
