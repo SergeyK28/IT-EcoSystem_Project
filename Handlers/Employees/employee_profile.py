@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Модуль окна профиля сотрудника CRM (исправленная версия).
-Использует методы employee_session напрямую, без вызова несуществующих методов.
+Модуль окна профиля сотрудника CRM (упрощённый дизайн).
+Использует методы employee_session напрямую.
 """
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QMessageBox, QGraphicsDropShadowEffect, QSizeGrip
+    QFrame, QMessageBox
 )
 import sys
 import os
 
-# Добавляем путь к корневой директории для импорта модулей
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from Handlers.Employees.employee_session import employee_session
@@ -22,17 +20,11 @@ from Server import db_crm
 
 class EmployeeProfileDialog(QDialog):
     """
-    Упрощенное окно профиля сотрудника с корректной загрузкой данных.
+    Упрощённое окно профиля сотрудника со стандартным заголовком.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dragging = False
-        self.resizing = False
-        self.drag_position = None
-        self.resize_direction = None
-        self.resize_margin = 10
-
         self.setup_ui()
         self.load_employee_data()
 
@@ -43,120 +35,56 @@ class EmployeeProfileDialog(QDialog):
         self.setMinimumSize(450, 550)
         self.resize(500, 600)
 
-        # Основной стиль
+        # Простой тёмный стиль (без излишеств)
         self.setStyleSheet("""
             QDialog {
-                background-color: transparent;
+                background-color: #2e2e2e;
             }
             QLabel {
-                color: #ffffff;
+                color: #f0f0f0;
                 background: transparent;
             }
             QPushButton {
-                padding: 8px 15px;
-                border-radius: 5px;
+                padding: 6px 12px;
+                border-radius: 3px;
                 font-size: 12px;
                 font-weight: bold;
-                min-height: 25px;
-            }
-            QPushButton#closeBtn {
-                background-color: #5a5a5a;
+                background-color: #4a4a4a;
                 color: white;
-                min-width: 30px;
-                max-width: 30px;
-                min-height: 30px;
-                max-height: 30px;
-                font-size: 14px;
-                padding: 0px;
-                border-radius: 15px;
+                border: 1px solid #5a5a5a;
             }
-            QPushButton#closeBtn:hover {
-                background-color: #777777;
+            QPushButton:hover {
+                background-color: #5a5a5a;
             }
             QPushButton#logoutBtn {
-                background-color: #dc3545;
-                color: white;
+                background-color: #b33c3c;
+                border: none;
             }
             QPushButton#logoutBtn:hover {
-                background-color: #c82333;
-            }
-            QFrame#mainContainer {
-                background-color: #2d2d2d;
-                border-radius: 15px;
-                border: 1px solid #404040;
+                background-color: #cc4c4c;
             }
             QFrame#infoFrame {
-                background-color: #353535;
-                border-radius: 10px;
+                background-color: #3a3a3a;
+                border-radius: 3px;
                 padding: 5px;
             }
             QFrame#statCard {
-                background-color: #353535;
-                border-radius: 8px;
+                background-color: #3a3a3a;
+                border-radius: 3px;
                 padding: 5px;
-            }
-            QSizeGrip {
-                background-color: transparent;
-                width: 15px;
-                height: 15px;
-            }
-        """)
-
-        # Настройки окна (без рамок, с возможностью перетаскивания)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
-        # Главный контейнер
-        self.main_container = QFrame(self)
-        self.main_container.setObjectName("mainContainer")
-        self.main_container.setGeometry(0, 0, self.width(), self.height())
-
-        # Тень
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 100))
-        shadow.setOffset(0, 5)
-        self.main_container.setGraphicsEffect(shadow)
-
-        # SizeGrip для изменения размера
-        self.size_grip = QSizeGrip(self.main_container)
-        self.size_grip.setStyleSheet("""
-            QSizeGrip {
-                background-color: #4a4a4a;
-                border-radius: 7px;
-                width: 15px;
-                height: 15px;
-            }
-            QSizeGrip:hover {
-                background-color: #5a5a5a;
             }
         """)
 
         # Основной layout
-        layout = QVBoxLayout(self.main_container)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 
-        # Заголовок с кнопкой закрытия
-        header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(0, 0, 0, 0)
-
+        # Заголовок (без кнопки закрытия)
         title_label = QLabel("ПРОФИЛЬ")
-        title_label.setStyleSheet("""
-            font-size: 16px;
-            font-weight: bold;
-            color: #4CAF50;
-        """)
-        header_layout.addWidget(title_label)
-        header_layout.addStretch()
-
-        self.close_btn = QPushButton("✕")
-        self.close_btn.setObjectName("closeBtn")
-        self.close_btn.setCursor(Qt.PointingHandCursor)
-        self.close_btn.clicked.connect(self.close)
-        header_layout.addWidget(self.close_btn)
-
-        layout.addLayout(header_layout)
+        title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2d7d3a;")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
 
         # Аватар с инициалами
         avatar_layout = QHBoxLayout()
@@ -167,7 +95,7 @@ class EmployeeProfileDialog(QDialog):
         self.avatar_label.setAlignment(Qt.AlignCenter)
         self.avatar_label.setStyleSheet("""
             QLabel {
-                background-color: #4CAF50;
+                background-color: #2d7d3a;
                 border-radius: 40px;
                 color: white;
                 font-size: 28px;
@@ -183,12 +111,7 @@ class EmployeeProfileDialog(QDialog):
         # Имя сотрудника
         self.name_label = QLabel()
         self.name_label.setAlignment(Qt.AlignCenter)
-        self.name_label.setStyleSheet("""
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            margin-top: 5px;
-        """)
+        self.name_label.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-top: 5px;")
         layout.addWidget(self.name_label)
 
         # Должность
@@ -196,10 +119,10 @@ class EmployeeProfileDialog(QDialog):
         self.position_label.setAlignment(Qt.AlignCenter)
         self.position_label.setStyleSheet("""
             font-size: 12px;
-            color: #4CAF50;
-            background-color: #353535;
-            padding: 5px 15px;
-            border-radius: 15px;
+            color: #2d7d3a;
+            background-color: #3a3a3a;
+            padding: 4px 12px;
+            border-radius: 12px;
             max-width: 200px;
             margin: 0 auto;
         """)
@@ -252,15 +175,9 @@ class EmployeeProfileDialog(QDialog):
         # Статистика
         stats_title = QLabel("СТАТИСТИКА")
         stats_title.setAlignment(Qt.AlignCenter)
-        stats_title.setStyleSheet("""
-            font-size: 12px;
-            font-weight: bold;
-            color: #4CAF50;
-            margin-top: 5px;
-        """)
+        stats_title.setStyleSheet("font-size: 12px; font-weight: bold; color: #2d7d3a; margin-top: 5px;")
         layout.addWidget(stats_title)
 
-        # Карточки статистики в ряд
         stats_layout = QHBoxLayout()
         stats_layout.setSpacing(10)
 
@@ -285,17 +202,8 @@ class EmployeeProfileDialog(QDialog):
         self.logout_btn.clicked.connect(self.logout)
         layout.addWidget(self.logout_btn)
 
-        # Позиционируем SizeGrip
-        self.size_grip.move(self.main_container.width() - 25, self.main_container.height() - 25)
-
-    def resizeEvent(self, event):
-        """Обновление позиции SizeGrip при изменении размера."""
-        super().resizeEvent(event)
-        self.main_container.resize(self.width(), self.height())
-        self.size_grip.move(self.main_container.width() - 25, self.main_container.height() - 25)
-
     def create_stat_card(self, icon, value):
-        """Создает упрощенную карточку статистики."""
+        """Создаёт упрощённую карточку статистики."""
         card = QFrame()
         card.setObjectName("statCard")
         card.setMinimumSize(100, 60)
@@ -310,12 +218,7 @@ class EmployeeProfileDialog(QDialog):
 
         stat_value_label = QLabel(value)
         stat_value_label.setAlignment(Qt.AlignCenter)
-        stat_value_label.setStyleSheet("""
-            color: #4CAF50;
-            font-size: 16px;
-            font-weight: bold;
-            background: none;
-        """)
+        stat_value_label.setStyleSheet("color: #2d7d3a; font-size: 16px; font-weight: bold; background: none;")
 
         layout.addWidget(icon_label)
         layout.addWidget(stat_value_label)
@@ -324,19 +227,14 @@ class EmployeeProfileDialog(QDialog):
         return card
 
     def load_employee_data(self):
-        """
-        Загружает данные сотрудника из сессии.
-        Использует только существующие методы employee_session.
-        """
+        """Загружает данные сотрудника из сессии."""
         if not employee_session.is_authenticated():
             return
 
-        # Получаем все данные сотрудника одним вызовом
         data = employee_session.get_employee_data()
         if not data:
             return
 
-        # Извлекаем необходимые поля
         first_name = data.get('FirstName', '')
         last_name = data.get('LastName', '')
         full_name = f"{first_name} {last_name}".strip()
@@ -345,12 +243,10 @@ class EmployeeProfileDialog(QDialog):
         role = data.get('Role', 'technician')
         employee_id = data.get('EmployeeID')
 
-        # Заполняем виджеты
         self.name_label.setText(full_name if full_name else "Сотрудник")
         self.email_label.setText(email if email else "Email не указан")
         self.position_label.setText(position)
 
-        # Отображаем роль в понятном виде
         role_text = {
             'admin': 'Администратор',
             'manager': 'Менеджер',
@@ -360,7 +256,6 @@ class EmployeeProfileDialog(QDialog):
         self.role_label.setText(f"Роль: {role_text}")
         self.id_label.setText(f"ID: {employee_id}")
 
-        # Инициалы для аватара
         if full_name:
             parts = full_name.split()
             if len(parts) >= 2:
@@ -371,14 +266,11 @@ class EmployeeProfileDialog(QDialog):
         else:
             self.avatar_label.setText("👤")
 
-        # Загружаем статистику, если есть ID
         if employee_id:
             self.load_employee_statistics(employee_id)
 
     def load_employee_statistics(self, employee_id):
-        """
-        Загружает статистику сотрудника из базы данных.
-        """
+        """Загружает статистику сотрудника из БД."""
         try:
             connection = db_crm.get_crm_connection()
             if not connection:
@@ -386,7 +278,6 @@ class EmployeeProfileDialog(QDialog):
 
             cursor = connection.cursor(dictionary=True)
 
-            # Общее количество заказов
             cursor.execute("""
                 SELECT COUNT(*) as total 
                 FROM Orders 
@@ -394,7 +285,6 @@ class EmployeeProfileDialog(QDialog):
             """, (employee_id, employee_id))
             total_orders = cursor.fetchone()['total']
 
-            # Активные заказы
             cursor.execute("""
                 SELECT COUNT(*) as active 
                 FROM Orders 
@@ -403,7 +293,6 @@ class EmployeeProfileDialog(QDialog):
             """, (employee_id, employee_id))
             active_orders = cursor.fetchone()['active']
 
-            # Завершенные заказы
             cursor.execute("""
                 SELECT COUNT(*) as completed 
                 FROM Orders 
@@ -415,7 +304,6 @@ class EmployeeProfileDialog(QDialog):
             cursor.close()
             connection.close()
 
-            # Обновление карточек
             self.update_stat_cards(total_orders, active_orders, completed_orders)
 
         except Exception as e:
@@ -431,7 +319,7 @@ class EmployeeProfileDialog(QDialog):
             self.completed_card.stat_label.setText(str(completed))
 
     def logout(self):
-        """Выход из аккаунта с подтверждением."""
+        """Выход из аккаунта."""
         reply = QMessageBox.question(
             self,
             "Подтверждение",
@@ -439,163 +327,12 @@ class EmployeeProfileDialog(QDialog):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
-
         if reply == QMessageBox.Yes:
             employee_session.logout()
             self.close()
-
-            # Открытие окна входа
             from Handlers.Employees.employee_login import EmployeeLoginDialog
             login_dialog = EmployeeLoginDialog()
             if login_dialog.exec_() == QDialog.Accepted:
                 from Handlers.main_CRM import MainCRMWindow
                 crm_window = MainCRMWindow()
                 crm_window.show()
-
-    # ==================== МЕТОДЫ ДЛЯ ПЕРЕТАСКИВАНИЯ И ИЗМЕНЕНИЯ РАЗМЕРА ====================
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            pos = event.pos()
-            margin = self.resize_margin
-
-            # Определение направления изменения размера
-            on_left = pos.x() <= margin
-            on_right = pos.x() >= self.width() - margin
-            on_top = pos.y() <= margin
-            on_bottom = pos.y() >= self.height() - margin
-
-            if on_left and on_top:
-                self.resize_direction = 'topleft'
-                self.resizing = True
-            elif on_right and on_top:
-                self.resize_direction = 'topright'
-                self.resizing = True
-            elif on_left and on_bottom:
-                self.resize_direction = 'bottomleft'
-                self.resizing = True
-            elif on_right and on_bottom:
-                self.resize_direction = 'bottomright'
-                self.resizing = True
-            elif on_left:
-                self.resize_direction = 'left'
-                self.resizing = True
-            elif on_right:
-                self.resize_direction = 'right'
-                self.resizing = True
-            elif on_top:
-                self.resize_direction = 'top'
-                self.resizing = True
-            elif on_bottom:
-                self.resize_direction = 'bottom'
-                self.resizing = True
-            else:
-                self.dragging = True
-                self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-                self.resizing = False
-
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton:
-            if self.resizing and self.resize_direction:
-                self.resize_window(event.globalPos())
-            elif self.dragging:
-                self.move(event.globalPos() - self.drag_position)
-            event.accept()
-        else:
-            self.update_cursor_shape(event.pos())
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.dragging = False
-            self.resizing = False
-            self.resize_direction = None
-            event.accept()
-
-    def resize_window(self, global_pos):
-        if not self.resize_direction:
-            return
-
-        rect = self.geometry()
-
-        if 'right' in self.resize_direction:
-            rect.setWidth(max(self.minimumWidth(), global_pos.x() - rect.x()))
-        if 'left' in self.resize_direction:
-            new_left = global_pos.x()
-            if rect.right() - new_left >= self.minimumWidth():
-                rect.setLeft(new_left)
-        if 'bottom' in self.resize_direction:
-            rect.setHeight(max(self.minimumHeight(), global_pos.y() - rect.y()))
-        if 'top' in self.resize_direction:
-            new_top = global_pos.y()
-            if rect.bottom() - new_top >= self.minimumHeight():
-                rect.setTop(new_top)
-
-        self.setGeometry(rect)
-
-    def update_cursor_shape(self, pos):
-        margin = self.resize_margin
-        on_left = pos.x() <= margin
-        on_right = pos.x() >= self.width() - margin
-        on_top = pos.y() <= margin
-        on_bottom = pos.y() >= self.height() - margin
-
-        if (on_left and on_top) or (on_right and on_bottom):
-            cursor = Qt.SizeFDiagCursor
-        elif (on_left and on_bottom) or (on_right and on_top):
-            cursor = Qt.SizeBDiagCursor
-        elif on_left or on_right:
-            cursor = Qt.SizeHorCursor
-        elif on_top or on_bottom:
-            cursor = Qt.SizeVerCursor
-        else:
-            cursor = Qt.ArrowCursor
-
-        self.setCursor(cursor)
-
-
-# ==================== ТОЧКА ВХОДА ДЛЯ ТЕСТИРОВАНИЯ ====================
-if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtCore import QTimer
-
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-
-    # Создаем тестовые данные сессии
-    class DummySession:
-        def is_authenticated(self):
-            return True
-
-        def get_employee_data(self):
-            return {
-                'EmployeeID': 1,
-                'FirstName': 'Александр',
-                'LastName': 'Петров',
-                'Email': 'admin@itecosystem.ru',
-                'Position': 'Администратор',
-                'Role': 'admin'
-            }
-
-    # Временно подменяем сессию для теста
-    original_session = employee_session
-    try:
-        # Для теста используем фиктивную сессию
-        import types
-        dummy = DummySession()
-        # Просто покажем окно с фиктивными данными, не изменяя глобальную сессию
-        dialog = EmployeeProfileDialog()
-        # Вручную установим данные для теста
-        dialog.name_label.setText("Александр Петров")
-        dialog.email_label.setText("admin@itecosystem.ru")
-        dialog.position_label.setText("Администратор")
-        dialog.role_label.setText("Роль: Администратор")
-        dialog.id_label.setText("ID: 1")
-        dialog.avatar_label.setText("АП")
-        # Обновим статистику через заглушку
-        dialog.update_stat_cards(15, 4, 11)
-        dialog.show()
-        sys.exit(app.exec_())
-    except Exception as e:
-        print(f"Ошибка теста: {e}")
