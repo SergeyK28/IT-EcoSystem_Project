@@ -734,10 +734,7 @@ class Ui_profil(object):
 
     def _create_contact_section(self) -> QFrame:
         """
-        Создает секцию с контактной информацией пользователя
-
-        Returns:
-            QFrame: Фрейм с контактами
+        Создает секцию с контактной информацией сервисного центра.
         """
         contact_frame = QFrame()
         contact_frame.setStyleSheet("""
@@ -761,8 +758,8 @@ class Ui_profil(object):
         contact_layout = QVBoxLayout(contact_frame)
         contact_layout.setSpacing(12)
 
-        # Заголовок секции
-        contact_header = QLabel("📞 Контактная информация")
+        # Заголовок секции (изменён)
+        contact_header = QLabel("📞 Контакты сервисного центра")
         contact_header.setStyleSheet("""
             QLabel {
                 color: #4CAF50;
@@ -773,7 +770,7 @@ class Ui_profil(object):
         """)
         contact_layout.addWidget(contact_header)
 
-        # Блок телефона
+        # Блок телефона (статические данные)
         phone_widget = QWidget()
         phone_layout = QHBoxLayout(phone_widget)
         phone_layout.setContentsMargins(0, 0, 0, 0)
@@ -781,8 +778,7 @@ class Ui_profil(object):
         phone_icon = QLabel("📱")
         phone_icon.setStyleSheet("font-size: 16px;")
 
-        phone_number = self.user_data.get('PhoneNumber',
-                                          '+7 (___) ___-__-__') if self.user_data else '+7 (___) ___-__-__'
+        phone_number = "+7 (929) 356-23-78"  # Фиксированный номер
         self.contact_phone = QLabel(phone_number)
         self.contact_phone.setStyleSheet("color: white; font-size: 13px;")
 
@@ -791,7 +787,7 @@ class Ui_profil(object):
         phone_layout.addStretch()
         contact_layout.addWidget(phone_widget)
 
-        # Блок email
+        # Блок email (статические данные)
         email_widget = QWidget()
         email_layout = QHBoxLayout(email_widget)
         email_layout.setContentsMargins(0, 0, 0, 0)
@@ -799,7 +795,7 @@ class Ui_profil(object):
         email_icon = QLabel("📧")
         email_icon.setStyleSheet("font-size: 16px;")
 
-        email = self.user_data.get('Email', 'email@example.com') if self.user_data else 'email@example.com'
+        email = "it.ecosystem.krsk@gmail.com"  # Фиксированный email
         self.contact_email = QLabel(email)
         self.contact_email.setStyleSheet("color: white; font-size: 13px;")
 
