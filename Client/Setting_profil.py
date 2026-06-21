@@ -683,36 +683,6 @@ class Ui_Setting_Profil(object):
 
         content_layout.addWidget(info_frame)
 
-        # ===== РАЗДЕЛ: ЛИЧНЫЕ ДАННЫЕ =====
-        personal_section = QLabel("📋 Личные данные")
-        personal_section.setStyleSheet("""
-            QLabel {
-                color: #4CAF50;
-                font-size: 16px;
-                font-weight: 600;
-                margin-top: 10px;
-            }
-        """)
-        content_layout.addWidget(personal_section)
-
-        # Кнопка "Имя и Фамилия"
-        self.btn_name_surname = ModernSettingButton(
-            "Имя и Фамилия",
-            "👤",
-            "Изменить ваши имя и фамилию"
-        )
-        self.btn_name_surname.clicked.connect(self.open_name_surname)
-        content_layout.addWidget(self.btn_name_surname)
-
-        # Кнопка "Дата рождения"
-        self.btn_date = ModernSettingButton(
-            "Дата рождения",
-            "📅",
-            "Изменить дату рождения"
-        )
-        self.btn_date.clicked.connect(self.open_date)
-        content_layout.addWidget(self.btn_date)
-
         # ===== РАЗДЕЛИТЕЛЬ =====
         separator1 = QFrame()
         separator1.setFrameShape(QFrame.HLine)
