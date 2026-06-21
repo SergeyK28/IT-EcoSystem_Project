@@ -47,7 +47,7 @@ class Ui_main_window_Dialog(object):
         Создает и настраивает все виджеты главного окна
         """
         main_window_Dialog.setObjectName("main_window_Dialog")
-        main_window_Dialog.resize(1200, 950)
+        main_window_Dialog.resize(1300, 950)
         main_window_Dialog.setWindowTitle("Главное окно")
 
         # Настройка иконки приложения
