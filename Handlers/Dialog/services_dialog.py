@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
     QTableWidgetItem, QPushButton, QLineEdit, QComboBox, QSpinBox,
     QDoubleSpinBox, QFrame, QMessageBox, QHeaderView, QGroupBox,
-    QFormLayout, QTextEdit, QSplitter, QCheckBox, QWidget,
+    QFormLayout, QTextEdit, QCheckBox, QWidget,
     QTabWidget, QMenu, QAction, QGridLayout
 )
 from PyQt5.QtGui import QColor, QIcon
@@ -301,10 +301,6 @@ class ServicesDialog(QDialog):
         self.reset_btn.clicked.connect(self.reset_filters)
         filter_layout.addWidget(self.reset_btn)
 
-        self.export_btn = QPushButton("📊 Экспорт")
-        self.export_btn.clicked.connect(self.export_services)
-        filter_layout.addWidget(self.export_btn)
-
         main_layout.addWidget(filter_frame)
 
         # ===== Вкладки =====
@@ -380,16 +376,8 @@ class ServicesDialog(QDialog):
         return frame
 
     def setup_services_tab(self):
-        """Настройка вкладки со списком услуг"""
         layout = QVBoxLayout(self.services_tab)
         layout.setContentsMargins(5, 5, 5, 5)
-
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setSizes([850, 700])
-
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(0, 0, 0, 0)
 
         self.table = QTableWidget()
         self.table.setAlternatingRowColors(True)
@@ -403,119 +391,40 @@ class ServicesDialog(QDialog):
             item.setTextAlignment(Qt.AlignCenter)
             self.table.setHorizontalHeaderItem(i, item)
 
-        self.table.horizontalHeader().setStretchLastSection(False)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)  # отключаем автоматическое растяжение последнего
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # ID скрыт, но можно по содержимому
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Название – растягивается
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Категория – по содержимому
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Цена
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Время
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Использовано
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Статус
+
         self.table.setColumnHidden(0, True)
-        self.table.setColumnWidth(1, 400)
-        self.table.setColumnWidth(2, 180)
-        self.table.setColumnWidth(3, 120)
-        self.table.setColumnWidth(4, 100)
-        self.table.setColumnWidth(5, 100)
-        self.table.setColumnWidth(6, 100)
+
+        self.table.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.doubleClicked.connect(self.on_service_double_clicked)
         self.table.itemSelectionChanged.connect(self.on_service_selected)
 
-        left_layout.addWidget(self.table)
-        splitter.addWidget(left_panel)
-
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setSpacing(8)
-
-        info_group = QGroupBox("📝 Информация об услуге")
-        info_layout = QFormLayout(info_group)
-        info_layout.setSpacing(10)
+        layout.addWidget(self.table)
 
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Введите полное название услуги...")
-        info_layout.addRow("Название *:", self.name_input)
-
         self.category_combo = QComboBox()
-        info_layout.addRow("Категория:", self.category_combo)
-
-        price_layout = QHBoxLayout()
         self.price_input = QDoubleSpinBox()
-        self.price_input.setRange(0, 1000000)
-        self.price_input.setPrefix("₽ ")
-        self.price_input.setDecimals(2)
-        price_layout.addWidget(self.price_input)
-
         self.cost_price_input = QDoubleSpinBox()
-        self.cost_price_input.setRange(0, 1000000)
-        self.cost_price_input.setPrefix("₽ ")
-        self.cost_price_input.setDecimals(2)
-        price_layout.addWidget(self.cost_price_input)
-        price_layout.addStretch()
-        info_layout.addRow("Цена / Себестоимость:", price_layout)
-
-        time_layout = QHBoxLayout()
         self.time_input = QSpinBox()
-        self.time_input.setRange(1, 1440)
-        self.time_input.setSuffix(" мин")
-        time_layout.addWidget(self.time_input)
-
         self.warranty_input = QSpinBox()
-        self.warranty_input.setRange(0, 3650)
-        self.warranty_input.setSuffix(" дн")
-        time_layout.addWidget(self.warranty_input)
-        time_layout.addStretch()
-        info_layout.addRow("Время / Гарантия:", time_layout)
-
-        self.active_check = QCheckBox("Услуга активна и доступна для заказов")
-        self.active_check.setChecked(True)
-        info_layout.addRow("", self.active_check)
-
-        right_layout.addWidget(info_group)
-
-        desc_group = QGroupBox("📄 Описание услуги")
-        desc_layout = QVBoxLayout(desc_group)
         self.description_input = QTextEdit()
-        self.description_input.setPlaceholderText(
-            "Введите подробное описание услуги..."
-        )
-        self.description_input.setMinimumHeight(100)
-        self.description_input.setMaximumHeight(120)
-        desc_layout.addWidget(self.description_input)
-        right_layout.addWidget(desc_group)
+        self.active_check = QCheckBox()
 
-        stats_group = QGroupBox("📊 Статистика использования")
-        stats_layout = QGridLayout(stats_group)
-        stats_layout.setSpacing(8)
-
-        stats_layout.addWidget(QLabel("📈 Использовано:"), 0, 0)
-        self.usage_label = QLabel("0 раз")
-        self.usage_label.setStyleSheet("color: #2d7d3a; font-weight: bold; font-size: 16px;")
-        stats_layout.addWidget(self.usage_label, 0, 1)
-
-        stats_layout.addWidget(QLabel("💰 Выручка:"), 1, 0)
-        self.revenue_label = QLabel("0 ₽")
-        self.revenue_label.setStyleSheet("color: #e0a800; font-weight: bold; font-size: 16px;")
-        stats_layout.addWidget(self.revenue_label, 1, 1)
-
-        stats_layout.addWidget(QLabel("📊 Маржинальность:"), 2, 0)
-        self.margin_label = QLabel("0%")
-        self.margin_label.setStyleSheet("color: #1a7a8a; font-weight: bold; font-size: 16px;")
-        stats_layout.addWidget(self.margin_label, 2, 1)
-
-        stats_layout.addWidget(QLabel("🕐 Последнее использование:"), 3, 0)
-        self.last_used_label = QLabel("Не использовалась")
-        self.last_used_label.setStyleSheet("color: #b0b0b0; font-size: 12px;")
-        stats_layout.addWidget(self.last_used_label, 3, 1)
-
-        right_layout.addWidget(stats_group)
-
-        form_buttons_layout = QHBoxLayout()
-        self.clear_form_btn = QPushButton("❌ Очистить")
-        self.clear_form_btn.clicked.connect(self.clear_form)
-        form_buttons_layout.addWidget(self.clear_form_btn)
-        form_buttons_layout.addStretch()
-        right_layout.addLayout(form_buttons_layout)
-        right_layout.addStretch()
-
-        splitter.addWidget(right_panel)
-        layout.addWidget(splitter)
+        self.usage_label = QLabel()
+        self.revenue_label = QLabel()
+        self.margin_label = QLabel()
+        self.last_used_label = QLabel()
 
     def setup_categories_tab(self):
         layout = QVBoxLayout(self.categories_tab)

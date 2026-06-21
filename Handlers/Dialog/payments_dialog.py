@@ -283,13 +283,8 @@ class PaymentsDialog(QDialog):
         self.add_btn.setObjectName("addBtn")
         self.add_btn.clicked.connect(self.add_payment)
 
-        self.export_btn = QPushButton("📊 Экспорт")
-        self.export_btn.setProperty("secondary", True)
-        self.export_btn.clicked.connect(self.export_data)
-
         bottom_layout.addWidget(self.stats_label)
         bottom_layout.addStretch()
-        bottom_layout.addWidget(self.export_btn)
         bottom_layout.addWidget(self.add_btn)
 
         main_layout.addWidget(bottom_frame)
