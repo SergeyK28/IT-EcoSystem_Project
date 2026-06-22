@@ -177,7 +177,7 @@ poetry.lock
 # Pipenv
 Pipfile.lock
 # requirements (кроме самого файла)
-!requirements.txt
+!Source_code/requirements.txt
 
 # === DOCKER ===
 .docker/
