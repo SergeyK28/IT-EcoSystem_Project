@@ -194,8 +194,8 @@ class MapWidget(QWidget):
                 <div class="info-box">
                     <h3>🏪 IT-EcoSystem</h3>
                     <p><span class="emoji">📍</span> Красноярск, Улица Микуцкого, 12</p>
-                    <p><span class="emoji">📞</span> +7 (999) 123-45-67</p>
-                    <p><span class="emoji">📧</span> info@it-eco.ru</p>
+                    <p><span class="emoji">📞</span> +7 (929) 356-23-78</p>
+                    <p><span class="emoji">📧</span> it.ecosystem.krsk@gmail.com</p>
                     <div class="hours">
                         <p><b>🕒 Режим работы:</b></p>
                         <p>Пн-Пт: 10:00-20:00</p>
