@@ -32,7 +32,7 @@ class EmployeeProfileDialog(QDialog):
         """Настройка интерфейса окна профиля."""
         self.setObjectName("EmployeeProfileDialog")
         self.setWindowTitle("Профиль сотрудника")
-        self.setMinimumSize(450, 550)
+        self.setMinimumSize(450, 750)
         self.resize(500, 600)
 
         # Простой тёмный стиль (без излишеств)

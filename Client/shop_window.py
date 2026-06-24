@@ -75,7 +75,7 @@ class ShopWindow(QDialog):
     def setupUi(self, Dialog):
         self.Dialog = Dialog
         Dialog.setObjectName("ShopWindow")
-        Dialog.resize(1000, 500)
+        Dialog.resize(1000, 1000)
         Dialog.setWindowTitle("IT-EcoSystem - Подбор услуги")
 
         Dialog.setWindowFlags(Dialog.windowFlags() | Qt.WindowMaximizeButtonHint)
@@ -666,14 +666,19 @@ class ShopWindow(QDialog):
 
         # Сохраняем в базу данных
         if db_crm.add_to_cart_db(session.get_user_id(), order_item):
-            QMessageBox.information(
-                self.Dialog,
-                "✅ Добавлено в корзину",
-                f"Услуга добавлена в корзину!\n\n"
-                f"📱 {device} {brand} {model}\n"
-                f"⚠️ Причина: {reason}\n"
-                f"💰 Стоимость: {price:,.0f} ₽".replace(",", " ")
+            msg = QMessageBox(self.Dialog)
+            msg.setWindowTitle("✅ Добавлено в корзину")
+            msg.setTextFormat(Qt.RichText)  # разрешаем HTML
+            msg.setText(
+                f'<span style="color: white;">'
+                f'Услуга добавлена в корзину!<br><br>'
+                f'📱 {device} {brand} {model}<br>'
+                f'⚠️ Причина: {reason}<br>'
+                f'💰 Стоимость: {price:,.0f} ₽'
+                f'</span>'.replace(",", " ")
             )
+            msg.setIcon(QMessageBox.Information)
+            msg.exec_()
         else:
             QMessageBox.warning(
                 self.Dialog,

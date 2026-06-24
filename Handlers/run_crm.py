@@ -5,14 +5,13 @@ import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QFont, QPalette, QColor
 from PyQt5.QtWidgets import QDialog
-
-# Добавляем путь к корневой директории
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from Handlers.Employees.employee_login import EmployeeLoginDialog
 from Handlers.main_CRM import MainCRMWindow
 from Handlers.Employees.employee_session import employee_session
 from Handlers.splash_screen_CRM import SplashScreen
+
+# Добавляем путь к корневой директории
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def main():

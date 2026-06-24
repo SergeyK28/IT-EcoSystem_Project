@@ -8,7 +8,7 @@ import sys
 import os
 from typing import Dict, List, Any
 
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QTimer, QDate
 from PyQt5.QtGui import QColor, QPalette, QFont
 from PyQt5.QtWidgets import (
